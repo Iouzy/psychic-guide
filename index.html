@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<!-- 
+  Amarante · Diário Digital
+  Portal de notícias, tempo, avisos e serviços do vale do Tâmega.
+  Dados em tempo real: Google News RSS · IPMA · Open-Meteo · API Sísmica IPMA
+  Projeto de código aberto. Não tem ligação à CM Amarante nem a entidades oficiais.
+-->
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Amarante · Diário Digital</title>
+<meta name="description" content="Portal informativo de Amarante — notícias, eventos, trânsito, tempo e serviços do vale do Tâmega." />
+<meta name="author" content="Amarante Diário" />
+<meta name="theme-color" content="#f7f3e9" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Amarante · Diário Digital" />
+<meta property="og:description" content="Portal informativo de Amarante — notícias, eventos, trânsito, tempo e serviços do vale do Tâmega." />
+<meta property="og:locale" content="pt_PT" />
+
+<!-- Favicon inline SVG -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231a1f2e'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='20' font-family='serif' fill='%23f7f3e9'>A</text></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #f7f3e9;
+    --paper-2: #f0eadc;
+    --paper-3: #e8e1cf;
+    --ink: #1a1f2e;
+    --ink-soft: #3d4452;
+    --ink-mid: #6a6e7a;
+    --ink-faint: #95907f;
+    --rule: #d8cfbb;
+    --rule-soft: #e4dcc7;
+    --vermillion: #b8401e;
+    --vermillion-soft: #d96a4a;
+    --vermillion-bg: rgba(184,64,30,0.08);
+    --gold: #9a7a30;
+    --gold-bg: rgba(154,122,48,0.1);
+    --green: #4a7c4a;
+    --green-bg: rgba(74,124,74,0.1);
+    --teal: #2a6478;
+    --teal-bg: rgba(42,100,120,0.08);
+    --plum: #6a3d5e;
+    --plum-bg: rgba(106,61,94,0.08);
+    --shadow-sm: 0 1px 2px rgba(26,31,46,0.04);
+    --shadow-md: 0 4px 12px rgba(26,31,46,0.08);
+    --shadow-lg: 0 8px 24px rgba(26,31,46,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: var(--paper); scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Geist', -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(154,122,48,0.04) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(184,64,30,0.03) 0%, transparent 45%);
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ============ MASTHEAD ============ */
+  .masthead {
+    padding: 22px 0 16px;
+    border-bottom: 3px double var(--ink);
+    margin-bottom: 18px;
+  }
+  .masthead-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: clamp(28px, 5vw, 48px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+  }
+  .brand h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--vermillion);
+  }
+  .brand .tagline {
+    margin-top: 4px;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-mid);
+    letter-spacing: 0.01em;
+  }
+
+  .search-wrap {
+    position: relative;
+    max-width: 380px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    padding: 10px 16px 10px 38px;
+    font-family: 'Newsreader', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: var(--ink);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-input:focus {
+    background: var(--paper);
+    border-color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    font-style: normal;
+  }
+  .search-input::placeholder { color: var(--ink-faint); }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--ink-faint);
+    pointer-events: none;
+  }
+
+  .masthead-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.7;
+  }
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 99px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--vermillion-soft);
+    border-radius: 50%;
+    animation: livePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(217,106,74,0.7); }
+    50% { opacity: 0.65; box-shadow: 0 0 0 4px rgba(217,106,74,0); }
+  }
+  .countdown { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 840px) {
+    .masthead-row { grid-template-columns: 1fr; gap: 14px; }
+    .search-wrap { order: 3; max-width: 100%; }
+    .masthead-meta { text-align: left; order: 2; }
+    .brand { order: 1; }
+  }
+
+  /* ============ STATUS BAR ============ */
+  .status-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 720px) {
+    .status-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  }
+  .status-pill {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 12px 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .status-pill .icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .status-pill .text { flex: 1; min-width: 0; }
+  .status-pill .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+  .status-pill .value {
+    font-family: 'Newsreader', serif;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1.2;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-pill.alert {
+    background: var(--vermillion-bg);
+    border-color: var(--vermillion-soft);
+  }
+  .status-pill.alert .value { color: var(--vermillion); }
+  .status-pill.warning-pill {
+    background: var(--gold-bg);
+    border-color: var(--gold);
+  }
+  .status-pill.warning-pill .value { color: var(--gold); }
+
+  /* ============ HERO ============ */
+  .hero {
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .hero-card {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 28px;
+    align-items: stretch;
+  }
+  @media (max-width: 840px) {
+    .hero-card { grid-template-columns: 1fr; gap: 18px; }
+  }
+  .hero-image {
+    aspect-ratio: 16/10;
+    background: var(--paper-3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-md);
+  }
+  .hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .hero-card:hover .hero-image img { transform: scale(1.02); }
+  .hero-image .placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--paper-3), var(--rule));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 18px;
+  }
+  .hero-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .hero-meta .cat {
+    padding: 3px 8px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 2px;
+    font-weight: 500;
+  }
+  .hero-meta .src { color: var(--vermillion); font-weight: 500; }
+  .hero-meta .time { color: var(--ink-faint); }
+  .hero-card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .hero-card .lede {
+    font-family: 'Newsreader', serif;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+  .hero-card .read-more {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--vermillion);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-card .read-more::after { content: '→'; transition: transform 0.2s; }
+  .hero-card:hover .read-more::after { transform: translateX(4px); }
+
+  /* ============ FILTERS ============ */
+  .filters {
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .cat-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .cat-tab {
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .cat-tab:hover { background: var(--paper-2); color: var(--ink); }
+  .cat-tab.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .cat-tab .count {
+    margin-left: 4px;
+    opacity: 0.5;
+    font-size: 9px;
+  }
+  .time-filter {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    padding: 6px 26px 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2395907f' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ============ LAYOUT MAIN ============ */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 36px;
+    margin-bottom: 50px;
+  }
+  @media (max-width: 980px) {
+    .main-layout { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  /* ============ NEWS GRID ============ */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .news-grid { grid-template-columns: 1fr; }
+  }
+
+  .news-card {
+    background: var(--paper);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .news-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--rule);
+  }
+  .news-card-image {
+    aspect-ratio: 16/9;
+    background: var(--paper-3);
+    overflow: hidden;
+    position: relative;
+  }
+  .news-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .news-card-image .placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--paper-2), var(--paper-3));
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+    padding: 16px;
+    text-align: center;
+  }
+  .news-card-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  .news-card-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .cat-pill {
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-weight: 500;
+    font-size: 8.5px;
+  }
+  .cat-acidentes { background: var(--vermillion-bg); color: var(--vermillion); }
+  .cat-cultura { background: var(--plum-bg); color: var(--plum); }
+  .cat-politica { background: var(--teal-bg); color: var(--teal); }
+  .cat-desporto { background: var(--green-bg); color: var(--green); }
+  .cat-transito { background: var(--gold-bg); color: var(--gold); }
+  .cat-sociedade { background: var(--paper-2); color: var(--ink-mid); }
+  .cat-economia { background: var(--paper-3); color: var(--ink-soft); }
+
+  .news-card-meta .src { color: var(--vermillion); font-weight: 500; }
+  .news-card-meta .time { color: var(--ink-faint); margin-left: auto; }
+
+  .news-card h3 {
+    font-family: 'Newsreader', serif;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .news-card p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .load-more {
+    display: block;
+    margin: 28px auto 0;
+    padding: 12px 28px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 99px;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .load-more:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .load-more:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .side-card {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 18px;
+  }
+  .side-card.feature {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .side-card.feature .sec-head h2 { color: var(--paper); }
+  .side-card.feature .sec-head .ornament { color: rgba(247,243,233,0.5); }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+  }
+  .side-card.feature .sec-head { border-color: rgba(247,243,233,0.2); }
+  .sec-head h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .sec-head .ornament {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  /* WEATHER */
+  .weather-main {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  .weather-temp {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--paper);
+    letter-spacing: -0.04em;
+  }
+  .weather-temp sup { font-size: 22px; opacity: 0.7; top: -0.5em; }
+  .weather-desc {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .weather-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(247,243,233,0.6);
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+  }
+  .weather-hourly {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(247,243,233,0.15);
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+  .hour-cell .h {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: rgba(247,243,233,0.4);
+    margin-bottom: 4px;
+  }
+  .hour-cell .t {
+    font-family: 'Newsreader', serif;
+    font-size: 13px;
+    color: var(--paper);
+  }
+  .hour-cell .p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--vermillion-soft);
+    margin-top: 2px;
+  }
+
+  /* WARNINGS */
+  .warning-item {
+    padding: 10px 12px;
+    border-left: 3px solid var(--vermillion);
+    background: var(--vermillion-bg);
+    margin-bottom: 6px;
+    border-radius: 0 2px 2px 0;
+  }
+  .warning-item.yellow { border-color: var(--gold); background: var(--gold-bg); }
+  .warning-item.orange { border-color: var(--vermillion-soft); background: rgba(217,106,74,0.1); }
+  .warning-item .level {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--vermillion);
+    margin-bottom: 3px;
+    font-weight: 500;
+  }
+  .warning-item.yellow .level { color: var(--gold); }
+  .warning-item .what {
+    font-family: 'Newsreader', serif;
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .warning-item .when {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+  .no-warning {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 6px 0;
+    line-height: 1.4;
+  }
+  .no-warning::before { content: '— '; color: var(--green); }
+
+  /* AIR & METRICS */
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .metric-row:last-child { border-bottom: 0; }
+  .metric-row .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .metric-row .val {
+    font-family: 'Newsreader', serif;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .metric-row .val small {
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-family: 'Geist', sans-serif;
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .quality-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .q-good { background: var(--green-bg); color: var(--green); }
+  .q-fair { background: var(--gold-bg); color: var(--gold); }
+  .q-poor { background: var(--vermillion-bg); color: var(--vermillion); }
+
+  /* QUAKES */
+  .quake-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--rule-soft);
+    align-items: center;
+  }
+  .quake-item:last-child { border-bottom: 0; }
+  .quake-mag {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+    font-weight: 500;
+    min-width: 38px;
+    line-height: 1;
+  }
+  .quake-info { flex: 1; min-width: 0; }
+  .quake-info .place {
+    font-family: 'Newsreader', serif;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .quake-info .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  /* ============ INFO SECTIONS (Events, Traffic, Services) ============ */
+  .info-section {
+    margin-top: 50px;
+    padding-top: 28px;
+    border-top: 3px double var(--ink);
+  }
+  .info-section-title {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .info-section-title h2 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(24px, 4vw, 36px);
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .info-section-title .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 980px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+
+  .info-block {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .info-block-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .info-block-head .badge {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--vermillion);
+    line-height: 1;
+  }
+  .info-block-head h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .info-list { display: flex; flex-direction: column; gap: 0; }
+  .info-link {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    transition: padding 0.15s;
+  }
+  .info-link:last-child { border-bottom: 0; }
+  .info-link:hover { padding-left: 4px; }
+  .info-link .title {
+    font-family: 'Newsreader', serif;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+  .info-link .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+  .info-link .arrow {
+    color: var(--vermillion);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .service-btn {
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.15s;
+  }
+  .service-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .service-btn:hover .service-sub { color: rgba(247,243,233,0.6); }
+  .service-btn .service-name {
+    font-family: 'Newsreader', serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .service-btn .service-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+  .service-btn.urgent {
+    background: var(--vermillion);
+    color: var(--paper);
+    border-color: var(--vermillion);
+  }
+  .service-btn.urgent .service-sub { color: rgba(247,243,233,0.7); }
+
+  /* ============ ACCESSIBILITY ============ */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    padding: 8px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Geist', sans-serif;
+    font-size: 13px;
+    border-radius: 0 0 4px 0;
+    z-index: 1000;
+    transition: top 0.15s;
+  }
+  .skip-link:focus { top: 0; }
+
+  :focus-visible {
+    outline: 2px solid var(--vermillion);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ============ SCROLL TO TOP ============ */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .scroll-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .scroll-top:hover { transform: translateY(-3px); }
+  .skeleton {
+    background: linear-gradient(90deg, var(--paper-2) 0%, var(--paper-3) 50%, var(--paper-2) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 3px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .skeleton-card {
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .skeleton-img { aspect-ratio: 16/9; }
+  .skeleton-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .skeleton-line { height: 14px; }
+  .skeleton-line.short { width: 60%; }
+
+  .error-text {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faint);
+    padding: 10px 0;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    margin-top: 60px;
+    padding: 28px 0 32px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+  }
+  footer .credit {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  footer .sources {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+  footer a { color: var(--vermillion); }
+  footer .disclaimer {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 12px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Saltar para o conteúdo</a>
+<button class="scroll-top" id="scroll-top" aria-label="Voltar ao topo">↑</button>
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <div class="brand">
+        <h1>Amarante <em>·</em> Diário</h1>
+        <div class="tagline">Notícias, eventos, trânsito e serviços do vale do Tâmega</div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+      <input type="search" class="search-input" id="search" placeholder="Pesquisar nas notícias…" aria-label="Pesquisar notícias" />
+      </div>
+      <div class="masthead-meta">
+        <div class="live-badge"><span class="live-dot"></span> Em direto</div>
+        <div id="date-line">—</div>
+        <div>Atualiza em <span class="countdown" id="countdown">—:—</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ STATUS BAR ============ -->
+  <div class="status-bar" id="status-bar">
+    <div class="status-pill" id="status-weather">
+      <span class="icon">⏳</span>
+      <div class="text">
+        <div class="label">Tempo agora</div>
+        <div class="value">A carregar…</div>
+      </div>
+    </div>
+    <div class="status-pill" id="status-warning">
+      <span class="icon">⏳</span>
+      <div class="text">
+        <div class="label">Avisos IPMA</div>
+        <div class="value">A verificar…</div>
+      </div>
+    </div>
+    <div class="status-pill" id="status-air">
+      <span class="icon">⏳</span>
+      <div class="text">
+        <div class="label">Qualidade do ar</div>
+        <div class="value">A medir…</div>
+      </div>
+    </div>
+    <div class="status-pill" id="status-seismic">
+      <span class="icon">⏳</span>
+      <div class="text">
+        <div class="label">Último sismo</div>
+        <div class="value">A consultar…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <a class="hero-card" id="hero" href="#" target="_blank" rel="noopener">
+      <div class="hero-image">
+        <div class="placeholder">A carregar destaque do dia…</div>
+      </div>
+      <div class="hero-body">
+        <div class="hero-meta">
+          <span class="cat">EM DESTAQUE</span>
+          <span class="src">—</span>
+          <span class="time">—</span>
+        </div>
+        <h2>A carregar notícias de Amarante…</h2>
+        <p class="lede">Aguarda um momento enquanto as últimas notícias do vale do Tâmega são recolhidas.</p>
+        <span class="read-more">Ler artigo</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- ============ FILTERS ============ -->
+  <nav class="filters" aria-label="Filtros de notícias">
+    <div class="cat-tabs" id="cat-tabs" role="tablist" aria-label="Categorias">
+      <button class="cat-tab active" data-cat="all">Tudo <span class="count" id="count-all">0</span></button>
+      <button class="cat-tab" data-cat="acidentes">Acidentes <span class="count" id="count-acidentes">0</span></button>
+      <button class="cat-tab" data-cat="cultura">Cultura <span class="count" id="count-cultura">0</span></button>
+      <button class="cat-tab" data-cat="politica">Política <span class="count" id="count-politica">0</span></button>
+      <button class="cat-tab" data-cat="desporto">Desporto <span class="count" id="count-desporto">0</span></button>
+      <button class="cat-tab" data-cat="transito">Trânsito <span class="count" id="count-transito">0</span></button>
+      <button class="cat-tab" data-cat="sociedade">Sociedade <span class="count" id="count-sociedade">0</span></button>
+    </div>
+    <select class="time-filter" id="time-filter" aria-label="Filtrar por período">
+      <option value="all">Todos os períodos</option>
+      <option value="1d">Últimas 24h</option>
+      <option value="7d">Última semana</option>
+      <option value="30d">Último mês</option>
+      <option value="1y">Último ano</option>
+    </select>
+  </nav>
+
+  <!-- ============ MAIN LAYOUT ============ -->
+  <div class="main-layout">
+
+    <main id="main-content">
+      <div class="news-grid" id="news-grid" aria-live="polite" aria-label="Notícias">
+        <!-- Skeleton loaders -->
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+      </div>
+      <button class="load-more" id="load-more">Carregar mais notícias</button>
+    </main>
+
+    <aside class="sidebar">
+
+      <div class="side-card feature">
+        <div class="sec-head">
+          <h2>O tempo agora</h2>
+          <span class="ornament">Open-Meteo</span>
+        </div>
+        <div id="weather-card">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(247,243,233,0.5);letter-spacing:0.1em;">A CARREGAR…</div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="sec-head">
+          <h2>Avisos meteorológicos</h2>
+          <span class="ornament">Porto · IPMA</span>
+        </div>
+        <div id="warnings-card">
+          <div class="error-text">A verificar avisos…</div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="sec-head">
+          <h2>Qualidade do ar</h2>
+          <span class="ornament">Índice EU</span>
+        </div>
+        <div id="air-card">
+          <div class="error-text">A medir partículas…</div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="sec-head">
+          <h2>Sismos próximos</h2>
+          <span class="ornament">200 km · IPMA</span>
+        </div>
+        <div id="seismic-card">
+          <div class="error-text">A consultar registos…</div>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- ============ EVENTS / TRAFFIC / SERVICES ============ -->
+  <section class="info-section">
+    <div class="info-section-title">
+      <h2>Pelo concelho</h2>
+      <div class="sub">Eventos · Trânsito · Serviços · Comunidade</div>
+    </div>
+
+    <div class="info-grid">
+
+      <!-- EVENTOS -->
+      <div class="info-block">
+        <div class="info-block-head">
+          <span class="badge">§</span>
+          <h3>Eventos & Agenda</h3>
+        </div>
+        <div class="info-list" id="events-list">
+          <div class="error-text">A procurar eventos…</div>
+        </div>
+        <a class="info-link" href="https://www.cm-amarante.pt/agenda" target="_blank" rel="noopener" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--rule);">
+          <div class="title">Agenda oficial da Câmara <span class="arrow">→</span></div>
+          <div class="sub">cm-amarante.pt</div>
+        </a>
+      </div>
+
+      <!-- TRÂNSITO -->
+      <div class="info-block">
+        <div class="info-block-head">
+          <span class="badge">⌖</span>
+          <h3>Trânsito & Transportes</h3>
+        </div>
+        <div class="info-list" id="traffic-list">
+          <div class="error-text">A consultar estradas…</div>
+        </div>
+        <div class="info-list" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);">
+          <a class="info-link" href="https://www.infraestruturasdeportugal.pt/pt-pt/itinerario" target="_blank" rel="noopener">
+            <div class="title">Estado das estradas — IP <span class="arrow">→</span></div>
+            <div class="sub">Infraestruturas de Portugal</div>
+          </a>
+          <a class="info-link" href="https://www.cp.pt/passageiros/pt/consultar-horarios?textSearchOri=Amarante&searchOriId=AM" target="_blank" rel="noopener">
+            <div class="title">Horários de comboios <span class="arrow">→</span></div>
+            <div class="sub">CP · linha do Tâmega</div>
+          </a>
+          <a class="info-link" href="https://maps.google.com/?q=tr%C3%A2nsito+Amarante" target="_blank" rel="noopener">
+            <div class="title">Trânsito em direto no mapa <span class="arrow">→</span></div>
+            <div class="sub">Google Maps</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- SERVIÇOS -->
+      <div class="info-block">
+        <div class="info-block-head">
+          <span class="badge">✚</span>
+          <h3>Serviços úteis</h3>
+        </div>
+        <div class="services-grid">
+          <a class="service-btn urgent" href="tel:112">
+            <div class="service-name">Emergência</div>
+            <div class="service-sub">112 · SOS</div>
+          </a>
+          <a class="service-btn" href="https://www.farmaciasdeservico.net/utente/sair/distrito-Porto/concelho-Amarante" target="_blank" rel="noopener">
+            <div class="service-name">Farmácia de serviço</div>
+            <div class="service-sub">Hoje · Amarante</div>
+          </a>
+          <a class="service-btn" href="https://www.sns24.gov.pt/" target="_blank" rel="noopener">
+            <div class="service-name">SNS 24</div>
+            <div class="service-sub">808 24 24 24</div>
+          </a>
+          <a class="service-btn" href="https://www.chts.min-saude.pt/" target="_blank" rel="noopener">
+            <div class="service-name">Hospital de Amarante</div>
+            <div class="service-sub">CHTS · Urgência</div>
+          </a>
+          <a class="service-btn" href="https://www.cm-amarante.pt" target="_blank" rel="noopener">
+            <div class="service-name">Câmara Municipal</div>
+            <div class="service-sub">cm-amarante.pt</div>
+          </a>
+          <a class="service-btn" href="https://www.gnr.pt/contactos.aspx" target="_blank" rel="noopener">
+            <div class="service-name">GNR Amarante</div>
+            <div class="service-sub">Posto territorial</div>
+          </a>
+        </div>
+
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Comunidade</div>
+          <div class="info-list">
+            <a class="info-link" href="https://www.facebook.com/search/top?q=amarante" target="_blank" rel="noopener">
+              <div class="title">Grupos de Amarante no Facebook <span class="arrow">→</span></div>
+              <div class="sub">Pesquisa direta</div>
+            </a>
+            <a class="info-link" href="https://www.olx.pt/q-amarante/" target="_blank" rel="noopener">
+              <div class="title">Classificados OLX <span class="arrow">→</span></div>
+              <div class="sub">Amarante e arredores</div>
+            </a>
+            <a class="info-link" href="https://www.expressodeamarante.pt" target="_blank" rel="noopener">
+              <div class="title">Expresso de Amarante <span class="arrow">→</span></div>
+              <div class="sub">Jornal local</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="credit">
+      Um projeto não-oficial sobre <em>Amarante</em> &mdash; vale do Tâmega.
+    </div>
+    <div class="sources">
+      Fontes: Google News · IPMA · Open-Meteo · Infraestruturas de Portugal · CP · ANF<br>
+      Atualização automática a cada 5 minutos
+    </div>
+    <div class="disclaimer">
+      Os dados são recolhidos em tempo real de fontes públicas. Este site é uma agregação independente sem ligação à Câmara Municipal de Amarante ou a qualquer entidade oficial.
+    </div>
+    <div class="sources" style="margin-top:12px;">
+      <script>document.write('© ' + new Date().getFullYear() + ' · Código aberto')</script>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // ========== CONFIG ==========
+  const AMARANTE = { lat: 41.2706, lon: -8.0810 };
+  const REFRESH_MS = 5 * 60 * 1000;
+  // Código do distrito do Porto na API de avisos IPMA
+  // (idAreaAviso: 'POT' = Porto, 'BRG' = Braga, etc.)
+  const DISTRICT_CODE = 'POT';
+
+  // ========== STATE ==========
+  let allArticles = [];
+  let displayLimit = 8;
+  let currentCategory = 'all';
+  let currentTimeFilter = 'all';
+  let currentSearch = '';
+
+  // ========== UTILS ==========
+  const $ = (id) => document.getElementById(id);
+  const fmtTime = (d) => d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  const fmtDate = (d) => d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  function timeAgo(dateStr) {
+    const d = new Date(dateStr);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'agora';
+    if (diff < 3600) return `há ${Math.floor(diff/60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff/3600)} h`;
+    if (diff < 86400*7) return `há ${Math.floor(diff/86400)} d`;
+    return d.toLocaleDateString('pt-PT', { day:'numeric', month:'short' });
+  }
+
+  function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  function extractImage(item) {
+    if (item.thumbnail && item.thumbnail.startsWith('http')) return item.thumbnail;
+    if (item.enclosure && item.enclosure.link) return item.enclosure.link;
+    const desc = item.description || item.content || '';
+    const match = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (match) return match[1];
+    return null;
+  }
+
+  // ========== CATEGORIZATION ==========
+  const CATEGORY_KEYWORDS = {
+    acidentes: ['acidente', 'incêndio', 'incendio', 'ferid', 'morto', 'morte', 'morreu', 'colisão', 'colisao', 'atropelad', 'choque', 'despist', 'vítima', 'vitima', 'tragédia', 'tragedia', 'apagão', 'apagao'],
+    cultura: ['festival', 'concerto', 'evento', 'cultura', 'arte', 'exposição', 'exposicao', 'teatro', 'música', 'musica', 'são gonçalo', 'sao goncalo', 'cinema', 'literatura', 'feira', 'romaria'],
+    politica: ['câmara', 'camara', 'autarquia', 'presidente', 'autárquica', 'autarquica', 'vereador', 'eleição', 'eleicao', 'orçamento', 'orcamento', 'assembleia', 'municipal', 'partido', 'ps ', 'psd', 'chega'],
+    desporto: ['futebol', 'jogo', 'campeonato', 'desporto', 'jogador', 'clube', 'fc amarante', 'amarante fc', 'liga', 'taça', 'taca', 'atleta', 'derrota', 'vitória', 'vitoria'],
+    transito: ['ip4', 'ip-4', 'a4', 'estrada', 'trânsito', 'transito', 'comboio', 'engarrafamento', 'cp ', 'rodoviária', 'rodoviaria', 'autoestrada', 'auto-estrada'],
+  };
+
+  function categorize(article) {
+    const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+    for (const [cat, words] of Object.entries(CATEGORY_KEYWORDS)) {
+      if (words.some(w => text.includes(w))) return cat;
+    }
+    return 'sociedade';
+  }
+
+  // ========== FETCH NEWS ==========
+  // Tenta múltiplos proxies CORS por ordem de fiabilidade
+  const CORS_PROXIES = [
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+
+  async function fetchWithProxy(rssUrl) {
+    for (const makeProxy of CORS_PROXIES) {
+      try {
+        const res = await fetch(makeProxy(rssUrl), { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        const text = await res.text();
+        // allorigins devolve JSON, os outros devolvem XML direto
+        let xmlText = text;
+        try {
+          const json = JSON.parse(text);
+          if (json.contents) xmlText = json.contents;
+        } catch {}
+        if (xmlText.includes('<item>') || xmlText.includes('<item ')) return xmlText;
+      } catch {}
+    }
+    return null;
+  }
+
+  async function fetchNewsBatch(query, count = 50) {
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pt-PT&gl=PT&ceid=PT:pt`;
+    try {
+      const xmlText = await fetchWithProxy(rssUrl);
+      if (!xmlText) return [];
+
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, 'text/xml');
+      const items = Array.from(xml.querySelectorAll('item')).slice(0, count);
+
+      return items.map(item => {
+        const rawTitle = item.querySelector('title')?.textContent || '';
+        const titleParts = rawTitle.split(' - ');
+        const source = titleParts.length > 1 ? titleParts.pop().trim() : 'Notícia';
+        const title = titleParts.join(' - ').trim();
+
+        const rawDesc = item.querySelector('description')?.textContent || '';
+        const description = stripHtml(rawDesc).trim();
+
+        const link = item.querySelector('link')?.textContent ||
+                     item.querySelector('guid')?.textContent || '#';
+        const pubDate = item.querySelector('pubDate')?.textContent || '';
+
+        const mediaUrl = item.querySelector('content')?.getAttribute('url') ||
+                         item.querySelector('enclosure')?.getAttribute('url') || null;
+        const imgMatch = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
+        const image = mediaUrl || (imgMatch ? imgMatch[1] : null);
+
+        const article = { title, description, source, link, pubDate, image };
+        article.category = categorize(article);
+        return article;
+      });
+    } catch (err) {
+      console.error('News fetch error:', err);
+      return [];
+    }
+  }
+
+    function dedupeArticles(articles) {
+    const seen = new Set();
+    return articles.filter(a => {
+      const key = a.title.toLowerCase().slice(0, 60);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  async function loadNews() {
+    // Fetch main feed
+    const articles = await fetchNewsBatch('Amarante Portugal', 50);
+    allArticles = dedupeArticles(articles);
+    renderHero();
+    renderNews();
+    updateCategoryCounts();
+  }
+
+  async function loadMoreNews() {
+    const btn = $('load-more');
+    btn.disabled = true;
+    btn.textContent = 'A carregar arquivo…';
+
+    // Try broader time-windowed queries
+    const queries = [
+      'Amarante Tâmega',
+      'Amarante concelho',
+      '"Amarante" Porto',
+    ];
+
+    const batches = await Promise.all(queries.map(q => fetchNewsBatch(q, 50)));
+    const newArticles = batches.flat();
+
+    allArticles = dedupeArticles([...allArticles, ...newArticles]);
+    displayLimit += 12;
+    renderNews();
+    updateCategoryCounts();
+
+    btn.disabled = false;
+    btn.textContent = 'Carregar mais notícias';
+  }
+
+  // ========== RENDER ==========
+  function applyFilters(articles) {
+    let result = articles;
+
+    if (currentCategory !== 'all') {
+      result = result.filter(a => a.category === currentCategory);
+    }
+
+    if (currentTimeFilter !== 'all') {
+      const cutoffs = { '1d': 86400, '7d': 86400*7, '30d': 86400*30, '1y': 86400*365 };
+      const cutoff = Date.now() - cutoffs[currentTimeFilter] * 1000;
+      result = result.filter(a => new Date(a.pubDate).getTime() >= cutoff);
+    }
+
+    if (currentSearch.trim()) {
+      const q = currentSearch.toLowerCase();
+      result = result.filter(a =>
+        a.title.toLowerCase().includes(q) ||
+        (a.description || '').toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }
+
+  function renderHero() {
+    if (!allArticles.length) return;
+    const top = allArticles[0];
+    const hero = $('hero');
+    hero.href = top.link;
+
+    const imgHtml = top.image
+      ? `<img src="${top.image}" alt="${top.title.replace(/"/g,'&quot;')}" onerror="this.parentElement.innerHTML='<div class=&quot;placeholder&quot;>Sem imagem disponível</div>'" />`
+      : `<div class="placeholder">${top.source}</div>`;
+
+    hero.querySelector('.hero-image').innerHTML = imgHtml;
+    hero.querySelector('.hero-meta').innerHTML = `
+      <span class="cat">${top.category.toUpperCase()}</span>
+      <span class="src">${top.source}</span>
+      <span class="time">${timeAgo(top.pubDate)}</span>
+    `;
+    hero.querySelector('h2').textContent = top.title;
+    hero.querySelector('.lede').textContent = top.description
+      ? top.description.slice(0, 220) + (top.description.length > 220 ? '…' : '')
+      : 'Lê o artigo completo na publicação original.';
+  }
+
+  function renderNews() {
+    const filtered = applyFilters(allArticles.slice(1)); // skip hero
+    const toShow = filtered.slice(0, displayLimit);
+    const grid = $('news-grid');
+
+    if (!toShow.length) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+          <div style="font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink-soft);margin-bottom:8px;">Nada encontrado.</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:0.1em;">EXPERIMENTA OUTRA CATEGORIA OU PERÍODO</div>
+        </div>
+      `;
+      $('load-more').style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = toShow.map(a => {
+      const safeTitle = a.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const imgHtml = a.image
+        ? `<img src="${a.image}" alt="${safeTitle}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;placeholder&quot;>${a.source}</div>'" />`
+        : `<div class="placeholder">${a.source}</div>`;
+
+      return `
+        <a class="news-card" href="${a.link}" target="_blank" rel="noopener">
+          <div class="news-card-image">${imgHtml}</div>
+          <div class="news-card-body">
+            <div class="news-card-meta">
+              <span class="cat-pill cat-${a.category}">${a.category}</span>
+              <span class="src">${a.source}</span>
+              <span class="time">${timeAgo(a.pubDate)}</span>
+            </div>
+            <h3>${a.title}</h3>
+            ${a.description ? `<p>${a.description.slice(0, 140)}${a.description.length > 140 ? '…' : ''}</p>` : ''}
+          </div>
+        </a>
+      `;
+    }).join('');
+
+    $('load-more').style.display = filtered.length > displayLimit ? 'block' : 'block';
+    $('load-more').textContent = filtered.length > displayLimit
+      ? `Carregar mais notícias (${filtered.length - displayLimit} restantes)`
+      : 'Procurar no arquivo';
+  }
+
+  function updateCategoryCounts() {
+    const counts = { all: allArticles.length };
+    ['acidentes', 'cultura', 'politica', 'desporto', 'transito', 'sociedade'].forEach(c => {
+      counts[c] = allArticles.filter(a => a.category === c).length;
+    });
+    Object.entries(counts).forEach(([cat, n]) => {
+      const el = $(`count-${cat}`);
+      if (el) el.textContent = n;
+    });
+  }
+
+  // ========== WEATHER ==========
+  const WEATHER_CODES = {
+    0: { d: 'Céu limpo', i: '☀' }, 1: { d: 'Maior parte limpo', i: '🌤' },
+    2: { d: 'Parcialmente nublado', i: '⛅' }, 3: { d: 'Nublado', i: '☁' },
+    45: { d: 'Nevoeiro', i: '🌫' }, 48: { d: 'Nevoeiro com geada', i: '🌫' },
+    51: { d: 'Chuvisco fraco', i: '🌦' }, 53: { d: 'Chuvisco', i: '🌦' }, 55: { d: 'Chuvisco intenso', i: '🌦' },
+    61: { d: 'Chuva fraca', i: '🌧' }, 63: { d: 'Chuva', i: '🌧' }, 65: { d: 'Chuva forte', i: '🌧' },
+    71: { d: 'Neve fraca', i: '🌨' }, 73: { d: 'Neve', i: '🌨' }, 75: { d: 'Neve intensa', i: '🌨' },
+    80: { d: 'Aguaceiros', i: '🌦' }, 81: { d: 'Aguaceiros fortes', i: '🌧' }, 82: { d: 'Aguaceiros violentos', i: '⛈' },
+    95: { d: 'Trovoada', i: '⛈' }, 96: { d: 'Trovoada granizo', i: '⛈' }, 99: { d: 'Trovoada violenta', i: '⛈' },
+  };
+
+  async function loadWeather() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${AMARANTE.lat}&longitude=${AMARANTE.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&hourly=temperature_2m,precipitation_probability&timezone=Europe%2FLisbon&forecast_days=2`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const c = data.current;
+      const code = WEATHER_CODES[c.weather_code] || { d: '—', i: '·' };
+
+      // Status pill
+      const sp = $('status-weather');
+      sp.querySelector('.icon').textContent = code.i;
+      sp.querySelector('.value').textContent = `${Math.round(c.temperature_2m)}° · ${code.d}`;
+
+      // Full card
+      const now = new Date();
+      const hours = data.hourly.time.map((t, idx) => ({
+        time: new Date(t),
+        temp: data.hourly.temperature_2m[idx],
+        precip: data.hourly.precipitation_probability[idx],
+      })).filter(h => h.time > now).slice(0, 6);
+
+      $('weather-card').innerHTML = `
+        <div class="weather-main">
+          <div class="weather-temp">${Math.round(c.temperature_2m)}<sup>°</sup></div>
+          <div>
+            <div class="weather-desc">${code.i} ${code.d}</div>
+            <div class="weather-detail">
+              HUMIDADE ${c.relative_humidity_2m}% &nbsp; VENTO ${Math.round(c.wind_speed_10m)} KM/H<br>
+              PRECIPITAÇÃO ${c.precipitation} MM
+            </div>
+          </div>
+        </div>
+        <div class="weather-hourly">
+          ${hours.map(h => `
+            <div class="hour-cell">
+              <div class="h">${fmtTime(h.time)}</div>
+              <div class="t">${Math.round(h.temp)}°</div>
+              <div class="p">${h.precip}%</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch (err) {
+      $('status-weather').querySelector('.value').textContent = 'Indisponível';
+      $('weather-card').innerHTML = '<div class="error-text" style="color:rgba(247,243,233,0.5);">Estação indisponível.</div>';
+    }
+  }
+
+  // ========== WARNINGS ==========
+  async function loadWarnings() {
+    try {
+      const res = await fetch('https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json');
+      const data = await res.json();
+      const active = data.filter(w =>
+        w.idAreaAviso === DISTRICT_CODE &&
+        w.awarenessLevelID &&
+        w.awarenessLevelID.toLowerCase() !== 'green' &&
+        new Date(w.endTime) > new Date()
+      );
+
+      const sp = $('status-warning');
+      if (!active.length) {
+        sp.querySelector('.icon').textContent = '✓';
+        sp.querySelector('.value').textContent = 'Sem avisos ativos';
+        $('warnings-card').innerHTML = '<div class="no-warning">Sem avisos meteorológicos ativos para o distrito do Porto.</div>';
+        return;
+      }
+
+      const highest = active.sort((a,b) => {
+        const order = { red: 3, orange: 2, yellow: 1 };
+        return (order[b.awarenessLevelID.toLowerCase()] || 0) - (order[a.awarenessLevelID.toLowerCase()] || 0);
+      })[0];
+
+      sp.classList.add(highest.awarenessLevelID.toLowerCase() === 'yellow' ? 'warning-pill' : 'alert');
+      sp.querySelector('.icon').textContent = '⚠';
+      sp.querySelector('.value').textContent = `${active.length} aviso${active.length > 1 ? 's' : ''} ${highest.awarenessLevelID.toLowerCase()}`;
+
+      const typeMap = {
+        'PRECIPITACAOFORTE': 'Precipitação forte', 'PRECIPITACAO': 'Precipitação',
+        'TROVOADA': 'Trovoada', 'VENTO': 'Vento forte', 'NEVE': 'Neve',
+        'TEMPOQUENTE': 'Tempo quente', 'TEMPOFRIO': 'Tempo frio',
+        'NEVOEIRO': 'Nevoeiro', 'AGITACAOMARITIMA': 'Agitação marítima',
+      };
+
+      $('warnings-card').innerHTML = active.map(w => {
+        const cls = w.awarenessLevelID.toLowerCase();
+        const what = typeMap[w.awarenessTypeName] || w.awarenessTypeName;
+        const start = new Date(w.startTime);
+        const end = new Date(w.endTime);
+        return `
+          <div class="warning-item ${cls}">
+            <div class="level">Aviso ${w.awarenessLevelID}</div>
+            <div class="what">${what}</div>
+            <div class="when">DE ${fmtTime(start)} A ${fmtTime(end)} · ${end.toLocaleDateString('pt-PT', { day:'numeric', month:'short' })}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      $('status-warning').querySelector('.value').textContent = 'Indisponível';
+      $('warnings-card').innerHTML = '<div class="error-text">Não foi possível consultar avisos.</div>';
+    }
+  }
+
+  // ========== AIR ==========
+  function aqiLabel(aqi) {
+    if (aqi <= 20) return { label: 'Muito boa', cls: 'q-good' };
+    if (aqi <= 40) return { label: 'Boa', cls: 'q-good' };
+    if (aqi <= 60) return { label: 'Razoável', cls: 'q-fair' };
+    if (aqi <= 80) return { label: 'Fraca', cls: 'q-poor' };
+    return { label: 'Muito fraca', cls: 'q-poor' };
+  }
+
+  async function loadAir() {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${AMARANTE.lat}&longitude=${AMARANTE.lon}&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const c = data.current;
+      const q = aqiLabel(c.european_aqi);
+
+      const sp = $('status-air');
+      sp.querySelector('.icon').textContent = '◌';
+      sp.querySelector('.value').textContent = `${Math.round(c.european_aqi)} · ${q.label}`;
+
+      $('air-card').innerHTML = `
+        <div class="metric-row">
+          <span class="lbl">Índice EU</span>
+          <span class="val">${Math.round(c.european_aqi)} <span class="quality-pill ${q.cls}">${q.label}</span></span>
+        </div>
+        <div class="metric-row"><span class="lbl">PM 2.5</span><span class="val">${c.pm2_5?.toFixed(1) ?? '—'} <small>µg/m³</small></span></div>
+        <div class="metric-row"><span class="lbl">PM 10</span><span class="val">${c.pm10?.toFixed(1) ?? '—'} <small>µg/m³</small></span></div>
+        <div class="metric-row"><span class="lbl">Ozono</span><span class="val">${c.ozone?.toFixed(0) ?? '—'} <small>µg/m³</small></span></div>
+      `;
+    } catch (err) {
+      $('status-air').querySelector('.value').textContent = 'Indisponível';
+      $('air-card').innerHTML = '<div class="error-text">Sensores indisponíveis.</div>';
+    }
+  }
+
+  // ========== SEISMIC ==========
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const toRad = (x) => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  async function loadSeismic() {
+    try {
+      const res = await fetch('https://api.ipma.pt/open-data/observation/seismic/PT.json');
+      const data = await res.json();
+      const quakes = (data.data || data || [])
+        .map(q => ({ ...q, dist: haversine(AMARANTE.lat, AMARANTE.lon, parseFloat(q.lat), parseFloat(q.lon)) }))
+        .filter(q => q.dist < 200 && !isNaN(q.dist))
+        .sort((a, b) => new Date(b.time) - new Date(a.time))
+        .slice(0, 5);
+
+      const sp = $('status-seismic');
+      if (!quakes.length) {
+        sp.querySelector('.icon').textContent = '◇';
+        sp.querySelector('.value').textContent = 'Calmo';
+        $('seismic-card').innerHTML = '<div class="no-warning">Sem sismos a menos de 200 km nos últimos 30 dias.</div>';
+        return;
+      }
+
+      const last = quakes[0];
+      sp.querySelector('.icon').textContent = '◆';
+      sp.querySelector('.value').textContent = `Mag. ${parseFloat(last.magnitud).toFixed(1)} · ${Math.round(last.dist)} km`;
+
+      $('seismic-card').innerHTML = quakes.map(q => {
+        const d = new Date(q.time);
+        return `
+          <div class="quake-item">
+            <div class="quake-mag">${parseFloat(q.magnitud).toFixed(1)}</div>
+            <div class="quake-info">
+              <div class="place">${q.local || 'Localização indeterminada'}</div>
+              <div class="meta">${d.toLocaleDateString('pt-PT', { day:'numeric', month:'short' })} · ${fmtTime(d)} · ${Math.round(q.dist)} km</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      $('status-seismic').querySelector('.value').textContent = 'Calmo';
+      $('seismic-card').innerHTML = '<div class="no-warning">Sem sismos relevantes próximos.</div>';
+    }
+  }
+
+  // ========== EVENTS & TRAFFIC ==========
+  async function loadEvents() {
+    const articles = await fetchNewsBatch('Amarante evento OR festival OR concerto OR feira', 15);
+    const events = articles.filter(a => a.category === 'cultura' || /evento|festival|concerto|feira|romaria|exposi/i.test(a.title)).slice(0, 6);
+
+    if (!events.length) {
+      $('events-list').innerHTML = '<div class="error-text">Sem eventos destacados nas notícias recentes.</div>';
+      return;
+    }
+
+    $('events-list').innerHTML = events.map(e => `
+      <a class="info-link" href="${e.link}" target="_blank" rel="noopener">
+        <div class="title">${e.title} <span class="arrow">→</span></div>
+        <div class="sub">${e.source} · ${timeAgo(e.pubDate)}</div>
+      </a>
+    `).join('');
+  }
+
+  async function loadTraffic() {
+    const articles = await fetchNewsBatch('IP4 OR Amarante trânsito OR acidente Amarante estrada', 15);
+    const traffic = articles.filter(a =>
+      /ip4|ip-4|a4|estrada|trânsito|transito|acidente|colisão|colisao|despist/i.test(a.title)
+    ).slice(0, 5);
+
+    if (!traffic.length) {
+      $('traffic-list').innerHTML = '<div class="no-warning" style="padding-left:0;">Sem ocorrências destacadas.</div>';
+      return;
+    }
+
+    $('traffic-list').innerHTML = traffic.map(t => `
+      <a class="info-link" href="${t.link}" target="_blank" rel="noopener">
+        <div class="title">${t.title} <span class="arrow">→</span></div>
+        <div class="sub">${t.source} · ${timeAgo(t.pubDate)}</div>
+      </a>
+    `).join('');
+  }
+
+  // ========== FILTERS ==========
+  $('cat-tabs').addEventListener('click', (e) => {
+    if (!e.target.matches('.cat-tab')) return;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentCategory = e.target.dataset.cat;
+    displayLimit = 8;
+    renderNews();
+  });
+
+  $('time-filter').addEventListener('change', (e) => {
+    currentTimeFilter = e.target.value;
+    displayLimit = 8;
+    renderNews();
+  });
+
+  let searchTimeout;
+  $('search').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentSearch = e.target.value;
+      displayLimit = 8;
+      renderNews();
+    }, 200);
+  });
+
+  $('load-more').addEventListener('click', () => {
+    const filtered = applyFilters(allArticles.slice(1));
+    if (filtered.length > displayLimit) {
+      displayLimit += 8;
+      renderNews();
+    } else {
+      loadMoreNews();
+    }
+  });
+
+  // ========== ORCHESTRATION ==========
+  let nextRefresh = Date.now() + REFRESH_MS;
+
+  function updateDateLine() {
+    $('date-line').textContent = fmtDate(new Date()).toUpperCase();
+  }
+
+  function updateCountdown() {
+    const remaining = Math.max(0, nextRefresh - Date.now());
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    $('countdown').textContent = `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  async function refreshAll() {
+    nextRefresh = Date.now() + REFRESH_MS;
+    updateDateLine();
+    await Promise.allSettled([
+      loadNews(),
+      loadWeather(),
+      loadWarnings(),
+      loadAir(),
+      loadSeismic(),
+      loadEvents(),
+      loadTraffic(),
+    ]);
+  }
+
+  refreshAll();
+  setInterval(updateCountdown, 1000);
+  setInterval(refreshAll, REFRESH_MS);
+
+  // ========== SCROLL TO TOP ==========
+  const scrollBtn = $('scroll-top');
+  window.addEventListener('scroll', () => {
+    scrollBtn.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+  scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+
+</body>
+</html>
