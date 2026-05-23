@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="pt" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Amarante · Diário Digital</title>
+<meta name="description" content="Portal informativo de Amarante — notícias, eventos, trânsito, tempo, mapa de ocorrências e galeria histórica do vale do Tâmega." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+  /* ============ THEME TOKENS ============ */
+  :root {
+    --paper: #f7f3e9;
+    --paper-2: #f0eadc;
+    --paper-3: #e8e1cf;
+    --ink: #1a1f2e;
+    --ink-soft: #3d4452;
+    --ink-mid: #6a6e7a;
+    --ink-faint: #95907f;
+    --rule: #d8cfbb;
+    --rule-soft: #e4dcc7;
+    --vermillion: #b8401e;
+    --vermillion-soft: #d96a4a;
+    --vermillion-bg: rgba(184,64,30,0.08);
+    --gold: #9a7a30;
+    --gold-bg: rgba(154,122,48,0.1);
+    --green: #4a7c4a;
+    --green-bg: rgba(74,124,74,0.1);
+    --teal: #2a6478;
+    --teal-bg: rgba(42,100,120,0.08);
+    --plum: #6a3d5e;
+    --plum-bg: rgba(106,61,94,0.08);
+    --shadow-sm: 0 1px 2px rgba(26,31,46,0.04);
+    --shadow-md: 0 4px 12px rgba(26,31,46,0.08);
+    --shadow-lg: 0 8px 24px rgba(26,31,46,0.12);
+    --shadow-xl: 0 24px 64px rgba(26,31,46,0.25);
+    --bg-tint-a: rgba(154,122,48,0.04);
+    --bg-tint-b: rgba(184,64,30,0.03);
+  }
+
+  [data-theme="dark"] {
+    --paper: #0f1218;
+    --paper-2: #161b24;
+    --paper-3: #1d232e;
+    --ink: #ece4d3;
+    --ink-soft: #b8b0a0;
+    --ink-mid: #8a8478;
+    --ink-faint: #5a574e;
+    --rule: #2a3140;
+    --rule-soft: #232936;
+    --vermillion: #e07955;
+    --vermillion-soft: #f08a66;
+    --vermillion-bg: rgba(224,121,85,0.12);
+    --gold: #d4a83f;
+    --gold-bg: rgba(212,168,63,0.12);
+    --green: #7eb87e;
+    --green-bg: rgba(126,184,126,0.12);
+    --teal: #5da8c0;
+    --teal-bg: rgba(93,168,192,0.12);
+    --plum: #b07da0;
+    --plum-bg: rgba(176,125,160,0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+    --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
+    --bg-tint-a: rgba(212,168,63,0.04);
+    --bg-tint-b: rgba(224,121,85,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--paper); scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Geist', -apple-system, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 20%, var(--bg-tint-a) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, var(--bg-tint-b) 0%, transparent 45%);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 22px; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  /* ============ MASTHEAD ============ */
+  .masthead {
+    padding: 22px 0 16px;
+    border-bottom: 3px double var(--ink);
+    margin-bottom: 18px;
+  }
+  .masthead-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(28px, 5vw, 48px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+  }
+  .brand h1 em { font-style: italic; font-weight: 400; color: var(--vermillion); }
+  .brand .tagline {
+    margin-top: 4px;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-mid);
+  }
+  .search-wrap { position: relative; max-width: 380px; width: 100%; margin: 0 auto; }
+  .search-input {
+    width: 100%;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    padding: 10px 16px 10px 38px;
+    font-family: 'Newsreader', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: var(--ink);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-input:focus { background: var(--paper); border-color: var(--ink); box-shadow: var(--shadow-sm); font-style: normal; }
+  .search-input::placeholder { color: var(--ink-faint); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--ink-faint); pointer-events: none; }
+
+  .theme-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .theme-toggle:hover { background: var(--ink); color: var(--paper); transform: rotate(15deg); }
+  .theme-toggle .moon { display: none; }
+  [data-theme="dark"] .theme-toggle .sun { display: none; }
+  [data-theme="dark"] .theme-toggle .moon { display: inline; }
+
+  .masthead-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.7;
+  }
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 99px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .live-dot { width: 6px; height: 6px; background: var(--vermillion-soft); border-radius: 50%; animation: livePulse 1.8s ease-in-out infinite; }
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(217,106,74,0.7); }
+    50% { opacity: 0.65; box-shadow: 0 0 0 4px rgba(217,106,74,0); }
+  }
+  .countdown { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 840px) {
+    .masthead-row { grid-template-columns: 1fr auto; gap: 12px; }
+    .search-wrap { order: 4; grid-column: 1 / -1; max-width: 100%; }
+    .masthead-meta { order: 3; grid-column: 1 / -1; text-align: left; }
+    .brand { order: 1; }
+    .theme-toggle { order: 2; justify-self: end; }
+  }
+
+  /* ============ STATUS BAR ============ */
+  .status-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 720px) { .status-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+  .status-pill {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 12px 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .status-pill .icon { font-size: 22px; line-height: 1; }
+  .status-pill .text { flex: 1; min-width: 0; }
+  .status-pill .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .status-pill .value {
+    font-family: 'Newsreader', serif;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-pill.alert { background: var(--vermillion-bg); border-color: var(--vermillion-soft); }
+  .status-pill.alert .value { color: var(--vermillion); }
+  .status-pill.warning-pill { background: var(--gold-bg); border-color: var(--gold); }
+  .status-pill.warning-pill .value { color: var(--gold); }
+
+  /* ============ HERO ============ */
+  .hero { margin-bottom: 36px; }
+  .hero-card {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 28px;
+    align-items: stretch;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  @media (max-width: 840px) { .hero-card { grid-template-columns: 1fr; gap: 18px; } }
+  .hero-image {
+    aspect-ratio: 16/10;
+    background: var(--paper-3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-md);
+  }
+  .hero-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s ease; }
+  .hero-card:hover .hero-image img { transform: scale(1.02); }
+  .placeholder-img {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--paper-3), var(--rule));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-mid);
+    font-size: 18px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .placeholder-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 30%, rgba(184,64,30,0.08), transparent 40%), radial-gradient(circle at 80% 70%, rgba(154,122,48,0.08), transparent 40%);
+  }
+  .placeholder-img span { position: relative; z-index: 1; }
+  .hero-body { display: flex; flex-direction: column; justify-content: center; }
+  .hero-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; }
+  .hero-meta .cat { padding: 3px 8px; background: var(--ink); color: var(--paper); border-radius: 2px; font-weight: 500; }
+  .hero-meta .src { color: var(--vermillion); font-weight: 500; }
+  .hero-meta .time { color: var(--ink-faint); }
+  .hero-card h2 { font-family: 'Fraunces', serif; font-weight: 400; font-size: clamp(28px, 4vw, 42px); line-height: 1.05; letter-spacing: -0.025em; margin-bottom: 14px; }
+  .hero-card .lede { font-family: 'Newsreader', serif; font-size: 17px; line-height: 1.5; color: var(--ink-soft); margin-bottom: 16px; }
+  .hero-card .read-more { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--vermillion); letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .hero-card .read-more::after { content: '→'; transition: transform 0.2s; }
+  .hero-card:hover .read-more::after { transform: translateX(4px); }
+
+  /* ============ FILTERS ============ */
+  .filters { margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .cat-tabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .cat-tab { padding: 6px 12px; border-radius: 99px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); transition: all 0.15s; white-space: nowrap; }
+  .cat-tab:hover { background: var(--paper-2); color: var(--ink); }
+  .cat-tab.active { background: var(--ink); color: var(--paper); }
+  .cat-tab .count { margin-left: 4px; opacity: 0.5; font-size: 9px; }
+  .time-filter {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    padding: 6px 26px 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2395907f' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ============ LAYOUT ============ */
+  .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 36px; margin-bottom: 50px; }
+  @media (max-width: 980px) { .main-layout { grid-template-columns: 1fr; gap: 28px; } }
+  .news-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  @media (max-width: 640px) { .news-grid { grid-template-columns: 1fr; } }
+
+  .news-card {
+    background: var(--paper);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+  }
+  .news-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--rule); }
+  .news-card-image { aspect-ratio: 16/9; background: var(--paper-3); overflow: hidden; }
+  .news-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .news-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .news-card-meta { display: flex; gap: 8px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .cat-pill { padding: 2px 7px; border-radius: 2px; font-weight: 500; font-size: 8.5px; }
+  .cat-acidentes { background: var(--vermillion-bg); color: var(--vermillion); }
+  .cat-cultura { background: var(--plum-bg); color: var(--plum); }
+  .cat-politica { background: var(--teal-bg); color: var(--teal); }
+  .cat-desporto { background: var(--green-bg); color: var(--green); }
+  .cat-transito { background: var(--gold-bg); color: var(--gold); }
+  .cat-sociedade { background: var(--paper-2); color: var(--ink-mid); }
+  .news-card-meta .src { color: var(--vermillion); font-weight: 500; }
+  .news-card-meta .time { color: var(--ink-faint); margin-left: auto; }
+  .news-card h3 { font-family: 'Newsreader', serif; font-weight: 500; font-size: 17px; line-height: 1.25; letter-spacing: -0.01em; }
+  .news-card p { font-size: 13px; color: var(--ink-soft); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .load-more {
+    display: block;
+    margin: 28px auto 0;
+    padding: 12px 28px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 99px;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .load-more:hover { background: var(--ink); color: var(--paper); }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,18,24,0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .modal-backdrop.open { display: flex; opacity: 1; }
+  .modal {
+    background: var(--paper);
+    border-radius: 6px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    background: rgba(247,243,233,0.95);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.15s;
+    color: var(--ink);
+    font-size: 18px;
+  }
+  [data-theme="dark"] .modal-close { background: rgba(15,18,24,0.95); color: var(--ink); }
+  .modal-close:hover { background: var(--ink); color: var(--paper); transform: rotate(90deg); }
+  .modal-image { width: 100%; aspect-ratio: 16/9; background: var(--paper-3); overflow: hidden; border-radius: 6px 6px 0 0; }
+  .modal-image img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-body { padding: 28px 32px 32px; }
+  .modal-body .modal-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; flex-wrap: wrap; }
+  .modal-body h2 { font-family: 'Fraunces', serif; font-weight: 400; font-size: clamp(22px, 3vw, 32px); line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 18px; }
+  .modal-body .modal-lede { font-family: 'Newsreader', serif; font-size: 17px; line-height: 1.55; color: var(--ink-soft); margin-bottom: 22px; }
+  .modal-body .modal-lede::first-letter { font-family: 'Fraunces', serif; font-size: 48px; line-height: 1; float: left; padding: 4px 8px 0 0; color: var(--vermillion); font-weight: 500; }
+  .modal-actions { display: flex; gap: 10px; padding-top: 18px; border-top: 1px solid var(--rule); flex-wrap: wrap; }
+  .modal-btn { flex: 1; min-width: 140px; padding: 11px 18px; border-radius: 99px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; transition: all 0.2s; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .modal-btn.primary { background: var(--ink); color: var(--paper); }
+  .modal-btn.primary:hover { background: var(--vermillion); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .modal-btn.secondary { background: transparent; border: 1px solid var(--rule); color: var(--ink-soft); }
+  .modal-btn.secondary:hover { background: var(--paper-2); border-color: var(--ink); }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar { display: flex; flex-direction: column; gap: 24px; }
+  .side-card { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; padding: 18px; }
+  .side-card.feature { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  [data-theme="dark"] .side-card.feature { background: #050709; }
+  .side-card.feature .sec-head h2 { color: var(--paper); }
+  .side-card.feature .sec-head .ornament { color: rgba(247,243,233,0.5); }
+  .sec-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 14px; }
+  .side-card.feature .sec-head { border-color: rgba(247,243,233,0.2); }
+  .sec-head h2 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; letter-spacing: -0.015em; }
+  .sec-head .ornament { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--ink-faint); letter-spacing: 0.15em; text-transform: uppercase; margin-left: auto; }
+
+  .weather-main { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+  .weather-temp { font-family: 'Fraunces', serif; font-weight: 300; font-size: 52px; line-height: 1; color: var(--paper); letter-spacing: -0.04em; }
+  .weather-temp sup { font-size: 22px; opacity: 0.7; top: -0.5em; }
+  .weather-desc { font-family: 'Newsreader', serif; font-style: italic; font-size: 14px; color: var(--paper); margin-bottom: 4px; }
+  .weather-detail { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(247,243,233,0.6); letter-spacing: 0.08em; line-height: 1.6; }
+  .weather-hourly { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(247,243,233,0.15); display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; text-align: center; }
+  .hour-cell .h { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: rgba(247,243,233,0.4); margin-bottom: 4px; }
+  .hour-cell .t { font-family: 'Newsreader', serif; font-size: 13px; color: var(--paper); }
+  .hour-cell .p { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--vermillion-soft); margin-top: 2px; }
+
+  .warning-item { padding: 10px 12px; border-left: 3px solid var(--vermillion); background: var(--vermillion-bg); margin-bottom: 6px; border-radius: 0 2px 2px 0; }
+  .warning-item.yellow { border-color: var(--gold); background: var(--gold-bg); }
+  .warning-item.orange { border-color: var(--vermillion-soft); background: rgba(217,106,74,0.1); }
+  .warning-item .level { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--vermillion); margin-bottom: 3px; font-weight: 500; }
+  .warning-item.yellow .level { color: var(--gold); }
+  .warning-item .what { font-family: 'Newsreader', serif; font-size: 14px; color: var(--ink); font-weight: 500; }
+  .warning-item .when { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--ink-faint); margin-top: 3px; }
+  .no-warning { font-family: 'Newsreader', serif; font-style: italic; font-size: 13px; color: var(--ink-soft); padding: 6px 0; }
+  .no-warning::before { content: '— '; color: var(--green); }
+
+  .metric-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); }
+  .metric-row:last-child { border-bottom: 0; }
+  .metric-row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-faint); letter-spacing: 0.1em; text-transform: uppercase; }
+  .metric-row .val { font-family: 'Newsreader', serif; font-size: 16px; color: var(--ink); font-weight: 500; }
+  .metric-row .val small { font-size: 10px; color: var(--ink-faint); font-family: 'Geist', sans-serif; margin-left: 2px; }
+  .quality-pill { display: inline-block; padding: 2px 7px; border-radius: 99px; font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; margin-left: 4px; }
+  .q-good { background: var(--green-bg); color: var(--green); }
+  .q-fair { background: var(--gold-bg); color: var(--gold); }
+  .q-poor { background: var(--vermillion-bg); color: var(--vermillion); }
+
+  .quake-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--rule-soft); align-items: center; }
+  .quake-item:last-child { border-bottom: 0; }
+  .quake-mag { font-family: 'Fraunces', serif; font-size: 22px; color: var(--ink); font-weight: 500; min-width: 38px; }
+  .quake-info { flex: 1; min-width: 0; }
+  .quake-info .place { font-family: 'Newsreader', serif; font-size: 13px; color: var(--ink); }
+  .quake-info .meta { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--ink-faint); margin-top: 2px; }
+
+  /* ============ MAP SECTION ============ */
+  .map-section { margin: 50px 0; padding-top: 28px; border-top: 3px double var(--ink); }
+  .section-title { text-align: center; margin-bottom: 28px; }
+  .section-title h2 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: clamp(24px, 4vw, 36px); color: var(--ink); letter-spacing: -0.02em; }
+  .section-title .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-faint); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px; }
+
+  .map-container {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+  }
+  @media (max-width: 840px) { .map-container { grid-template-columns: 1fr; } }
+  #occurrences-map { height: 500px; background: var(--paper-3); }
+  @media (max-width: 840px) { #occurrences-map { height: 400px; } }
+  [data-theme="dark"] .leaflet-tile { filter: brightness(0.7) invert(1) contrast(0.85) hue-rotate(180deg) saturate(0.7) brightness(0.85); }
+  .leaflet-container { background: var(--paper-3); font-family: 'Geist', sans-serif; }
+  .leaflet-popup-content-wrapper { background: var(--paper) !important; color: var(--ink) !important; border-radius: 4px !important; }
+  .leaflet-popup-tip { background: var(--paper) !important; }
+  .leaflet-popup-content { font-family: 'Geist', sans-serif !important; margin: 12px 14px !important; }
+
+  .map-legend { padding: 22px; border-left: 1px solid var(--rule); display: flex; flex-direction: column; gap: 14px; }
+  @media (max-width: 840px) { .map-legend { border-left: 0; border-top: 1px solid var(--rule); } }
+  .map-legend h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 16px; margin-bottom: 4px; }
+  .map-legend .legend-desc { font-family: 'Newsreader', serif; font-style: italic; font-size: 13px; color: var(--ink-mid); line-height: 1.4; margin-bottom: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .legend-text { font-size: 12px; color: var(--ink-soft); flex: 1; }
+  .legend-text strong { color: var(--ink); font-weight: 500; }
+  .legend-text .count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-faint); margin-left: 4px; }
+
+  .marker-pin {
+    position: relative;
+    cursor: pointer;
+  }
+  .marker-pin .dot {
+    border: 2px solid var(--paper);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .marker-pin .label {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 6px);
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ============ GALLERY ============ */
+  .gallery-section { margin: 50px 0; padding-top: 28px; border-top: 3px double var(--ink); }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .gallery-item {
+    aspect-ratio: 1;
+    background: var(--paper-3);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s ease;
+  }
+  .gallery-item:hover {
+    transform: scale(1.03);
+    box-shadow: var(--shadow-lg);
+    z-index: 2;
+  }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+  .gallery-item .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15,18,24,0.85) 0%, rgba(15,18,24,0) 50%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    display: flex;
+    align-items: flex-end;
+    padding: 14px;
+  }
+  .gallery-item:hover .overlay { opacity: 1; }
+  .gallery-item .caption {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: white;
+    line-height: 1.3;
+  }
+  .gallery-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-faint);
+  }
+
+  /* ============ INFO BLOCKS ============ */
+  .info-section { margin-top: 50px; padding-top: 28px; border-top: 3px double var(--ink); }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 980px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-block { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; padding: 20px; }
+  .info-block-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+  .info-block-head .badge { font-family: 'Fraunces', serif; font-style: italic; font-size: 20px; color: var(--vermillion); }
+  .info-block-head h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
+  .info-list { display: flex; flex-direction: column; }
+  .info-link { display: block; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); transition: padding 0.15s; text-align: left; width: 100%; }
+  .info-link:last-child { border-bottom: 0; }
+  .info-link:hover { padding-left: 4px; }
+  .info-link .title { font-family: 'Newsreader', serif; font-size: 14px; color: var(--ink); line-height: 1.3; margin-bottom: 3px; }
+  .info-link .sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-faint); letter-spacing: 0.08em; }
+  .info-link .arrow { color: var(--vermillion); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+  .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .service-btn { padding: 10px 12px; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; display: flex; flex-direction: column; gap: 2px; transition: all 0.15s; }
+  .service-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .service-btn:hover .service-sub { color: rgba(247,243,233,0.6); }
+  .service-btn .service-name { font-family: 'Newsreader', serif; font-size: 13px; font-weight: 500; }
+  .service-btn .service-sub { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--ink-faint); letter-spacing: 0.05em; }
+  .service-btn.urgent { background: var(--vermillion); color: var(--paper); border-color: var(--vermillion); }
+  .service-btn.urgent .service-sub { color: rgba(247,243,233,0.7); }
+
+  /* ============ LOADING ============ */
+  .skeleton { background: linear-gradient(90deg, var(--paper-2) 0%, var(--paper-3) 50%, var(--paper-2) 100%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 3px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .skeleton-card { border: 1px solid var(--rule-soft); border-radius: 4px; overflow: hidden; }
+  .skeleton-img { aspect-ratio: 16/9; }
+  .skeleton-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .skeleton-line { height: 14px; }
+  .skeleton-line.short { width: 60%; }
+  .error-text { font-family: 'Newsreader', serif; font-style: italic; font-size: 13px; color: var(--ink-faint); padding: 10px 0; }
+
+  /* ============ FOOTER ============ */
+  footer { margin-top: 60px; padding: 28px 0 32px; border-top: 1px solid var(--rule); text-align: center; }
+  .visit-counter {
+    display: inline-block;
+    margin-bottom: 18px;
+    padding: 8px 16px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mid);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .visit-counter strong { color: var(--vermillion); font-weight: 500; margin: 0 2px; }
+  footer .credit { font-family: 'Newsreader', serif; font-style: italic; font-size: 14px; color: var(--ink-soft); margin-bottom: 8px; }
+  footer .sources { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-faint); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.8; }
+  footer a { color: var(--vermillion); }
+  footer .disclaimer { font-family: 'Newsreader', serif; font-style: italic; font-size: 11px; color: var(--ink-faint); margin-top: 12px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-row">
+      <div class="brand">
+        <h1>Amarante <em>·</em> Diário</h1>
+        <div class="tagline">Notícias, eventos, trânsito, mapa, galeria e serviços do vale do Tâmega</div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="search" class="search-input" id="search" placeholder="Pesquisar nas notícias…" />
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Mudar tema">
+        <span class="sun">☀</span>
+        <span class="moon">☾</span>
+      </button>
+      <div class="masthead-meta">
+        <div class="live-badge"><span class="live-dot"></span> Em direto</div>
+        <div id="date-line">—</div>
+        <div>Atualiza em <span class="countdown" id="countdown">—:—</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-pill" id="status-weather"><span class="icon">⏳</span><div class="text"><div class="label">Tempo agora</div><div class="value">A carregar…</div></div></div>
+    <div class="status-pill" id="status-warning"><span class="icon">⏳</span><div class="text"><div class="label">Avisos IPMA</div><div class="value">A verificar…</div></div></div>
+    <div class="status-pill" id="status-air"><span class="icon">⏳</span><div class="text"><div class="label">Qualidade do ar</div><div class="value">A medir…</div></div></div>
+    <div class="status-pill" id="status-seismic"><span class="icon">⏳</span><div class="text"><div class="label">Último sismo</div><div class="value">A consultar…</div></div></div>
+  </div>
+
+  <section class="hero">
+    <button class="hero-card" id="hero">
+      <div class="hero-image"><div class="placeholder-img"><span>A carregar destaque…</span></div></div>
+      <div class="hero-body">
+        <div class="hero-meta">
+          <span class="cat">EM DESTAQUE</span>
+          <span class="src">—</span>
+          <span class="time">—</span>
+        </div>
+        <h2>A carregar notícias de Amarante…</h2>
+        <p class="lede">Aguarda um momento enquanto as últimas notícias são recolhidas.</p>
+        <span class="read-more">Ver pré-visualização</span>
+      </div>
+    </button>
+  </section>
+
+  <nav class="filters">
+    <div class="cat-tabs" id="cat-tabs">
+      <button class="cat-tab active" data-cat="all">Tudo <span class="count" id="count-all">0</span></button>
+      <button class="cat-tab" data-cat="acidentes">Acidentes <span class="count" id="count-acidentes">0</span></button>
+      <button class="cat-tab" data-cat="cultura">Cultura <span class="count" id="count-cultura">0</span></button>
+      <button class="cat-tab" data-cat="politica">Política <span class="count" id="count-politica">0</span></button>
+      <button class="cat-tab" data-cat="desporto">Desporto <span class="count" id="count-desporto">0</span></button>
+      <button class="cat-tab" data-cat="transito">Trânsito <span class="count" id="count-transito">0</span></button>
+      <button class="cat-tab" data-cat="sociedade">Sociedade <span class="count" id="count-sociedade">0</span></button>
+    </div>
+    <select class="time-filter" id="time-filter">
+      <option value="all">Todos os períodos</option>
+      <option value="1d">Últimas 24h</option>
+      <option value="7d">Última semana</option>
+      <option value="30d">Último mês</option>
+      <option value="1y">Último ano</option>
+    </select>
+  </nav>
+
+  <div class="main-layout">
+    <main>
+      <div class="news-grid" id="news-grid">
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton-body"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div></div>
+      </div>
+      <button class="load-more" id="load-more">Carregar mais notícias</button>
+    </main>
+
+    <aside class="sidebar">
+      <div class="side-card feature">
+        <div class="sec-head"><h2>O tempo agora</h2><span class="ornament">Open-Meteo</span></div>
+        <div id="weather-card"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(247,243,233,0.5);letter-spacing:0.1em;">A CARREGAR…</div></div>
+      </div>
+      <div class="side-card">
+        <div class="sec-head"><h2>Avisos meteorológicos</h2><span class="ornament">Porto · IPMA</span></div>
+        <div id="warnings-card"><div class="error-text">A verificar avisos…</div></div>
+      </div>
+      <div class="side-card">
+        <div class="sec-head"><h2>Qualidade do ar</h2><span class="ornament">Índice EU</span></div>
+        <div id="air-card"><div class="error-text">A medir partículas…</div></div>
+      </div>
+      <div class="side-card">
+        <div class="sec-head"><h2>Sismos próximos</h2><span class="ornament">200 km · IPMA</span></div>
+        <div id="seismic-card"><div class="error-text">A consultar registos…</div></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ============ MAPA DE OCORRÊNCIAS ============ -->
+  <section class="map-section">
+    <div class="section-title">
+      <h2>Mapa do concelho</h2>
+      <div class="sub">Freguesias · Menções nas notícias recentes</div>
+    </div>
+    <div class="map-container">
+      <div id="occurrences-map"></div>
+      <div class="map-legend">
+        <div>
+          <h3>Pulso do concelho</h3>
+          <div class="legend-desc">As freguesias com mais cobertura nas notícias recentes aparecem com pontos maiores e mais vivos.</div>
+        </div>
+        <div id="map-legend-list">
+          <div class="error-text" style="padding:0;">A processar mapa…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALERIA HISTÓRICA ============ -->
+  <section class="gallery-section">
+    <div class="section-title">
+      <h2>Galeria de Amarante</h2>
+      <div class="sub">Fotografias do Wikimedia Commons</div>
+    </div>
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="gallery-loading">A descarregar imagens do arquivo Wikimedia…</div>
+    </div>
+  </section>
+
+  <!-- ============ EVENTOS · TRÂNSITO · SERVIÇOS ============ -->
+  <section class="info-section">
+    <div class="section-title">
+      <h2>Pelo concelho</h2>
+      <div class="sub">Eventos · Trânsito · Serviços · Comunidade</div>
+    </div>
+    <div class="info-grid">
+
+      <div class="info-block">
+        <div class="info-block-head"><span class="badge">§</span><h3>Eventos & Agenda</h3></div>
+        <div class="info-list" id="events-list"><div class="error-text">A procurar eventos…</div></div>
+        <a class="info-link" href="https://www.cm-amarante.pt/agenda" target="_blank" rel="noopener" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--rule);">
+          <div class="title">Agenda oficial da Câmara <span class="arrow">→</span></div>
+          <div class="sub">cm-amarante.pt</div>
+        </a>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-head"><span class="badge">⌖</span><h3>Trânsito & Transportes</h3></div>
+        <div class="info-list" id="traffic-list"><div class="error-text">A consultar estradas…</div></div>
+        <div class="info-list" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);">
+          <a class="info-link" href="https://www.infraestruturasdeportugal.pt/pt-pt/itinerario" target="_blank" rel="noopener"><div class="title">Estado das estradas — IP <span class="arrow">→</span></div><div class="sub">Infraestruturas de Portugal</div></a>
+          <a class="info-link" href="https://www.cp.pt/passageiros/pt/consultar-horarios?textSearchOri=Amarante&searchOriId=AM" target="_blank" rel="noopener"><div class="title">Horários de comboios <span class="arrow">→</span></div><div class="sub">CP · linha do Tâmega</div></a>
+          <a class="info-link" href="https://maps.google.com/?q=tr%C3%A2nsito+Amarante" target="_blank" rel="noopener"><div class="title">Trânsito em direto no mapa <span class="arrow">→</span></div><div class="sub">Google Maps</div></a>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-head"><span class="badge">✚</span><h3>Serviços úteis</h3></div>
+        <div class="services-grid">
+          <a class="service-btn urgent" href="tel:112"><div class="service-name">Emergência</div><div class="service-sub">112 · SOS</div></a>
+          <a class="service-btn" href="https://www.farmaciasdeservico.net/utente/sair/distrito-Porto/concelho-Amarante" target="_blank" rel="noopener"><div class="service-name">Farmácia de serviço</div><div class="service-sub">Hoje · Amarante</div></a>
+          <a class="service-btn" href="https://www.sns24.gov.pt/" target="_blank" rel="noopener"><div class="service-name">SNS 24</div><div class="service-sub">808 24 24 24</div></a>
+          <a class="service-btn" href="https://www.chts.min-saude.pt/" target="_blank" rel="noopener"><div class="service-name">Hospital Amarante</div><div class="service-sub">CHTS · Urgência</div></a>
+          <a class="service-btn" href="https://www.cm-amarante.pt" target="_blank" rel="noopener"><div class="service-name">Câmara Municipal</div><div class="service-sub">cm-amarante.pt</div></a>
+          <a class="service-btn" href="https://www.gnr.pt/contactos.aspx" target="_blank" rel="noopener"><div class="service-name">GNR Amarante</div><div class="service-sub">Posto territorial</div></a>
+        </div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Comunidade</div>
+          <div class="info-list">
+            <a class="info-link" href="https://www.facebook.com/search/top?q=amarante" target="_blank" rel="noopener"><div class="title">Grupos de Amarante no Facebook <span class="arrow">→</span></div><div class="sub">Pesquisa direta</div></a>
+            <a class="info-link" href="https://www.olx.pt/q-amarante/" target="_blank" rel="noopener"><div class="title">Classificados OLX <span class="arrow">→</span></div><div class="sub">Amarante e arredores</div></a>
+            <a class="info-link" href="https://www.expressodeamarante.pt" target="_blank" rel="noopener"><div class="title">Expresso de Amarante <span class="arrow">→</span></div><div class="sub">Jornal local</div></a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="visit-counter" id="visit-counter">
+      <strong>—</strong> visitas registadas neste dispositivo
+    </div>
+    <div class="credit">Um projeto não-oficial sobre <em>Amarante</em>.</div>
+    <div class="sources">Fontes: Google News · IPMA · Open-Meteo · Wikimedia Commons · Infraestruturas de Portugal · CP · ANF<br>Atualização automática a cada 5 minutos</div>
+    <div class="disclaimer">Os dados são recolhidos em tempo real de fontes públicas. Este site é uma agregação independente sem ligação à Câmara Municipal de Amarante ou a qualquer entidade oficial.</div>
+  </footer>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <article class="modal" id="modal">
+    <button class="modal-close" id="modal-close" aria-label="Fechar">×</button>
+    <div class="modal-image" id="modal-image"></div>
+    <div class="modal-body">
+      <div class="modal-meta" id="modal-meta"></div>
+      <h2 id="modal-title"></h2>
+      <div class="modal-lede" id="modal-lede"></div>
+      <div class="modal-actions">
+        <a class="modal-btn primary" id="modal-link" target="_blank" rel="noopener">Ler artigo completo →</a>
+        <button class="modal-btn secondary" id="modal-share">↗ Partilhar</button>
+      </div>
+    </div>
+  </article>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ============ CONFIG ============
+  const AMARANTE = { lat: 41.2706, lon: -8.0810 };
+  const REFRESH_MS = 5 * 60 * 1000;
+  const DISTRICT_CODE = 'POT';
+
+  // Principais freguesias com coordenadas aproximadas
+  const FREGUESIAS = [
+    { name: 'São Gonçalo', lat: 41.2706, lon: -8.0810, isCenter: true },
+    { name: 'Madalena', lat: 41.2752, lon: -8.0743 },
+    { name: 'Cepelos', lat: 41.2628, lon: -8.0892 },
+    { name: 'Gatão', lat: 41.2541, lon: -8.0964 },
+    { name: 'Travanca', lat: 41.2342, lon: -8.1287 },
+    { name: 'Mancelos', lat: 41.2189, lon: -8.1450 },
+    { name: 'Vila Caiz', lat: 41.2298, lon: -8.1814 },
+    { name: 'Telões', lat: 41.3094, lon: -7.9523 },
+    { name: 'Fregim', lat: 41.2587, lon: -8.0411 },
+    { name: 'Aboadela', lat: 41.3104, lon: -7.9842 },
+    { name: 'Ansiães', lat: 41.2964, lon: -8.0245 },
+    { name: 'Gondar', lat: 41.2845, lon: -8.0234 },
+    { name: 'Lufrei', lat: 41.2487, lon: -8.0512 },
+    { name: 'Vila Chã do Marão', lat: 41.2789, lon: -7.9234 },
+    { name: 'Salvador do Monte', lat: 41.2123, lon: -8.0987 },
+    { name: 'Real', lat: 41.2456, lon: -8.0298 },
+    { name: 'Padronelo', lat: 41.2812, lon: -8.0567 },
+    { name: 'Rebordelo', lat: 41.2398, lon: -8.0789 },
+  ];
+
+  // ============ STATE ============
+  let allArticles = [];
+  let displayLimit = 8;
+  let currentCategory = 'all';
+  let currentTimeFilter = 'all';
+  let currentSearch = '';
+  let leafletMap = null;
+  let mapMarkers = [];
+
+  // ============ UTILS ============
+  const $ = (id) => document.getElementById(id);
+  const fmtTime = (d) => d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  const fmtDate = (d) => d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const fmtFullDate = (d) => d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  function timeAgo(dateStr) {
+    const d = new Date(dateStr);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'agora';
+    if (diff < 3600) return `há ${Math.floor(diff/60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff/3600)} h`;
+    if (diff < 86400*7) return `há ${Math.floor(diff/86400)} d`;
+    return d.toLocaleDateString('pt-PT', { day:'numeric', month:'short' });
+  }
+
+  function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text || ''; return div.innerHTML; }
+  function stripHtml(html) { const tmp = document.createElement('div'); tmp.innerHTML = html; return tmp.textContent || tmp.innerText || ''; }
+
+  function extractImage(item) {
+    if (item.thumbnail && item.thumbnail.startsWith('http')) return item.thumbnail;
+    if (item.enclosure && item.enclosure.link) return item.enclosure.link;
+    const fields = [item.description, item.content, item['content:encoded']];
+    for (const field of fields) {
+      if (!field) continue;
+      const imgMatch = field.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (imgMatch) {
+        const url = imgMatch[1];
+        if (!url.includes('1x1') && !url.includes('pixel') && url.length > 20) return url;
+      }
+      const mediaMatch = field.match(/url=["']([^"']+\.(jpg|jpeg|png|webp)[^"']*)["']/i);
+      if (mediaMatch) return mediaMatch[1];
+    }
+    return null;
+  }
+
+  function placeholderForArticle(article) {
+    const source = article.source || 'Amarante';
+    const cat = article.category || 'sociedade';
+    const colors = {
+      acidentes: ['#b8401e', '#d96a4a'], cultura: ['#6a3d5e', '#a06090'],
+      politica: ['#2a6478', '#4a90a8'], desporto: ['#4a7c4a', '#7ab87a'],
+      transito: ['#9a7a30', '#c4a560'], sociedade: ['#3d4452', '#6a6e7a'],
+    };
+    const [c1, c2] = colors[cat] || colors.sociedade;
+    return `<div class="placeholder-img" style="background:linear-gradient(135deg, ${c1}22, ${c2}22);"><span>${escapeHtml(source)}</span></div>`;
+  }
+
+  const CATEGORY_KEYWORDS = {
+    acidentes: ['acidente', 'incêndio', 'incendio', 'ferid', 'morto', 'morte', 'morreu', 'colisão', 'colisao', 'atropelad', 'choque', 'despist', 'vítima', 'vitima', 'tragédia', 'tragedia', 'apagão', 'apagao'],
+    cultura: ['festival', 'concerto', 'evento', 'cultura', 'arte', 'exposição', 'exposicao', 'teatro', 'música', 'musica', 'são gonçalo', 'sao goncalo', 'cinema', 'literatura', 'feira', 'romaria'],
+    politica: ['câmara', 'camara', 'autarquia', 'presidente', 'autárquica', 'autarquica', 'vereador', 'eleição', 'eleicao', 'orçamento', 'orcamento', 'assembleia', 'municipal', 'partido', 'ps ', 'psd', 'chega'],
+    desporto: ['futebol', 'jogo', 'campeonato', 'desporto', 'jogador', 'clube', 'fc amarante', 'amarante fc', 'liga', 'taça', 'taca', 'atleta', 'derrota', 'vitória', 'vitoria'],
+    transito: ['ip4', 'ip-4', 'a4', 'estrada', 'trânsito', 'transito', 'comboio', 'engarrafamento', 'cp ', 'rodoviária', 'rodoviaria', 'autoestrada', 'auto-estrada'],
+  };
+
+  function categorize(article) {
+    const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+    for (const [cat, words] of Object.entries(CATEGORY_KEYWORDS)) {
+      if (words.some(w => text.includes(w))) return cat;
+    }
+    return 'sociedade';
+  }
+
+  // ============ THEME ============
+  function initTheme() {
+    const saved = localStorage.getItem('amarante-theme');
+    const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('amarante-theme', next);
+  }
+  initTheme();
+  $('theme-toggle').addEventListener('click', toggleTheme);
+
+  // ============ VISIT COUNTER ============
+  function updateVisitCounter() {
+    const key = 'amarante-visits';
+    const firstKey = 'amarante-first-visit';
+    let visits = parseInt(localStorage.getItem(key) || '0', 10) + 1;
+    localStorage.setItem(key, String(visits));
+    if (!localStorage.getItem(firstKey)) {
+      localStorage.setItem(firstKey, new Date().toISOString());
+    }
+    const first = new Date(localStorage.getItem(firstKey));
+    const firstStr = first.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+    $('visit-counter').innerHTML = `<strong>${visits}</strong> visita${visits !== 1 ? 's' : ''} registada${visits !== 1 ? 's' : ''} neste dispositivo · desde ${firstStr}`;
+  }
+  updateVisitCounter();
+
+  // ============ NEWS ============
+  async function fetchNewsBatch(query, count = 50) {
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pt-PT&gl=PT&ceid=PT:pt-150`;
+    const proxy = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=${count}`;
+    try {
+      const res = await fetch(proxy);
+      const data = await res.json();
+      if (!data.items) return [];
+      return data.items.map(item => {
+        const titleParts = item.title.split(' - ');
+        const source = titleParts.length > 1 ? titleParts.pop() : 'Notícia';
+        const title = titleParts.join(' - ');
+        const description = stripHtml(item.description || '').trim();
+        const image = extractImage(item);
+        const article = { title, description, source, link: item.link, pubDate: item.pubDate, image };
+        article.category = categorize(article);
+        return article;
+      });
+    } catch (err) { console.error('News fetch error:', err); return []; }
+  }
+
+  function dedupeArticles(articles) {
+    const seen = new Set();
+    return articles.filter(a => {
+      const key = a.title.toLowerCase().slice(0, 60);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  async function loadNews() {
+    const articles = await fetchNewsBatch('Amarante Portugal', 50);
+    allArticles = dedupeArticles(articles);
+    renderHero();
+    renderNews();
+    updateCategoryCounts();
+    renderOccurrencesMap();
+  }
+
+  async function loadMoreNews() {
+    const btn = $('load-more');
+    btn.disabled = true;
+    btn.textContent = 'A carregar arquivo…';
+    const queries = ['Amarante Tâmega', 'Amarante concelho', '"Amarante" Porto'];
+    const batches = await Promise.all(queries.map(q => fetchNewsBatch(q, 50)));
+    allArticles = dedupeArticles([...allArticles, ...batches.flat()]);
+    displayLimit += 12;
+    renderNews();
+    updateCategoryCounts();
+    renderOccurrencesMap();
+    btn.disabled = false;
+    btn.textContent = 'Carregar mais notícias';
+  }
+
+  function applyFilters(articles) {
+    let result = articles;
+    if (currentCategory !== 'all') result = result.filter(a => a.category === currentCategory);
+    if (currentTimeFilter !== 'all') {
+      const cutoffs = { '1d': 86400, '7d': 86400*7, '30d': 86400*30, '1y': 86400*365 };
+      const cutoff = Date.now() - cutoffs[currentTimeFilter] * 1000;
+      result = result.filter(a => new Date(a.pubDate).getTime() >= cutoff);
+    }
+    if (currentSearch.trim()) {
+      const q = currentSearch.toLowerCase();
+      result = result.filter(a => a.title.toLowerCase().includes(q) || (a.description || '').toLowerCase().includes(q));
+    }
+    return result;
+  }
+
+  function renderHero() {
+    if (!allArticles.length) return;
+    const top = allArticles[0];
+    const hero = $('hero');
+    hero.dataset.idx = '0';
+    const imgEl = hero.querySelector('.hero-image');
+    if (top.image) {
+      window.__placeholders = window.__placeholders || [];
+      window.__placeholders[0] = placeholderForArticle(top);
+      imgEl.innerHTML = `<img src="${escapeHtml(top.image)}" alt="" onerror="this.parentElement.innerHTML=window.__placeholders[0]" />`;
+    } else {
+      imgEl.innerHTML = placeholderForArticle(top);
+    }
+    hero.querySelector('.hero-meta').innerHTML = `<span class="cat">${top.category.toUpperCase()}</span><span class="src">${escapeHtml(top.source)}</span><span class="time">${timeAgo(top.pubDate)}</span>`;
+    hero.querySelector('h2').textContent = top.title;
+    hero.querySelector('.lede').textContent = top.description ? top.description.slice(0, 220) + (top.description.length > 220 ? '…' : '') : 'Toca para ver pré-visualização.';
+  }
+
+  function renderNews() {
+    const filtered = applyFilters(allArticles.slice(1));
+    const toShow = filtered.slice(0, displayLimit);
+    const grid = $('news-grid');
+    if (!toShow.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;"><div style="font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--ink-soft);">Não encontrámos artigos com estes filtros.</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:0.1em;margin-top:8px;">EXPERIMENTA OUTRA CATEGORIA OU PERÍODO</div></div>`;
+      $('load-more').style.display = 'none';
+      return;
+    }
+    window.__placeholders = [];
+    grid.innerHTML = toShow.map((a) => {
+      const realIdx = allArticles.indexOf(a);
+      const placeholder = placeholderForArticle(a);
+      window.__placeholders[realIdx] = placeholder;
+      const imgHtml = a.image ? `<img src="${escapeHtml(a.image)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML=window.__placeholders[${realIdx}]" />` : placeholder;
+      return `<button class="news-card" data-idx="${realIdx}"><div class="news-card-image">${imgHtml}</div><div class="news-card-body"><div class="news-card-meta"><span class="cat-pill cat-${a.category}">${a.category}</span><span class="src">${escapeHtml(a.source)}</span><span class="time">${timeAgo(a.pubDate)}</span></div><h3>${escapeHtml(a.title)}</h3>${a.description ? `<p>${escapeHtml(a.description.slice(0, 140))}${a.description.length > 140 ? '…' : ''}</p>` : ''}</div></button>`;
+    }).join('');
+    $('load-more').style.display = 'block';
+    $('load-more').textContent = filtered.length > displayLimit ? `Carregar mais notícias (${filtered.length - displayLimit} restantes)` : 'Procurar no arquivo';
+  }
+
+  function updateCategoryCounts() {
+    const counts = { all: allArticles.length };
+    ['acidentes', 'cultura', 'politica', 'desporto', 'transito', 'sociedade'].forEach(c => { counts[c] = allArticles.filter(a => a.category === c).length; });
+    Object.entries(counts).forEach(([cat, n]) => { const el = $(`count-${cat}`); if (el) el.textContent = n; });
+  }
+
+  // ============ MODAL ============
+  function openModal(article) {
+    const img = $('modal-image');
+    if (article.image) {
+      img.innerHTML = `<img src="${escapeHtml(article.image)}" alt="" onerror="this.parentElement.innerHTML='${placeholderForArticle(article).replace(/'/g, "\\'")}'" />`;
+    } else { img.innerHTML = placeholderForArticle(article); }
+    const d = new Date(article.pubDate);
+    $('modal-meta').innerHTML = `<span class="cat-pill cat-${article.category}">${article.category}</span><span style="color:var(--vermillion);font-weight:500;">${escapeHtml(article.source)}</span><span style="color:var(--ink-faint);">${fmtFullDate(d)} · ${fmtTime(d)}</span>`;
+    $('modal-title').textContent = article.title;
+    $('modal-lede').textContent = article.description || 'Pré-visualização não disponível. Clica abaixo para ler o artigo completo na publicação original.';
+    $('modal-link').href = article.link;
+    $('modal-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    window.__currentModalArticle = article;
+  }
+  function closeModal() { $('modal-backdrop').classList.remove('open'); document.body.style.overflow = ''; }
+  $('modal-close').addEventListener('click', closeModal);
+  $('modal-backdrop').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  $('modal-share').addEventListener('click', async () => {
+    const a = window.__currentModalArticle;
+    if (!a) return;
+    try {
+      if (navigator.share) await navigator.share({ title: a.title, text: `${a.title} — via Amarante Diário`, url: a.link });
+      else {
+        await navigator.clipboard.writeText(a.link);
+        const btn = $('modal-share');
+        const original = btn.textContent;
+        btn.textContent = '✓ Link copiado';
+        setTimeout(() => btn.textContent = original, 2000);
+      }
+    } catch (err) {}
+  });
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.news-card');
+    if (card) { const idx = parseInt(card.dataset.idx); if (!isNaN(idx) && allArticles[idx]) openModal(allArticles[idx]); return; }
+    const hero = e.target.closest('#hero');
+    if (hero) { const idx = parseInt(hero.dataset.idx); if (!isNaN(idx) && allArticles[idx]) openModal(allArticles[idx]); }
+  });
+
+  // ============ MAPA DE OCORRÊNCIAS ============
+  function initMap() {
+    if (leafletMap) return;
+    leafletMap = L.map('occurrences-map', {
+      center: [41.27, -8.05],
+      zoom: 11,
+      scrollWheelZoom: false,
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 18,
+    }).addTo(leafletMap);
+  }
+
+  function countMentionsForFreguesia(name) {
+    const lower = name.toLowerCase();
+    return allArticles.filter(a => {
+      const text = (a.title + ' ' + (a.description || '')).toLowerCase();
+      return text.includes(lower);
+    }).length;
+  }
+
+  function renderOccurrencesMap() {
+    initMap();
+    mapMarkers.forEach(m => leafletMap.removeLayer(m));
+    mapMarkers = [];
+
+    const enriched = FREGUESIAS.map(f => ({ ...f, mentions: countMentionsForFreguesia(f.name) }));
+    const maxMentions = Math.max(1, ...enriched.map(f => f.mentions));
+
+    enriched.forEach(f => {
+      const intensity = f.mentions / maxMentions;
+      const size = f.isCenter ? 22 : Math.max(10, 10 + intensity * 18);
+      const color = f.mentions === 0 ? '#95907f' : f.isCenter ? '#b8401e' : `rgb(${Math.round(184 - (1-intensity)*100)}, ${Math.round(64 + (1-intensity)*60)}, ${Math.round(30 + (1-intensity)*50)})`;
+      const opacity = f.mentions === 0 ? 0.4 : 0.85;
+
+      const icon = L.divIcon({
+        className: 'marker-pin',
+        html: `<div class="dot" style="width:${size}px;height:${size}px;background:${color};opacity:${opacity};"></div>`,
+        iconSize: [size, size],
+        iconAnchor: [size/2, size/2],
+      });
+
+      const marker = L.marker([f.lat, f.lon], { icon }).addTo(leafletMap);
+      const popupContent = `
+        <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:500;margin-bottom:4px;">${f.name}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#666;letter-spacing:0.08em;">
+          ${f.mentions} menção${f.mentions !== 1 ? 'ões' : ''} nas notícias
+        </div>
+      `;
+      marker.bindPopup(popupContent);
+      mapMarkers.push(marker);
+    });
+
+    // Render legend list — top 5 freguesias by mentions
+    const top = enriched.filter(f => f.mentions > 0).sort((a,b) => b.mentions - a.mentions).slice(0, 6);
+    const legendEl = $('map-legend-list');
+    if (!top.length) {
+      legendEl.innerHTML = '<div class="error-text" style="padding:0;">Nenhuma freguesia mencionada nas notícias atuais.</div>';
+    } else {
+      legendEl.innerHTML = top.map(f => {
+        const intensity = f.mentions / maxMentions;
+        const color = f.isCenter ? '#b8401e' : `rgb(${Math.round(184 - (1-intensity)*100)}, ${Math.round(64 + (1-intensity)*60)}, ${Math.round(30 + (1-intensity)*50)})`;
+        return `<div class="legend-item"><span class="legend-dot" style="background:${color};"></span><span class="legend-text"><strong>${f.name}</strong><span class="count">· ${f.mentions} menção${f.mentions !== 1 ? 'ões' : ''}</span></span></div>`;
+      }).join('');
+    }
+  }
+
+  // ============ GALERIA WIKIMEDIA ============
+  async function loadGallery() {
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsprimary=all&ggsnamespace=6&ggsradius=10000&ggscoord=41.2706%7C-8.0810&ggslimit=24&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=400&format=json&origin=*`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = data.query && data.query.pages ? Object.values(data.query.pages) : [];
+      const images = pages
+        .filter(p => p.imageinfo && p.imageinfo[0])
+        .map(p => {
+          const info = p.imageinfo[0];
+          const meta = info.extmetadata || {};
+          return {
+            thumb: info.thumburl || info.url,
+            full: info.url,
+            title: (p.title || '').replace(/^File:/, '').replace(/\.[^.]+$/, '').replace(/_/g, ' '),
+            description: meta.ImageDescription ? stripHtml(meta.ImageDescription.value) : '',
+            author: meta.Artist ? stripHtml(meta.Artist.value) : '',
+            descriptionUrl: info.descriptionurl,
+          };
+        })
+        .filter(img => img.thumb && !img.thumb.endsWith('.svg') && !img.thumb.endsWith('.pdf'));
+
+      const grid = $('gallery-grid');
+      if (!images.length) {
+        grid.innerHTML = '<div class="gallery-loading">Sem imagens encontradas no Wikimedia para esta área.</div>';
+        return;
+      }
+      grid.innerHTML = images.map((img, i) => `
+        <a class="gallery-item" href="${escapeHtml(img.descriptionUrl)}" target="_blank" rel="noopener" title="${escapeHtml(img.title)}">
+          <img src="${escapeHtml(img.thumb)}" alt="${escapeHtml(img.title)}" loading="lazy" onerror="this.parentElement.style.display='none'" />
+          <div class="overlay"><div class="caption">${escapeHtml(img.title)}</div></div>
+        </a>
+      `).join('');
+    } catch (err) {
+      console.error('Gallery error:', err);
+      $('gallery-grid').innerHTML = '<div class="gallery-loading">Não foi possível carregar a galeria.</div>';
+    }
+  }
+
+  // ============ WEATHER ============
+  const WEATHER_CODES = {
+    0: { d: 'Céu limpo', i: '☀' }, 1: { d: 'Maior parte limpo', i: '🌤' }, 2: { d: 'Parcialmente nublado', i: '⛅' }, 3: { d: 'Nublado', i: '☁' },
+    45: { d: 'Nevoeiro', i: '🌫' }, 48: { d: 'Nevoeiro com geada', i: '🌫' },
+    51: { d: 'Chuvisco fraco', i: '🌦' }, 53: { d: 'Chuvisco', i: '🌦' }, 55: { d: 'Chuvisco intenso', i: '🌦' },
+    61: { d: 'Chuva fraca', i: '🌧' }, 63: { d: 'Chuva', i: '🌧' }, 65: { d: 'Chuva forte', i: '🌧' },
+    71: { d: 'Neve fraca', i: '🌨' }, 73: { d: 'Neve', i: '🌨' }, 75: { d: 'Neve intensa', i: '🌨' },
+    80: { d: 'Aguaceiros', i: '🌦' }, 81: { d: 'Aguaceiros fortes', i: '🌧' }, 82: { d: 'Aguaceiros violentos', i: '⛈' },
+    95: { d: 'Trovoada', i: '⛈' }, 96: { d: 'Trovoada granizo', i: '⛈' }, 99: { d: 'Trovoada violenta', i: '⛈' },
+  };
+
+  async function loadWeather() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${AMARANTE.lat}&longitude=${AMARANTE.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&hourly=temperature_2m,precipitation_probability&timezone=Europe%2FLisbon&forecast_days=2`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const c = data.current;
+      const code = WEATHER_CODES[c.weather_code] || { d: '—', i: '·' };
+      const sp = $('status-weather');
+      sp.querySelector('.icon').textContent = code.i;
+      sp.querySelector('.value').textContent = `${Math.round(c.temperature_2m)}° · ${code.d}`;
+      const now = new Date();
+      const hours = data.hourly.time.map((t, idx) => ({ time: new Date(t), temp: data.hourly.temperature_2m[idx], precip: data.hourly.precipitation_probability[idx] })).filter(h => h.time > now).slice(0, 6);
+      $('weather-card').innerHTML = `<div class="weather-main"><div class="weather-temp">${Math.round(c.temperature_2m)}<sup>°</sup></div><div><div class="weather-desc">${code.i} ${code.d}</div><div class="weather-detail">HUMIDADE ${c.relative_humidity_2m}% &nbsp; VENTO ${Math.round(c.wind_speed_10m)} KM/H<br>PRECIPITAÇÃO ${c.precipitation} MM</div></div></div><div class="weather-hourly">${hours.map(h => `<div class="hour-cell"><div class="h">${fmtTime(h.time)}</div><div class="t">${Math.round(h.temp)}°</div><div class="p">${h.precip}%</div></div>`).join('')}</div>`;
+    } catch (err) {
+      $('status-weather').querySelector('.value').textContent = 'Indisponível';
+      $('weather-card').innerHTML = '<div class="error-text" style="color:rgba(247,243,233,0.5);">Estação indisponível.</div>';
+    }
+  }
+
+  async function loadWarnings() {
+    try {
+      const res = await fetch('https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json');
+      const data = await res.json();
+      const active = data.filter(w => w.idAreaAviso === DISTRICT_CODE && w.awarenessLevelID && w.awarenessLevelID.toLowerCase() !== 'green' && new Date(w.endTime) > new Date());
+      const sp = $('status-warning');
+      if (!active.length) {
+        sp.querySelector('.icon').textContent = '✓';
+        sp.querySelector('.value').textContent = 'Sem avisos ativos';
+        $('warnings-card').innerHTML = '<div class="no-warning">Sem avisos meteorológicos ativos para o distrito do Porto.</div>';
+        return;
+      }
+      const highest = active.sort((a,b) => { const order = { red: 3, orange: 2, yellow: 1 }; return (order[b.awarenessLevelID.toLowerCase()] || 0) - (order[a.awarenessLevelID.toLowerCase()] || 0); })[0];
+      sp.classList.add(highest.awarenessLevelID.toLowerCase() === 'yellow' ? 'warning-pill' : 'alert');
+      sp.querySelector('.icon').textContent = '⚠';
+      sp.querySelector('.value').textContent = `${active.length} aviso${active.length > 1 ? 's' : ''} ${highest.awarenessLevelID.toLowerCase()}`;
+      const typeMap = { 'PRECIPITACAOFORTE': 'Precipitação forte', 'PRECIPITACAO': 'Precipitação', 'TROVOADA': 'Trovoada', 'VENTO': 'Vento forte', 'NEVE': 'Neve', 'TEMPOQUENTE': 'Tempo quente', 'TEMPOFRIO': 'Tempo frio', 'NEVOEIRO': 'Nevoeiro', 'AGITACAOMARITIMA': 'Agitação marítima' };
+      $('warnings-card').innerHTML = active.map(w => {
+        const cls = w.awarenessLevelID.toLowerCase();
+        const what = typeMap[w.awarenessTypeName] || w.awarenessTypeName;
+        const start = new Date(w.startTime);
+        const end = new Date(w.endTime);
+        return `<div class="warning-item ${cls}"><div class="level">Aviso ${w.awarenessLevelID}</div><div class="what">${what}</div><div class="when">DE ${fmtTime(start)} A ${fmtTime(end)} · ${end.toLocaleDateString('pt-PT', { day:'numeric', month:'short' })}</div></div>`;
+      }).join('');
+    } catch (err) {
+      $('status-warning').querySelector('.value').textContent = 'Indisponível';
+      $('warnings-card').innerHTML = '<div class="error-text">Não foi possível consultar avisos.</div>';
+    }
+  }
+
+  function aqiLabel(aqi) {
+    if (aqi <= 20) return { label: 'Muito boa', cls: 'q-good' };
+    if (aqi <= 40) return { label: 'Boa', cls: 'q-good' };
+    if (aqi <= 60) return { label: 'Razoável', cls: 'q-fair' };
+    if (aqi <= 80) return { label: 'Fraca', cls: 'q-poor' };
+    return { label: 'Muito fraca', cls: 'q-poor' };
+  }
+
+  async function loadAir() {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${AMARANTE.lat}&longitude=${AMARANTE.lon}&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const c = data.current;
+      const q = aqiLabel(c.european_aqi);
+      const sp = $('status-air');
+      sp.querySelector('.icon').textContent = '◌';
+      sp.querySelector('.value').textContent = `${Math.round(c.european_aqi)} · ${q.label}`;
+      $('air-card').innerHTML = `<div class="metric-row"><span class="lbl">Índice EU</span><span class="val">${Math.round(c.european_aqi)} <span class="quality-pill ${q.cls}">${q.label}</span></span></div><div class="metric-row"><span class="lbl">PM 2.5</span><span class="val">${c.pm2_5?.toFixed(1) ?? '—'} <small>µg/m³</small></span></div><div class="metric-row"><span class="lbl">PM 10</span><span class="val">${c.pm10?.toFixed(1) ?? '—'} <small>µg/m³</small></span></div><div class="metric-row"><span class="lbl">Ozono</span><span class="val">${c.ozone?.toFixed(0) ?? '—'} <small>µg/m³</small></span></div>`;
+    } catch (err) {
+      $('status-air').querySelector('.value').textContent = 'Indisponível';
+      $('air-card').innerHTML = '<div class="error-text">Sensores indisponíveis.</div>';
+    }
+  }
+
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371; const toRad = (x) => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1); const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  async function loadSeismic() {
+    try {
+      const res = await fetch('https://api.ipma.pt/open-data/observation/seismic/PT.json');
+      const data = await res.json();
+      const quakes = (data.data || data || []).map(q => ({ ...q, dist: haversine(AMARANTE.lat, AMARANTE.lon, parseFloat(q.lat), parseFloat(q.lon)) })).filter(q => q.dist < 200 && !isNaN(q.dist)).sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+      const sp = $('status-seismic');
+      if (!quakes.length) {
+        sp.querySelector('.icon').textContent = '◇';
+        sp.querySelector('.value').textContent = 'Calmo';
+        $('seismic-card').innerHTML = '<div class="no-warning">Sem sismos a menos de 200 km nos últimos 30 dias.</div>';
+        return;
+      }
+      const last = quakes[0];
+      sp.querySelector('.icon').textContent = '◆';
+      sp.querySelector('.value').textContent = `Mag. ${parseFloat(last.magnitud).toFixed(1)} · ${Math.round(last.dist)} km`;
+      $('seismic-card').innerHTML = quakes.map(q => { const d = new Date(q.time); return `<div class="quake-item"><div class="quake-mag">${parseFloat(q.magnitud).toFixed(1)}</div><div class="quake-info"><div class="place">${q.local || 'Localização indeterminada'}</div><div class="meta">${d.toLocaleDateString('pt-PT', { day:'numeric', month:'short' })} · ${fmtTime(d)} · ${Math.round(q.dist)} km</div></div></div>`; }).join('');
+    } catch (err) {
+      $('status-seismic').querySelector('.value').textContent = 'Calmo';
+      $('seismic-card').innerHTML = '<div class="no-warning">Sem sismos relevantes próximos.</div>';
+    }
+  }
+
+  async function loadEvents() {
+    const articles = await fetchNewsBatch('Amarante evento OR festival OR concerto OR feira', 15);
+    const events = articles.filter(a => a.category === 'cultura' || /evento|festival|concerto|feira|romaria|exposi/i.test(a.title)).slice(0, 6);
+    if (!events.length) { $('events-list').innerHTML = '<div class="error-text">Sem eventos destacados nas notícias recentes.</div>'; return; }
+    $('events-list').innerHTML = events.map(e => `<a class="info-link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener"><div class="title">${escapeHtml(e.title)} <span class="arrow">→</span></div><div class="sub">${escapeHtml(e.source)} · ${timeAgo(e.pubDate)}</div></a>`).join('');
+  }
+
+  async function loadTraffic() {
+    const articles = await fetchNewsBatch('IP4 OR Amarante trânsito OR acidente Amarante estrada', 15);
+    const traffic = articles.filter(a => /ip4|ip-4|a4|estrada|trânsito|transito|acidente|colisão|colisao|despist/i.test(a.title)).slice(0, 5);
+    if (!traffic.length) { $('traffic-list').innerHTML = '<div class="no-warning" style="padding-left:0;">Sem ocorrências destacadas.</div>'; return; }
+    $('traffic-list').innerHTML = traffic.map(t => `<a class="info-link" href="${escapeHtml(t.link)}" target="_blank" rel="noopener"><div class="title">${escapeHtml(t.title)} <span class="arrow">→</span></div><div class="sub">${escapeHtml(t.source)} · ${timeAgo(t.pubDate)}</div></a>`).join('');
+  }
+
+  // ============ FILTERS ============
+  $('cat-tabs').addEventListener('click', (e) => { if (!e.target.matches('.cat-tab')) return; document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active')); e.target.classList.add('active'); currentCategory = e.target.dataset.cat; displayLimit = 8; renderNews(); });
+  $('time-filter').addEventListener('change', (e) => { currentTimeFilter = e.target.value; displayLimit = 8; renderNews(); });
+  let searchTimeout;
+  $('search').addEventListener('input', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { currentSearch = e.target.value; displayLimit = 8; renderNews(); }, 200); });
+  $('load-more').addEventListener('click', () => { const filtered = applyFilters(allArticles.slice(1)); if (filtered.length > displayLimit) { displayLimit += 8; renderNews(); } else { loadMoreNews(); } });
+
+  // ============ ORCHESTRATION ============
+  let nextRefresh = Date.now() + REFRESH_MS;
+  function updateDateLine() { $('date-line').textContent = fmtDate(new Date()).toUpperCase(); }
+  function updateCountdown() { const remaining = Math.max(0, nextRefresh - Date.now()); const m = Math.floor(remaining / 60000); const s = Math.floor((remaining % 60000) / 1000); $('countdown').textContent = `${m}:${String(s).padStart(2, '0')}`; }
+  async function refreshAll() {
+    nextRefresh = Date.now() + REFRESH_MS;
+    updateDateLine();
+    await Promise.allSettled([loadNews(), loadWeather(), loadWarnings(), loadAir(), loadSeismic(), loadEvents(), loadTraffic()]);
+  }
+  refreshAll();
+  loadGallery(); // só uma vez, é estável
+  setInterval(updateCountdown, 1000);
+  setInterval(refreshAll, REFRESH_MS);
+</script>
+
+</body>
+</html>
