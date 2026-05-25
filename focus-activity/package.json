@@ -1,0 +1,14 @@
+{
+  "name": "focus-activity",
+  "version": "1.0.0",
+  "description": "Local Capacitor plugin: foreground-service focus timer with a live chronometer notification and pause/resume/conclude actions (Android).",
+  "private": true,
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^6.0.0"
+  }
+}
