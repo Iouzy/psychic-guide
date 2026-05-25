@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" role="img" aria-label="Pauta — Intentions, focus blocks and habits">
+  <defs>
+    <!-- Deep space → ocean gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0a0f1e"/>
+      <stop offset="45%" stop-color="#0b1a35"/>
+      <stop offset="100%" stop-color="#06243f"/>
+    </linearGradient>
+
+    <!-- Neon accent gradient (cyan → violet) -->
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#7df9ff"/>
+      <stop offset="50%"  stop-color="#5b8cff"/>
+      <stop offset="100%" stop-color="#b06bff"/>
+    </linearGradient>
+
+    <!-- Warm terracotta brand accent -->
+    <linearGradient id="ember" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#ffb38a"/>
+      <stop offset="100%" stop-color="#b8533a"/>
+    </linearGradient>
+
+    <!-- Wave gradient (translucent neon) -->
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#7df9ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Soft glow filter -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Strong glow for title -->
+    <filter id="titleGlow" x="-30%" y="-50%" width="160%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b1"/>
+      <feGaussianBlur stdDeviation="14" result="b2"/>
+      <feMerge>
+        <feMergeNode in="b2"/>
+        <feMergeNode in="b1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Reusable star -->
+    <radialGradient id="star" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Grid pattern (subtle cyber lines) -->
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#5b8cff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+
+    <!-- Wave path (used by 3 animated layers) -->
+    <path id="wavePath" d="M0,60 C160,20 320,100 480,60 C640,20 800,100 960,60 C1120,20 1280,100 1440,60 L1440,140 L0,140 Z"/>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="360" fill="url(#bg)"/>
+  <rect width="1280" height="360" fill="url(#grid)"/>
+
+  <!-- Aurora glow -->
+  <ellipse cx="240" cy="120" rx="380" ry="120" fill="#5b8cff" opacity="0.18" filter="url(#glow)"/>
+  <ellipse cx="1040" cy="80" rx="320" ry="100" fill="#b06bff" opacity="0.16" filter="url(#glow)"/>
+  <ellipse cx="640" cy="320" rx="520" ry="100" fill="#7df9ff" opacity="0.12" filter="url(#glow)"/>
+
+  <!-- Stars -->
+  <g>
+    <circle cx="120"  cy="70"  r="1.6" fill="url(#star)">
+      <animate attributeName="opacity" values="0.2;1;0.2" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300"  cy="40"  r="1.2" fill="url(#star)">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="520"  cy="90"  r="1.8" fill="url(#star)">
+      <animate attributeName="opacity" values="0.2;0.9;0.2" dur="3.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="760"  cy="50"  r="1.2" fill="url(#star)">
+      <animate attributeName="opacity" values="0.3;1;0.3" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="900"  cy="100" r="1.4" fill="url(#star)">
+      <animate attributeName="opacity" values="0.2;0.9;0.2" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1080" cy="60"  r="1.6" fill="url(#star)">
+      <animate attributeName="opacity" values="0.3;1;0.3" dur="2.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1200" cy="110" r="1.2" fill="url(#star)">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="3.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="60"   cy="140" r="1.0" fill="url(#star)">
+      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Orbit ring around title (subtle, decorative) -->
+  <g transform="translate(640,170)" opacity="0.35">
+    <ellipse cx="0" cy="0" rx="380" ry="70" fill="none" stroke="url(#neon)" stroke-width="1" stroke-dasharray="2 6">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="40s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Title group -->
+  <g transform="translate(640,180)" text-anchor="middle" font-family="'Geist', 'Inter', system-ui, sans-serif">
+    <!-- Tagline above -->
+    <text y="-58" fill="#7df9ff" font-size="14" letter-spacing="8" opacity="0.85">
+      ◌ INTENTIONS · FOCUS · HABITS ◌
+    </text>
+
+    <!-- Glowing title (background copy) -->
+    <text y="20" font-size="120" font-weight="800" letter-spacing="6" fill="url(#neon)" filter="url(#titleGlow)" opacity="0.85">
+      PAUTA
+    </text>
+    <!-- Crisp foreground copy -->
+    <text y="20" font-size="120" font-weight="800" letter-spacing="6" fill="#ffffff">
+      PAUTA
+    </text>
+
+    <!-- Subtitle -->
+    <text y="62" font-size="18" fill="#cbd5ff" opacity="0.85" font-family="'Instrument Serif', 'Times New Roman', serif" font-style="italic">
+      your daily pauta — private, offline, yours
+    </text>
+  </g>
+
+  <!-- Animated wave layers at bottom -->
+  <g transform="translate(0,220)" opacity="0.9">
+    <use href="#wavePath" fill="url(#wave)" opacity="0.45">
+      <animateTransform attributeName="transform" type="translate" values="0 0;-160 0;0 0" dur="14s" repeatCount="indefinite"/>
+    </use>
+  </g>
+  <g transform="translate(0,250)" opacity="0.85">
+    <use href="#wavePath" fill="url(#wave)" opacity="0.55">
+      <animateTransform attributeName="transform" type="translate" values="0 0;160 0;0 0" dur="11s" repeatCount="indefinite"/>
+    </use>
+  </g>
+  <g transform="translate(0,280)">
+    <use href="#wavePath" fill="url(#wave)" opacity="0.75">
+      <animateTransform attributeName="transform" type="translate" values="0 0;-200 0;0 0" dur="8s" repeatCount="indefinite"/>
+    </use>
+  </g>
+
+  <!-- Ember accent line (brand tie-in) -->
+  <line x1="540" y1="260" x2="740" y2="260" stroke="url(#ember)" stroke-width="2" stroke-linecap="round" opacity="0.9">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="3s" repeatCount="indefinite"/>
+  </line>
+  <circle cx="640" cy="260" r="4" fill="#ffb38a" filter="url(#glow)">
+    <animate attributeName="r" values="3;6;3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+</svg>
