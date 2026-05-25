@@ -28,7 +28,8 @@ function getCapacitorPlugins() {
 function useNativeFocusNotification(store) {
   const plugins = getCapacitorPlugins();
   const FA = plugins && plugins.FocusActivity;          // preferred: foreground service
-  const LN = !FA && plugins ? plugins.LocalNotifications : null; // fallback
+  const LNall = plugins && plugins.LocalNotifications;  // official plugin (always a dep)
+  const LN = !FA ? LNall : null;                        // used as the surface only when FA absent
   const enabled = !!(FA || LN);
 
   const blocks = store.state.blocks;
@@ -64,6 +65,9 @@ function useNativeFocusNotification(store) {
     let sub;
     (async () => {
       if (FA) {
+        // The foreground notification still needs POST_NOTIFICATIONS (Android 13+);
+        // reuse the official plugin's prompt since it's app-wide.
+        try { if (LNall) await LNall.requestPermissions(); } catch (e) {}
         try { sub = await FA.addListener("action", (ev) => applyAction(ev && ev.kind)); } catch (e) {}
         return;
       }
