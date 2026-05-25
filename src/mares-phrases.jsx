@@ -57,6 +57,7 @@ const MARE_PHRASES = {
     "Maré viva": "Maré viva — a mais forte do mês natural.",
     "Maré anual": "Quase um ano. Isto já não é tentativa.",
     "Oceano": "Já não é uma maré. É um oceano. O hábito é parte de si.",
+    "Tsunami": "Dois anos de água a subir. Isto é um tsunami — imparável.",
   },
   // Habit detail header phrases
   detailHeader: [

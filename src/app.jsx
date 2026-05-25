@@ -134,7 +134,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             onClick={() => { onClose(); onOpenInsights && onOpenInsights(); }}/>
           <DataAction accentColor={accentColor}
             title={tr("Como funcionam as marés")}
-            subtitle={tr("O que significam os tiers, de Onda a Oceano.")}
+            subtitle={tr("O que significam os tiers, de Onda a Tsunami.")}
             onClick={() => { onClose(); onOpenTierGuide && onOpenTierGuide(); }}/>
         </DataGroup>
 
@@ -218,6 +218,16 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
                 )}
               </div>
             )}
+            <div style={{
+              fontFamily: "var(--sans)", fontSize: 13, color: "var(--ink-2)",
+              lineHeight: 1.5, marginTop: canInstall ? 10 : 0,
+            }}>
+              {tr("Código-fonte e instruções no repositório: ")}
+              <a href="https://github.com/Iouzy/psychic-guide" target="_blank" rel="noopener noreferrer"
+                style={{ color: accentColor, textDecoration: "underline", wordBreak: "break-all" }}>
+                github.com/Iouzy/psychic-guide
+              </a>
+            </div>
           </DataGroup>
         )}
 
