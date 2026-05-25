@@ -166,6 +166,11 @@
 
 <!-- Tweak defaults -->
 <script>
+  // Build stamp injected by scripts/build-web.mjs. `run` is the GitHub Actions
+  // run number (0 in local dev), `ts` is the build's Unix time in seconds.
+  window.PAUTA_BUILD = { /*BUILD-INFO-BEGIN*/ ts: 0, run: 0 /*BUILD-INFO-END*/ };
+  window.PAUTA_REPO  = "Iouzy/psychic-guide";
+
   window.PAUTA_CLEAN_START = true;
   window.PAUTA_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
     "accent": "#B8533A",

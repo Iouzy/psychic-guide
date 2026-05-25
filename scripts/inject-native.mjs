@@ -9,6 +9,7 @@ const SRC     = join(ROOT, "native/android");
 const JAVA    = join(ROOT, "android/app/src/main/java/com/pauta/app");
 const DRAWABLE = join(ROOT, "android/app/src/main/res/drawable");
 const MANIFEST = join(ROOT, "android/app/src/main/AndroidManifest.xml");
+const GRADLE   = join(ROOT, "android/app/build.gradle");
 
 // ── 1. Copy Kotlin source files ───────────────────────────────
 mkdirSync(JAVA,     { recursive: true });
@@ -65,6 +66,22 @@ if (!manifest.includes("FocusService")) {
   console.log("Patched AndroidManifest.xml");
 } else {
   console.log("AndroidManifest.xml already patched — skipped");
+}
+
+// ── 4. Bump versionCode/versionName from CI env ──────────────
+// Without this, every CI build ships versionCode 1, so Android refuses to
+// install the new APK over an existing copy with "package conflicts with an
+// existing package". Using GITHUB_RUN_NUMBER makes each build strictly newer
+// than the previous one, so the OS treats it as a real update.
+const run = Number(process.env.GITHUB_RUN_NUMBER || 0);
+if (run > 0) {
+  let gradle = readFileSync(GRADLE, "utf8");
+  gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${run}`);
+  gradle = gradle.replace(/versionName\s+"[^"]*"/, `versionName "1.0.${run}"`);
+  writeFileSync(GRADLE, gradle);
+  console.log(`Patched build.gradle: versionCode=${run}, versionName=1.0.${run}`);
+} else {
+  console.log("No GITHUB_RUN_NUMBER set — leaving build.gradle versionCode at the Capacitor default.");
 }
 
 console.log("Native injection complete.");
