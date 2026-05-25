@@ -12,6 +12,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
   const [sheetEdit, setSheetEdit] = useState(null); // blockId
   const [sheetHistory, setSheetHistory] = useState(false);
   const [filter, setFilter] = useState(null); // { kind:"block"|"intention", id, label }
+  const [immersiveId, setImmersiveId] = useState(null); // blockId in distraction-free focus mode
 
   // Open start sheet from Hoje
   useEffect(() => {
@@ -131,6 +132,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             onPause={() => setSheetPause(true)}
             onSwitch={() => setSheetSwitch(true)}
             onConclude={() => setSheetConclude({ blockId: activeBlock.id })}
+            onImmersive={() => setImmersiveId(activeBlock.id)}
             onCancel={() => {
               if (confirm(tr("Descartar este bloco? Não fica guardado."))) {
                 deleteBlock(activeBlock.id);
@@ -266,11 +268,116 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         blocks={blocks}
         accentColor={accentColor}
       />
+
+      {(() => {
+        const b = immersiveId && blocks.find(x => x.id === immersiveId && x.status !== "done");
+        if (!b) return null;
+        return (
+          <ImmersiveFocus
+            block={b}
+            accentColor={accentColor}
+            onPause={() => pauseActive("")}
+            onResume={() => resumeBlock(b.id)}
+            onConclude={() => { setImmersiveId(null); setSheetConclude({ blockId: b.id }); }}
+            onExit={() => setImmersiveId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
 
 window.TabPauta = TabPauta;
+
+// ─── Immersive (distraction-free) focus overlay ───────────────
+// Covers the whole frame (incl. the tab bar) with a minimal dark surface: just
+// the live timer and the essential controls. Requests OS fullscreen where
+// supported (Android WebView / Chrome); on platforms that block it (iOS Safari)
+// it simply stays an in-app overlay.
+function ImmersiveFocus({ block, accentColor, onPause, onResume, onConclude, onExit }) {
+  const now = useNow(1000, true);
+  const paused = block.status === "paused";
+  // Running total across all segments; an open segment counts up to `now`, a
+  // closed (paused) one is frozen at its endedAt.
+  const shown = block.sessions.reduce((acc, seg) => acc + ((seg.endedAt || now) - seg.startedAt), 0);
+
+  useEffect(() => {
+    const el = document.documentElement;
+    if (el.requestFullscreen) { try { el.requestFullscreen({ navigationUI: "hide" }).catch(() => {}); } catch (e) {} }
+    return () => {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try { document.exitFullscreen().catch(() => {}); } catch (e) {}
+      }
+    };
+  }, []);
+
+  const ctrl = (onClick, label, icon, primary) => (
+    <button onClick={onClick} className="tap"
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        background: primary ? accentColor : "transparent",
+        border: primary ? "none" : "1px solid rgba(245,241,234,0.28)",
+        color: "var(--on-dark)", borderRadius: 999, padding: "13px 22px",
+        fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.1em",
+        textTransform: "uppercase", fontWeight: 500, cursor: "pointer",
+      }}>
+      {icon}{label}
+    </button>
+  );
+
+  return (
+    <div data-noswipe="true" style={{
+      position: "absolute", inset: 0, zIndex: 60,
+      background: "var(--surface-dark)", color: "var(--on-dark)",
+      display: "flex", flexDirection: "column",
+      animation: "fadeIn 0.2s ease",
+    }}>
+      <button onClick={onExit} className="tap" title={tr("Sair do foco total")}
+        style={{
+          position: "absolute", top: 18, right: 18,
+          width: 36, height: 36, borderRadius: "50%",
+          background: "rgba(245,241,234,0.08)", border: "none",
+          color: "var(--on-dark-2)", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 6h4V2M14 6h-4V2M2 10h4v4M14 10h-4v4"/>
+        </svg>
+      </button>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", textAlign: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: "50%", background: accentColor,
+            boxShadow: paused ? "none" : `0 0 10px ${accentColor}`,
+            opacity: paused ? 0.4 : 1,
+            animation: paused ? "none" : "pulse 1.6s ease-in-out infinite",
+          }}/>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
+            {paused ? tr("em pausa") : tr("em curso")}
+          </div>
+        </div>
+        <div style={{
+          fontFamily: "var(--mono)", fontWeight: 300,
+          fontSize: "min(22vw, 96px)", lineHeight: 0.9, letterSpacing: "-0.03em",
+          fontFeatureSettings: '"tnum"',
+        }}>
+          {fmtDuration(shown, { timer: true })}
+        </div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.2, marginTop: 24, maxWidth: 340, color: "var(--on-dark)" }}>
+          {block.title}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "0 24px 46px", flexWrap: "wrap" }}>
+        {paused
+          ? ctrl(onResume, tr("Retomar"), <Icon.Play size={12}/>, true)
+          : ctrl(onPause, tr("Pausar"), <Icon.Pause size={12}/>, false)}
+        {ctrl(onConclude, tr("Concluir"), null, !paused ? false : true)}
+      </div>
+    </div>
+  );
+}
 
 // ─── Pauta history sheet ──────────────────────────────────
 function PautaHistorySheet({ open, onClose, blocks, accentColor }) {

@@ -2,7 +2,7 @@
 // Timeline, StartSheet, PauseSheet, ConcludeSheet, SwitchSheet
 
 // ─── ACTIVE BLOCK CARD ───────────────────────────────────────
-function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, onSwitch, onConclude, onCancel }) {
+function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, onSwitch, onConclude, onCancel, onImmersive }) {
   const now = useNow(1000, true);
   const currentSeg = block.sessions[block.sessions.length - 1];
   const elapsed = now - currentSeg.startedAt;
@@ -32,6 +32,19 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
             {trf("início {t}", { t: fmtClock(currentSeg.startedAt) })}
           </div>
+          {onImmersive && (
+            <button onClick={onImmersive} className="tap" title={tr("Foco total")}
+              style={{
+                width: 22, height: 22, borderRadius: "50%",
+                background: "rgba(245,241,234,0.08)", border: "none",
+                color: "var(--on-dark-2)", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4"/>
+              </svg>
+            </button>
+          )}
           {onCancel && (
             <button onClick={onCancel} className="tap" title={tr("descartar este bloco")}
               style={{
