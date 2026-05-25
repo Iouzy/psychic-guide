@@ -33,9 +33,7 @@
   <img alt="Issues" src="https://img.shields.io/github/issues/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=b06bff" />
   <img alt="Last commit" src="https://img.shields.io/github/last-commit/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=ffb38a" />
   <img alt="Repo size" src="https://img.shields.io/github/repo-size/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=cbd5ff" />
-  <a href="https://hits.seeyoufarm.com">
-    <img alt="Visitors" src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FIouzy%2Fpsychic-guide&count_bg=%237DF9FF&title_bg=%230A0F1E&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=true" />
-  </a>
+  <img alt="Visitors" src="https://api.visitorbadge.io/api/visitors?path=Iouzy%2Fpsychic-guide&label=visitors&labelColor=%230a0f1e&countColor=%237df9ff&style=flat-square" />
 </p>
 
 <!-- ── Tech stack chips ─────────────────────────────────────── -->
