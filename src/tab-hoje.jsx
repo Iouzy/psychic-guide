@@ -296,12 +296,15 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
     <div>
       <button onClick={onBack} className="tap"
         style={{
-          border: "none", background: "transparent", padding: "4px 0",
-          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
-          color: "var(--ink-3)", textTransform: "uppercase", cursor: "pointer",
-          marginBottom: 12,
+          display: "inline-flex", alignItems: "center", gap: 7,
+          border: "1px solid var(--rule)", background: "var(--paper-2)",
+          borderRadius: 999, padding: "9px 15px 9px 11px",
+          fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.08em",
+          color: "var(--ink-2)", textTransform: "uppercase", cursor: "pointer",
+          marginBottom: 16,
         }}>
-        ← {tr("dias")}
+        <span style={{ fontSize: 17, lineHeight: 1, marginTop: -2 }}>‹</span>
+        {tr("dias")}
       </button>
       <div style={{
         fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",

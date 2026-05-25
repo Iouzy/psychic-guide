@@ -639,6 +639,7 @@ function habitAllTimeStats(h, todayTs = Date.now()) {
 // Streak tier (Onda → Oceano). Names/subtitles are stored in Portuguese (source)
 // and translated at access time via trTier() so they follow live language switches.
 const TIDE_TIERS = [
+  { min: 720, name: "Tsunami", subtitle: "uma força que ninguém trava" },
   { min: 360, name: "Oceano", subtitle: "já não é uma maré" },
   { min: 240, name: "Maré anual", subtitle: "quase um ano de constância" },
   { min: 120, name: "Maré viva", subtitle: "a mais forte do mês" },
