@@ -148,6 +148,7 @@ function TabMares({ store, accentColor }) {
             />
           ) : (
             <button onClick={() => setAdding(true)} className="tap"
+              data-tour="add-habit"
               style={{
                 marginTop: 20, width: "100%",
                 border: "1.5px dashed var(--rule)", borderRadius: 12,

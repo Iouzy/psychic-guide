@@ -142,6 +142,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         {/* Start CTA (no active) */}
         {!activeBlock && (
           <button onClick={() => setSheetStart({})} className="tap"
+            data-tour="start-block"
             style={{
               width: "100%", marginBottom: 22,
               background: "var(--surface-dark)", color: "var(--on-dark)",

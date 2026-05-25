@@ -414,6 +414,7 @@ function App() {
         accentColor={accentColor}/>
       {!prefs.onboardingSeen && (
         <OnboardingOverlay accentColor={accentColor}
+          store={store}
           onTab={setTab}
           onDone={() => { store.setPref("onboardingSeen", true); setTab("hoje"); }}/>
       )}
