@@ -33,7 +33,7 @@
   <img alt="Issues" src="https://img.shields.io/github/issues/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=b06bff" />
   <img alt="Last commit" src="https://img.shields.io/github/last-commit/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=ffb38a" />
   <img alt="Repo size" src="https://img.shields.io/github/repo-size/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=cbd5ff" />
-  <img alt="Visitors" src="https://api.visitorbadge.io/api/visitors?path=Iouzy%2Fpsychic-guide&label=visitors&labelColor=%230a0f1e&countColor=%237df9ff&style=flat-square" />
+  <img alt="Visitors" src="https://visitor-badge.laobi.icu/badge?page_id=Iouzy.psychic-guide.readme&left_color=%230a0f1e&right_color=%237df9ff&left_text=visitors" />
 </p>
 
 <!-- ── Tech stack chips ─────────────────────────────────────── -->
