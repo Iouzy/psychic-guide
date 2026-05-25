@@ -478,7 +478,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   useEffect(() => {
     if (isCurrentMonth && stripRef.current) {
       const el = stripRef.current;
-      const cellW = 14 + 2; // cell width + gap
+      const cellW = 22 + 3; // cell width + gap (must match DayCell + strip gap below)
       const todayLeft = (todayD.getDate() - 1) * cellW;
       el.scrollLeft = Math.max(0, todayLeft - el.clientWidth / 2 + cellW / 2);
     }
@@ -606,7 +606,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
 
       {/* Month strip — pulse of days */}
       <div style={{ position: "relative" }}>
-        <div ref={stripRef} style={{ display: "flex", gap: 2, alignItems: "center", padding: "4px 0", overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div ref={stripRef} style={{ display: "flex", gap: 3, alignItems: "center", padding: "4px 0", overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {days.map((day) => (
             <DayCell
               key={day.key}
@@ -733,8 +733,8 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
       }}
       title={fmtDateShort(tsFromDayKey(day.key))}
       style={{
-        width: 14, height: 14, flexShrink: 0,
-        borderRadius: 2,
+        width: 22, height: 22, flexShrink: 0,
+        borderRadius: 4,
         background: filled ? (isToday ? accentColor : "var(--ink)") : "transparent",
         // Borders per state (incl. pre-criação with outline + dot, per user request)
         border:

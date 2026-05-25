@@ -1064,14 +1064,15 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
     return { columns: cols, monthLabels: labels };
   }, [habit, todayTs, createdKey, todayKey, habitEnd, isCount]);
 
-  const CELL = 13, GAP = 3;
+  const CELL = 22, GAP = 4;
+  const LABEL_W = 30;
 
   return (
     <div style={{ overflowX: "auto", paddingBottom: 6 }}>
       <div style={{ display: "inline-block", minWidth: "100%" }}>
         <div style={{
           position: "relative", height: 14,
-          marginLeft: 16,
+          marginLeft: LABEL_W + 4,
         }}>
           {monthLabels.map((ml, i) => (
             <div key={i} style={{
@@ -1086,11 +1087,12 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
         <div style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
           <div style={{
             display: "flex", flexDirection: "column", gap: GAP,
-            width: 16, fontFamily: "var(--mono)", fontSize: 8,
+            width: LABEL_W, fontFamily: "var(--mono)", fontSize: 9,
             color: "var(--ink-3)", paddingTop: 0,
+            letterSpacing: "0.02em",
           }}>
-            {["D", "2", "3", "4", "5", "6", "S"].map((lbl, i) => (
-              <div key={i} style={{ height: CELL, lineHeight: CELL + "px" }}>{lbl}</div>
+            {[tr("dom"), tr("seg"), tr("ter"), tr("qua"), tr("qui"), tr("sex"), tr("sáb")].map((lbl, i) => (
+              <div key={i} style={{ height: CELL, lineHeight: CELL + "px", textAlign: "right", paddingRight: 4 }}>{lbl}</div>
             ))}
           </div>
 
