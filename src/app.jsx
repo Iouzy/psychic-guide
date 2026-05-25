@@ -343,6 +343,8 @@ function App() {
 
   // Local reminders (only while the app is open).
   useReminders(store);
+  // Native Android focus timer notification / Xiaomi island.
+  useFocusActivity(store);
 
   // Keyboard shortcuts (desktop): 1/2/3 tabs, g settings, i insights, ? guide.
   useEffect(() => {

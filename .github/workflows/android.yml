@@ -28,6 +28,9 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Inject native focus-timer plugin
+        run: npm run inject:native
+
       - name: Generate app icon from icons/icon-512.png
         continue-on-error: true
         run: |
