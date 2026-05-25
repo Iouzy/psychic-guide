@@ -1,0 +1,97 @@
+// Pauta service worker — offline app shell.
+// Bump CACHE_VERSION whenever the precached assets change so clients refresh.
+const CACHE_VERSION = "pauta-v1";
+
+// Same-origin assets that make up the app shell. Relative paths keep this
+// working whether served from a domain root or a GitHub Pages subpath.
+const LOCAL_ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-512-maskable.png",
+  "./icons/apple-touch-icon.png",
+  "./src/tweaks-panel.jsx",
+  "./src/store.jsx",
+  "./src/ui-primitives.jsx",
+  "./src/sub-components.jsx",
+  "./src/sheets.jsx",
+  "./src/tab-hoje.jsx",
+  "./src/tab-pauta.jsx",
+  "./src/mares-phrases.jsx",
+  "./src/tab-mares.jsx",
+  "./src/mares-sheets.jsx",
+  "./src/app.jsx",
+];
+
+// Third-party runtime deps. Best-effort during install (a flaky CDN shouldn't
+// block activation); they also get cached on first fetch below.
+const CDN_ASSETS = [
+  "https://unpkg.com/react@18.3.1/umd/react.development.js",
+  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js",
+  "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE_VERSION);
+      await cache.addAll(LOCAL_ASSETS.map((u) => new Request(u, { cache: "reload" })));
+      await Promise.allSettled(CDN_ASSETS.map((u) => cache.add(u)));
+      self.skipWaiting();
+    })()
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })()
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+
+  // Navigations: serve the app shell so offline launches render.
+  if (req.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          return await fetch(req);
+        } catch (e) {
+          const cache = await caches.open(CACHE_VERSION);
+          return (
+            (await cache.match("./index.html")) ||
+            (await cache.match("./")) ||
+            Response.error()
+          );
+        }
+      })()
+    );
+    return;
+  }
+
+  // Everything else: cache-first, fall back to network and cache the result.
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_VERSION);
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      try {
+        const res = await fetch(req);
+        if (res && (res.ok || res.type === "opaque")) {
+          cache.put(req, res.clone());
+        }
+        return res;
+      } catch (e) {
+        return cached || Response.error();
+      }
+    })()
+  );
+});

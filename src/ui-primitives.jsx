@@ -63,10 +63,26 @@ const Icon = {
       <path d="M2 12L2.5 9.5L9 3L11 5L4.5 11.5L2 12Z"/>
     </svg>
   ),
+  Gear: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+    </svg>
+  ),
+  Download: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12M7 11l5 4 5-4M4 20h16"/>
+    </svg>
+  ),
+  Upload: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 16V4M7 8l5-4 5 4M4 20h16"/>
+    </svg>
+  ),
 };
 
 // ─── Status bar ─────────────────────────────────────────────
-function StatusBar({ time }) {
+function StatusBar({ time, onMenu }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60000);
@@ -75,6 +91,15 @@ function StatusBar({ time }) {
   return (
     <div className="statusbar">
       <span>{fmtClock(time || now)}</span>
+      {onMenu && (
+        <button onClick={onMenu} className="tap" aria-label="Definições" title="Definições"
+          style={{
+            background: "transparent", border: "none", color: "var(--ink-2)",
+            cursor: "pointer", padding: 4, margin: -4, display: "flex", alignItems: "center",
+          }}>
+          <Icon.Gear size={16}/>
+        </button>
+      )}
     </div>
   );
 }
