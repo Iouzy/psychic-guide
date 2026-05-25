@@ -306,6 +306,56 @@ function emptyState() {
 }
 function saveState(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {} }
 
+// ─── EXPORT / IMPORT ───────────────────────────────────────
+// Backup file shape: { app:"pauta", version, exportedAt, data:<state> }.
+const EXPORT_VERSION = 4;
+
+function downloadJSON(filename, obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Rebuild a clean, current-day-normalized state from an imported object.
+// Accepts either a raw state object or the wrapped backup file's `.data`.
+function normalizeImported(s) {
+  const todayKey = dayKeyOf(Date.now());
+  const days = (s.days && typeof s.days === "object") ? { ...s.days } : {};
+  let today = (s.today && s.today.dayKey)
+    ? { dayKey: s.today.dayKey, intentions: s.today.intentions || [], reflection: s.today.reflection || "" }
+    : { dayKey: todayKey, intentions: [], reflection: "" };
+  if (today.dayKey !== todayKey) {
+    if ((today.intentions && today.intentions.length > 0) || (today.reflection && today.reflection.trim())) {
+      days[today.dayKey] = { intentions: today.intentions, reflection: today.reflection };
+    }
+    today = { dayKey: todayKey, intentions: [], reflection: "" };
+  }
+  const blocks = Array.isArray(s.blocks) ? s.blocks : [];
+  const habits = Array.isArray(s.habits) ? s.habits.map(h => migrateHabit(h)) : [];
+  const activeId = blocks.some(b => b.id === s.activeId) ? s.activeId : null;
+  return { today, days, activeId, blocks, habits };
+}
+
+// Parse + validate backup text. Returns the normalized state or throws.
+function parseBackup(text) {
+  const parsed = JSON.parse(text);
+  const incoming = (parsed && parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
+  if (!incoming || typeof incoming !== "object") {
+    throw new Error("Ficheiro vazio ou inválido.");
+  }
+  const looksLikePauta = ("blocks" in incoming) || ("habits" in incoming) || ("today" in incoming);
+  if (!looksLikePauta) {
+    throw new Error("Isto não parece um backup do Pauta.");
+  }
+  return normalizeImported(incoming);
+}
+
 // ─── DERIVED ──────────────────────────────────────────────
 // Build a timeline (sorted events) from blocks
 // Each event: { kind: "start"|"pause"|"resume"|"conclude", time, blockId, sessionIdx, block }
@@ -790,6 +840,27 @@ function useStore() {
     }
   };
 
+  // ─ Backup ─
+  const exportData = () => {
+    const stamp = dayKeyOf(Date.now());
+    downloadJSON(`pauta-backup-${stamp}.json`, {
+      app: "pauta",
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: state,
+    });
+  };
+  // Returns { ok } or { ok:false, error }. Caller confirms the overwrite.
+  const importData = (text) => {
+    try {
+      const next = parseBackup(text);
+      setState(next);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message || "Não foi possível ler o ficheiro." };
+    }
+  };
+
   return {
     state, activeBlock,
     // hoje
@@ -802,6 +873,8 @@ function useStore() {
     addHabit, removeHabit, updateHabit,
     // misc
     resetAll, reseed,
+    // backup
+    exportData, importData,
   };
 }
 
