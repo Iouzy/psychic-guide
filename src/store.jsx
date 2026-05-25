@@ -111,6 +111,14 @@ function quarterLabel(q) {
   const names = { 1: tr("Jan–Mar"), 2: tr("Abr–Jun"), 3: tr("Jul–Set"), 4: tr("Out–Dez") };
   return "Q" + qq + " " + y + " · " + names[qq];
 }
+function nextQuarter(q) {
+  const [y, qq] = q.split("-Q").map(Number);
+  return qq >= 4 ? (y + 1) + "-Q1" : y + "-Q" + (qq + 1);
+}
+function prevQuarter(q) {
+  const [y, qq] = q.split("-Q").map(Number);
+  return qq <= 1 ? (y - 1) + "-Q4" : y + "-Q" + (qq - 1);
+}
 
 // ─── SEED ───────────────────────────────────────────────
 // Realistic data so the app feels lived-in on first open.
@@ -139,8 +147,8 @@ function seed() {
     today: {
       dayKey: dayKeyOf(Date.now()),
       intentions: [
-        { id: ids.briefing, text: tr("Terminar a primeira versão do briefing"), done: false, createdAt: Date.now() },
-        { id: ids.ler, text: tr("Ler o capítulo 4 de 'Deep Work'"), done: false, createdAt: Date.now() },
+        { id: ids.briefing, text: tr("Terminar a primeira versão do briefing"), done: false, priority: "principal", createdAt: Date.now() },
+        { id: ids.ler, text: tr("Ler o capítulo 4 de 'Deep Work'"), done: false, priority: "importante", createdAt: Date.now() },
         { id: ids.emails, text: tr("Responder e-mails pendentes"), done: true, createdAt: Date.now() },
       ],
       reflection: "",
@@ -847,6 +855,12 @@ function useStore() {
   const toggleIntention = (id) => setState(s => ({
     ...s, today: { ...s.today, intentions: s.today.intentions.map(i => i.id === id ? { ...i, done: !i.done } : i) }
   }));
+  const reorderIntentions = (orderedIds) => setState(s => {
+    const by = Object.fromEntries(s.today.intentions.map(i => [i.id, i]));
+    const next = orderedIds.map(id => by[id]).filter(Boolean);
+    if (next.length !== s.today.intentions.length) return s;
+    return { ...s, today: { ...s.today, intentions: next } };
+  });
   const setReflection = (text) => setState(s => ({ ...s, today: { ...s.today, reflection: text } }));
 
   // ─ Pauta ─
@@ -1064,6 +1078,15 @@ function useStore() {
   const updateGoal = (id, patch) => setState(s => ({ ...s, goals: (s.goals || []).map(g => g.id === id ? { ...g, ...patch } : g) }));
   const toggleGoal = (id) => setState(s => ({ ...s, goals: (s.goals || []).map(g => g.id === id ? { ...g, done: !g.done } : g) }));
   const removeGoal = (id) => setState(s => ({ ...s, goals: (s.goals || []).filter(g => g.id !== id) }));
+  // Reorder the goals within one quarter; goals in other quarters keep their slots.
+  const reorderGoals = (quarter, orderedIds) => setState(s => {
+    const goals = s.goals || [];
+    const by = Object.fromEntries(goals.map(g => [g.id, g]));
+    const reordered = orderedIds.map(id => by[id]).filter(g => g && g.quarter === quarter);
+    let i = 0;
+    const next = goals.map(g => g.quarter === quarter ? (reordered[i++] || g) : g);
+    return { ...s, goals: next };
+  });
 
   const resetAll = () => {
     if (confirm(tr("Apagar tudo e recomeçar? Isto não pode ser desfeito."))) {
@@ -1104,7 +1127,7 @@ function useStore() {
   return {
     state, activeBlock,
     // hoje
-    addIntention, updateIntention, removeIntention, toggleIntention, setReflection,
+    addIntention, updateIntention, removeIntention, toggleIntention, reorderIntentions, setReflection,
     // pauta
     startBlock, pauseActive, resumeBlock, concludeActive, concludeBlock,
     updateBlock, updateSessionNote, deleteBlock,
@@ -1114,7 +1137,7 @@ function useStore() {
     // prefs
     setPref, setReminderPref,
     // goals
-    addGoal, updateGoal, toggleGoal, removeGoal,
+    addGoal, updateGoal, toggleGoal, removeGoal, reorderGoals,
     // misc
     resetAll, reseed,
     // backup
@@ -1139,7 +1162,7 @@ Object.assign(window, {
   pad, uid,
   buildTimeline, blockFocusMs, dailyFocusMs, dailyBlockCount, blocksAllDays, pastDayKeys,
   // prefs / goals / insights
-  defaultPrefs, mergePrefs, quarterOf, quarterLabel,
+  defaultPrefs, mergePrefs, quarterOf, quarterLabel, nextQuarter, prevQuarter,
   focusByHour, bestHourStats, habitFocusCorrelation, weeklyReview,
   // habit stats
   HABIT_MATURITY_DAYS, TIDE_TIERS, NAVIGATOR_LEVELS,

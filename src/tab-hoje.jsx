@@ -1,7 +1,7 @@
 // Tab: HOJE — intenções do dia + reflexão noturna
 
 function TabHoje({ store, accentColor, onJumpToPauta }) {
-  const { state, addIntention, updateIntention, toggleIntention, removeIntention, setReflection } = store;
+  const { state, addIntention, updateIntention, toggleIntention, removeIntention, reorderIntentions, setReflection } = store;
   const { today, blocks } = state;
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState("");
@@ -26,6 +26,9 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
   }, [blocks]);
 
   const pastKeys = useMemo(() => pastDayKeys(state), [state.days]);
+
+  const intentionIds = today.intentions.map(i => i.id);
+  const { dragId, start } = useDragReorder(intentionIds, reorderIntentions);
 
   const commitNew = () => {
     if (newText.trim()) addIntention(newText);
@@ -75,15 +78,17 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {today.intentions.map((it, i) => (
+        {today.intentions.map((it) => (
           <IntentionRow
             key={it.id}
             intention={it}
-            isPrimary={i === 0}
             focusMs={focusByIntention[it.id] || 0}
+            dragging={dragId === it.id}
             onToggle={() => toggleIntention(it.id)}
             onChange={text => updateIntention(it.id, { text })}
             onRemove={() => removeIntention(it.id)}
+            onCyclePriority={() => updateIntention(it.id, { priority: nextPriority(it.priority) })}
+            onDragStart={(e) => start(e, it.id)}
             onStart={() => onJumpToPauta && onJumpToPauta({ intention: it })}
             accentColor={accentColor}
           />
@@ -414,15 +419,54 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
 }
 
 // ─── Intention row ─────────────────────────────────────────
-function IntentionRow({ intention, isPrimary, focusMs, onToggle, onChange, onRemove, onStart, accentColor }) {
+// Priority cycles: nenhuma → principal → importante → nenhuma.
+function nextPriority(p) {
+  return p === "principal" ? "importante" : p === "importante" ? null : "principal";
+}
+
+function PriorityChip({ priority, accentColor, onClick }) {
+  const styles = {
+    principal: { mark: "●", label: tr("principal"), color: accentColor, weight: 600 },
+    importante: { mark: "◆", label: tr("importante"), color: "var(--ink-2)", weight: 500 },
+  };
+  const s = styles[priority] || { mark: "○", label: tr("prioridade"), color: "var(--ink-4)", weight: 400 };
+  return (
+    <button onClick={onClick} className="tap" title={tr("definir prioridade")}
+      style={{
+        border: "none", background: "transparent", padding: 0, cursor: "pointer",
+        fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.04em",
+        color: s.color, fontWeight: s.weight, display: "inline-flex", alignItems: "center", gap: 5,
+      }}>
+      <span style={{ fontSize: 9 }}>{s.mark}</span>{s.label}
+    </button>
+  );
+}
+
+function IntentionRow({ intention, focusMs, dragging, onToggle, onChange, onRemove, onCyclePriority, onDragStart, onStart, accentColor }) {
   const [hover, setHover] = useState(false);
+  const isPrimary = intention.priority === "principal";
+  const isImportant = intention.priority === "importante";
   return (
     <div
+      data-drag-id={intention.id}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{
-        display: "flex", alignItems: "flex-start", gap: 12,
+        display: "flex", alignItems: "flex-start", gap: 10,
         padding: "14px 0", borderBottom: "1px solid var(--rule)",
+        background: dragging ? "var(--paper-2)" : "transparent",
+        opacity: dragging ? 0.7 : 1, borderRadius: dragging ? 10 : 0,
+        transition: "background 0.12s",
       }}>
+      <button
+        onPointerDown={onDragStart} className="tap" title={tr("arrastar para reordenar")}
+        style={{
+          width: 22, alignSelf: "stretch", border: "none", background: "transparent",
+          color: hover || dragging ? "var(--ink-3)" : "var(--ink-4)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "grab", padding: 0, touchAction: "none", flexShrink: 0,
+        }}>
+        <Icon.Grip size={13}/>
+      </button>
       <div style={{ paddingTop: 1 }}>
         <Check checked={intention.done} onChange={onToggle} accentColor={accentColor}/>
       </div>
@@ -434,8 +478,8 @@ function IntentionRow({ intention, isPrimary, focusMs, onToggle, onChange, onRem
           multiline={false}
           style={{
             display: "block",
-            fontFamily: isPrimary ? "var(--serif)" : "var(--sans)",
-            fontSize: isPrimary ? 22 : 16,
+            fontFamily: isPrimary || isImportant ? "var(--serif)" : "var(--sans)",
+            fontSize: isPrimary ? 22 : isImportant ? 18 : 16,
             lineHeight: 1.25,
             color: intention.done ? "var(--ink-3)" : "var(--ink)",
             textDecoration: intention.done ? "line-through" : "none",
@@ -443,12 +487,10 @@ function IntentionRow({ intention, isPrimary, focusMs, onToggle, onChange, onRem
             letterSpacing: isPrimary ? "-0.01em" : "0",
           }}
         />
-        {(focusMs > 0 || isPrimary) && (
-          <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
-            {isPrimary && <span style={{ color: accentColor, fontWeight: 500 }}>● {tr("principal")}</span>}
-            {focusMs > 0 && <span>{trf("{d} em foco", { d: fmtDuration(focusMs) })}</span>}
-          </div>
-        )}
+        <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 12, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
+          <PriorityChip priority={intention.priority} accentColor={accentColor} onClick={onCyclePriority}/>
+          {focusMs > 0 && <span>{trf("{d} em foco", { d: fmtDuration(focusMs) })}</span>}
+        </div>
       </div>
       <div style={{ display: "flex", gap: 4, opacity: hover ? 1 : 0, transition: "opacity 0.12s" }}>
         <button onClick={onStart} className="tap" title={tr("iniciar bloco com esta intenção")}

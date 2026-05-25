@@ -368,29 +368,53 @@ function InsightsSheet({ open, onClose, store, accentColor }) {
 
 // ─── Metas trimestrais (secção do Hoje) ─────────────────────
 function GoalsSection({ store, accentColor }) {
-  const { state, addGoal, toggleGoal, removeGoal } = store;
+  const { state, addGoal, updateGoal, toggleGoal, removeGoal, reorderGoals } = store;
   const goals = state.goals || [];
   const [q, setQ] = useState(quarterOf(Date.now()));
   const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [histOpen, setHistOpen] = useState(false);
 
-  const quarters = useMemo(() => {
-    const set = new Set(goals.map(g => g.quarter));
-    set.add(quarterOf(Date.now()));
-    return Array.from(set).sort().reverse();
-  }, [goals]);
-
+  const current = quarterOf(Date.now());
   const list = goals.filter(g => g.quarter === q);
   const done = list.filter(g => g.done).length;
+
+  const listIds = list.map(g => g.id);
+  const { dragId, start } = useDragReorder(listIds, (ids) => reorderGoals(q, ids));
+
+  const history = useMemo(() => {
+    const map = {};
+    goals.forEach(g => {
+      const m = map[g.quarter] || (map[g.quarter] = { total: 0, done: 0 });
+      m.total++; if (g.done) m.done++;
+    });
+    return Object.keys(map).sort().reverse().map(qk => ({ q: qk, ...map[qk] }));
+  }, [goals]);
 
   const commit = () => {
     if (text.trim()) { addGoal(text, q); haptic(8); }
     setText(""); setAdding(false);
   };
+  const startEdit = (g) => { setEditId(g.id); setEditText(g.text); };
+  const commitEdit = () => {
+    if (editId) { const t = editText.trim(); if (t) updateGoal(editId, { text: t }); }
+    setEditId(null); setEditText("");
+  };
+  const carryOver = (g) => { updateGoal(g.id, { quarter: nextQuarter(g.quarter) }); haptic(8); };
+
+  const navBtn = (onClick, children, title) => (
+    <button onClick={onClick} className="tap" title={title}
+      style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--rule)", background: "transparent",
+        color: "var(--ink-3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+      {children}
+    </button>
+  );
 
   return (
     <div style={{ marginTop: 32, padding: "20px 22px", background: "var(--paper-2)", borderRadius: 14, border: "1px solid var(--rule)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)" }}>
           {tr("Metas do trimestre")}
         </div>
@@ -398,16 +422,17 @@ function GoalsSection({ store, accentColor }) {
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>{done}/{list.length}</div>
         )}
       </div>
-      <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-        {quarters.map(qq => (
-          <button key={qq} onClick={() => setQ(qq)} className="tap" style={{
-            border: "1px solid " + (qq === q ? accentColor : "var(--rule)"),
-            background: qq === q ? `${accentColor}11` : "transparent",
-            color: qq === q ? accentColor : "var(--ink-3)",
-            borderRadius: 999, padding: "4px 10px",
-            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.06em", cursor: "pointer",
-          }}>{quarterLabel(qq).split(" · ")[0]}</button>
-        ))}
+
+      {/* Quarter navigator (free: past & future) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        {navBtn(() => setQ(prevQuarter(q)), <span style={{ display: "inline-flex", transform: "rotate(180deg)" }}><Icon.Chevron size={13}/></span>, tr("trimestre anterior"))}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <div style={{ fontFamily: "var(--serif)", fontSize: 16, color: "var(--ink)" }}>{quarterLabel(q).split(" · ")[0]}</div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em", color: "var(--ink-3)" }}>
+            {quarterLabel(q).split(" · ")[1]}{q === current ? " · " + tr("atual") : ""}
+          </div>
+        </div>
+        {navBtn(() => setQ(nextQuarter(q)), <Icon.Chevron size={13}/>, tr("trimestre seguinte"))}
       </div>
 
       {list.length === 0 && !adding && (
@@ -418,17 +443,37 @@ function GoalsSection({ store, accentColor }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {list.map(g => (
-          <div key={g.id} className="goal-row" style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
+          <div key={g.id} data-drag-id={g.id} className="goal-row"
+            style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 0", borderBottom: "1px solid var(--rule)",
+              background: dragId === g.id ? "var(--paper)" : "transparent", opacity: dragId === g.id ? 0.7 : 1,
+              borderRadius: dragId === g.id ? 10 : 0, transition: "background 0.12s" }}>
+            <button onPointerDown={(e) => start(e, g.id)} className="tap" title={tr("arrastar para reordenar")}
+              style={{ width: 20, alignSelf: "stretch", border: "none", background: "transparent", color: "var(--ink-4)",
+                display: "flex", alignItems: "center", justifyContent: "center", cursor: "grab", padding: 0, touchAction: "none", flexShrink: 0 }}>
+              <Icon.Grip size={12}/>
+            </button>
             <div style={{ paddingTop: 1 }}>
               <Check checked={g.done} onChange={() => { toggleGoal(g.id); haptic(8); }} size={20} accentColor={accentColor}/>
             </div>
-            <div style={{
-              flex: 1, fontFamily: "var(--serif)", fontSize: 16, lineHeight: 1.3,
-              color: g.done ? "var(--ink-3)" : "var(--ink)",
-              textDecoration: g.done ? "line-through" : "none", textDecorationColor: "var(--ink-3)",
-            }}>{g.text}</div>
+            {editId === g.id ? (
+              <input autoFocus value={editText} onChange={e => setEditText(e.target.value)} onBlur={commitEdit}
+                onKeyDown={e => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") { setEditId(null); setEditText(""); } }}
+                style={{ flex: 1, border: "none", borderBottom: "1px solid var(--rule)", background: "transparent", padding: "0 0 2px", fontSize: 16, color: "var(--ink)", fontFamily: "var(--serif)" }}/>
+            ) : (
+              <div onClick={() => startEdit(g)} title={tr("tocar para editar")} style={{
+                flex: 1, fontFamily: "var(--serif)", fontSize: 16, lineHeight: 1.3, cursor: "text",
+                color: g.done ? "var(--ink-3)" : "var(--ink)",
+                textDecoration: g.done ? "line-through" : "none", textDecorationColor: "var(--ink-3)",
+              }}>{g.text}</div>
+            )}
+            {!g.done && editId !== g.id && (
+              <button onClick={() => carryOver(g)} className="tap" title={trf("mover para {q}", { q: quarterLabel(nextQuarter(g.quarter)).split(" · ")[0] })}
+                style={{ border: "none", background: "transparent", color: "var(--ink-4)", cursor: "pointer", padding: 2, display: "flex" }}>
+                <Icon.Chevron size={13}/>
+              </button>
+            )}
             <button onClick={() => removeGoal(g.id)} className="tap" title={tr("remover")}
-              style={{ border: "none", background: "transparent", color: "var(--ink-4)", cursor: "pointer", padding: 2 }}>
+              style={{ border: "none", background: "transparent", color: "var(--ink-4)", cursor: "pointer", padding: 2, display: "flex" }}>
               <Icon.Trash size={13}/>
             </button>
           </div>
@@ -450,6 +495,36 @@ function GoalsSection({ store, accentColor }) {
           </div>
           {tr("adicionar meta")}
         </button>
+      )}
+
+      {/* Histórico de trimestres */}
+      {history.length > 0 && (
+        <div style={{ marginTop: 16, borderTop: "1px solid var(--rule)", paddingTop: 12 }}>
+          <button onClick={() => setHistOpen(o => !o)} className="tap"
+            style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 8,
+              fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)" }}>
+            <span style={{ display: "inline-flex", transform: histOpen ? "rotate(90deg)" : "none", transition: "transform 0.12s" }}><Icon.Chevron size={11}/></span>
+            {tr("Histórico")}
+          </button>
+          {histOpen && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 10 }}>
+              {history.map(h => (
+                <button key={h.q} onClick={() => { setQ(h.q); haptic(6); }} className="tap"
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+                    border: "none", background: h.q === q ? `${accentColor}11` : "transparent",
+                    borderRadius: 8, padding: "8px 10px", cursor: "pointer", textAlign: "left" }}>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: h.q === q ? accentColor : "var(--ink-2)" }}>
+                    {quarterLabel(h.q).split(" · ")[0]}{h.q === current ? " · " + tr("atual") : ""}
+                  </span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: h.done === h.total ? accentColor : "var(--ink-3)" }}>
+                    {trf("{d}/{t} cumpridas", { d: h.done, t: h.total })}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -63,6 +63,13 @@ const Icon = {
       <path d="M2 12L2.5 9.5L9 3L11 5L4.5 11.5L2 12Z"/>
     </svg>
   ),
+  Grip: (p) => (
+    <svg width={p.size||14} height={p.size||14} viewBox="0 0 14 14" fill="currentColor">
+      <circle cx="5" cy="3" r="1.1"/><circle cx="9" cy="3" r="1.1"/>
+      <circle cx="5" cy="7" r="1.1"/><circle cx="9" cy="7" r="1.1"/>
+      <circle cx="5" cy="11" r="1.1"/><circle cx="9" cy="11" r="1.1"/>
+    </svg>
+  ),
   Gear: (p) => (
     <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/>
@@ -317,4 +324,49 @@ function Check({ checked, onChange, size = 22, accentColor }) {
   );
 }
 
-Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check });
+// ─── Drag-to-reorder (pointer/touch) ───────────────────────
+// Reorders a vertical list of rows. Each row must carry a
+// data-drag-id={id} attribute; the drag handle calls start(e, id).
+// onReorder(orderedIds) fires live as the dragged row crosses others.
+function useDragReorder(ids, onReorder) {
+  const [dragId, setDragId] = useState(null);
+  const idsRef = useRef(ids);
+  idsRef.current = ids;
+
+  const start = (e, id) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.haptic) window.haptic(10);
+    setDragId(id);
+
+    const move = (ev) => {
+      const p = ev.touches ? ev.touches[0] : ev;
+      const el = document.elementFromPoint(p.clientX, p.clientY);
+      const row = el && el.closest && el.closest("[data-drag-id]");
+      if (!row) return;
+      const overId = row.getAttribute("data-drag-id");
+      if (!overId || overId === id) return;
+      const cur = idsRef.current.slice();
+      const from = cur.indexOf(id);
+      const to = cur.indexOf(overId);
+      if (from < 0 || to < 0 || from === to) return;
+      cur.splice(to, 0, cur.splice(from, 1)[0]);
+      onReorder(cur);
+    };
+    const end = () => {
+      setDragId(null);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      if (window.haptic) window.haptic(6);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  };
+
+  return { dragId, start };
+}
+
+Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder });
