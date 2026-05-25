@@ -11,7 +11,7 @@ const OUT = join(ROOT, "icons");
 mkdirSync(OUT, { recursive: true });
 
 const PAPER = [0xf5, 0xf1, 0xea];
-const TERRACOTTA = [0xb8, 0x53, 0x3a];
+const TERRACOTTA = [0x3d, 0x5a, 0x80]; // azul oceano #3D5A80 (era terracota #B8533A)
 
 // CRC32 + PNG chunk encoding
 const CRC_TABLE = (() => {
@@ -147,3 +147,11 @@ for (const t of targets) {
   writeFileSync(join(OUT, t.name), png);
   console.log("wrote", t.name, png.length, "bytes");
 }
+
+// resources/icon.png — fonte 1024×1024 usada por `npx @capacitor/assets generate`
+// para produzir os ic_launcher mipmap-* do Android APK.
+const RES = join(ROOT, "resources");
+mkdirSync(RES, { recursive: true });
+const resPng = drawIcon(1024, 0.14);
+writeFileSync(join(RES, "icon.png"), resPng);
+console.log("wrote resources/icon.png", resPng.length, "bytes");
