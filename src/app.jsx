@@ -414,8 +414,16 @@ function App() {
         accentColor={accentColor}/>
       {!prefs.onboardingSeen && (
         <OnboardingOverlay accentColor={accentColor}
+          store={store}
           onTab={setTab}
-          onDone={() => { store.setPref("onboardingSeen", true); setTab("hoje"); }}/>
+          onDone={(reset) => {
+            // The user can choose to keep what they created during the tour, or
+            // start clean. The clean path also wipes the demo seed silently
+            // (no confirm() prompt — that's reserved for the in-app reset).
+            if (reset) store.clearForOnboarding();
+            else store.setPref("onboardingSeen", true);
+            setTab("hoje");
+          }}/>
       )}
 
       <TweaksPanel title={tr("Tweaks")}>

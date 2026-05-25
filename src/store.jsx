@@ -1103,6 +1103,15 @@ function useStore() {
     }
   };
 
+  // Silent reset used at the end of the interactive onboarding when the user
+  // chooses "start fresh": wipes the demo seed and anything they created during
+  // the tour, then marks the tour as seen. No confirm() — the choice was just
+  // made on the outro screen.
+  const clearForOnboarding = () => setState(s => ({
+    ...emptyState(),
+    prefs: { ...s.prefs, onboardingSeen: true },
+  }));
+
   // ─ Backup ─
   const exportData = () => {
     const stamp = dayKeyOf(Date.now());
@@ -1139,7 +1148,7 @@ function useStore() {
     // goals
     addGoal, updateGoal, toggleGoal, removeGoal, reorderGoals,
     // misc
-    resetAll, reseed,
+    resetAll, reseed, clearForOnboarding,
     // backup
     exportData, importData,
   };

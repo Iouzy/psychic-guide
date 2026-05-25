@@ -9,277 +9,338 @@ function haptic(ms = 10) {
 }
 
 // ─── Onboarding (primeira abertura) ─────────────────────────
-// Tour guiado: o overlay conduz pelas tabs reais (esmaecidas por trás) e mostra,
-// em cada uma, um "exemplo fantasma" interativo. O fantasma vive só aqui — nunca
-// é escrito no store — por isso desaparece sem deixar rasto quando o tour acaba.
+// Tour com holofote: o overlay conduz pelas três tabs reais e, em cada uma,
+// escurece tudo menos o controlo verdadeiro (o botão de adicionar intenção,
+// começar um bloco, criar uma maré). O utilizador faz a ação a sério na app
+// — o que cria fica guardado — e o passo conclui-se sozinho quando o store
+// regista a mudança. No fim pode optar por manter o que criou ou começar do
+// zero (isto também limpa a seed de demonstração).
 
-// Moldura do exemplo: cartão claro, etiqueta "exemplo" e dica pulsante.
-function GhostFrame({ children, accentColor, hint, hintDone }) {
-  return (
-    <div style={{
-      position: "relative",
-      background: "var(--paper)",
-      border: "1px solid var(--rule)",
-      borderRadius: 16,
-      padding: "18px 18px 16px",
-      boxShadow: "0 18px 50px rgba(0,0,0,0.32)",
-    }}>
-      <div style={{
-        position: "absolute", top: -10, left: 16,
-        background: accentColor, color: "var(--on-dark)",
-        fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
-        textTransform: "uppercase", padding: "3px 9px", borderRadius: 6,
-      }}>{tr("exemplo")}</div>
-      {children}
-      {hint && (
-        <div style={{
-          marginTop: 13, paddingTop: 11, borderTop: "1px solid var(--rule)",
-          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.04em",
-          color: hintDone ? accentColor : "var(--ink-3)",
-          display: "flex", alignItems: "center", gap: 7,
-        }}>
-          {!hintDone && <span style={{
-            width: 6, height: 6, borderRadius: "50%", background: accentColor,
-            animation: "pulse 1.4s infinite", flexShrink: 0,
-          }}/>}
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
+// Cor do escurecimento. Mais opaco que o ghost antigo: queremos que o foco
+// caia mesmo no buraco e não na app por trás.
+const ONBOARDING_SCRIM = "rgba(8,6,4,0.62)";
 
-function GhostIntention({ accentColor }) {
-  const [done, setDone] = useState(false);
-  return (
-    <GhostFrame accentColor={accentColor} hintDone={done}
-      hint={done ? tr("feito — é assim que se risca uma intenção.") : tr("toque no círculo para marcar como feita")}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-        <div style={{ paddingTop: 2 }}>
-          <Check checked={done} onChange={() => { haptic(10); setDone(d => !d); }} accentColor={accentColor}/>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.2,
-            color: done ? "var(--ink-3)" : "var(--ink)",
-            textDecoration: done ? "line-through" : "none", textDecorationColor: "var(--ink-3)",
-          }}>{tr("Marcar consulta no dentista")}</div>
-          <div style={{
-            marginTop: 5, fontFamily: "var(--mono)", fontSize: 10,
-            letterSpacing: "0.06em", color: accentColor,
-          }}>{tr("principal")}</div>
-        </div>
-      </div>
-    </GhostFrame>
-  );
-}
+// Cantos ligeiramente arredondados à volta do buraco do holofote, mais largos
+// que o controlo para o anel respirar. Os 4 rects ficam justos a estas margens.
+const SPOTLIGHT_PADDING = 6;
+const SPOTLIGHT_RADIUS = 14;
 
-function GhostBlock({ accentColor }) {
-  const [running, setRunning] = useState(false);
-  const [secs, setSecs] = useState(0);
-  useEffect(() => {
-    if (!running) { setSecs(0); return; }
-    const id = setInterval(() => setSecs(s => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [running]);
-  const clock = `00:${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
-  return (
-    <GhostFrame accentColor={accentColor} hintDone={running}
-      hint={running ? tr("em foco — o tempo conta-se sozinho.") : tr("toque em iniciar para começar o bloco")}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
-            color: running ? accentColor : "var(--ink-3)", marginBottom: 5,
-          }}>{running ? tr("a decorrer") : tr("bloco de foco")}</div>
-          <div style={{ fontFamily: "var(--serif)", fontSize: 20, lineHeight: 1.15, color: "var(--ink)" }}>
-            {tr("Estudar 45 min para o teste")}
-          </div>
-          {running && (
-            <div style={{
-              marginTop: 7, fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-2)",
-              display: "flex", alignItems: "center", gap: 7,
-            }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: accentColor, animation: "pulse 1.2s infinite" }}/>
-              {clock}
-            </div>
-          )}
-        </div>
-        <button onClick={() => { haptic(10); setRunning(r => !r); }} className="tap"
-          style={{
-            width: 50, height: 50, borderRadius: "50%", border: "none", flexShrink: 0,
-            background: running ? "var(--paper-3)" : accentColor,
-            color: running ? "var(--ink)" : "var(--on-dark)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-          {running ? <Icon.Pause size={16}/> : <Icon.Play size={15}/>}
-        </button>
-      </div>
-    </GhostFrame>
-  );
-}
-
-function GhostHabit({ accentColor }) {
-  const [done, setDone] = useState(false);
-  const past = [1, 1, 0, 1, 1, 1]; // dias anteriores (cheio = feito)
-  return (
-    <GhostFrame accentColor={accentColor} hintDone={done}
-      hint={done ? tr("a maré sobe um dia. recuar é respirar.") : tr("toque no dia de hoje para marcar")}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-        <div style={{ fontFamily: "var(--serif)", fontSize: 20, color: "var(--ink)" }}>{tr("Beber água")}</div>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.06em", color: accentColor }}>
-          {trf("{n} dias", { n: done ? 6 : 5 })}
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 7 }}>
-        {past.map((v, i) => (
-          <span key={i} style={{
-            flex: 1, height: 28, borderRadius: 7,
-            background: v ? accentColor + "30" : "var(--paper-3)",
-            border: `1px solid ${v ? accentColor + "55" : "var(--rule)"}`,
-          }}/>
-        ))}
-        <button onClick={() => { haptic(10); setDone(d => !d); }} className="tap"
-          style={{
-            flex: 1, height: 28, borderRadius: 7, padding: 0,
-            background: done ? accentColor : "transparent",
-            border: `1.5px ${done ? "solid" : "dashed"} ${done ? accentColor : "var(--ink-3)"}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-          {done && <Icon.Check size={14} color="var(--paper)"/>}
-        </button>
-      </div>
-      <div style={{
-        marginTop: 7, textAlign: "right", fontFamily: "var(--mono)", fontSize: 9,
-        letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-4)",
-      }}>{tr("hoje")} ↑</div>
-    </GhostFrame>
-  );
-}
-
-function OnboardingOverlay({ onDone, accentColor, onTab }) {
-  const [step, setStep] = useState(0);
+function OnboardingOverlay({ onDone, accentColor, onTab, store }) {
+  const [stepIdx, setStepIdx] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  // rect do controlo destacado, em coordenadas locais do overlay.
+  const [rect, setRect] = useState(null);
+  // engaged: o utilizador tocou no controlo. O escurecimento desaparece quase
+  // todo para libertar a interação (sheet centrado, formulário inline, etc.).
+  const [engaged, setEngaged] = useState(false);
+  const overlayRef = useRef(null);
+  // baseline guardada à entrada de cada passo, para detetar "fez a ação agora"
+  // em vez de "já havia coisas no seed".
+  const baselineRef = useRef({ intentions: 0, blocks: 0, habits: 0, activeId: null });
 
   const steps = [
     {
       kind: "intro", tag: tr("bem-vindo"),
       title: <>{tr("Esta é a sua")} <em style={{ color: accentColor }}>{tr("pauta")}</em>.</>,
-      body: tr("Um lugar calmo para o que importa. Vou mostrar com um exemplo em cada separador — depois apaga-se e fica tudo seu."),
+      body: tr("Um lugar calmo para o que importa. Vamos conhecer as três tabs em três toques — na app a sério, sem exemplos."),
     },
     {
-      kind: "tour", tab: "hoje", ghost: "intention", tag: tr("hoje"),
+      kind: "tour", tab: "hoje", selector: '[data-tour="add-intention"]',
+      tag: tr("hoje"),
       title: tr("Comece pelo que importa."),
-      body: tr("Liste 1 a 4 intenções para o dia — coisas do dia-a-dia, grandes ou pequenas."),
+      body: tr("Toque para juntar uma intenção ao seu dia."),
+      detect: (s, b) => s.today.intentions.length > b.intentions,
     },
     {
-      kind: "tour", tab: "pauta", ghost: "block", tag: tr("foco"),
+      kind: "tour", tab: "pauta", selector: '[data-tour="start-block"]',
+      tag: tr("foco"),
       title: tr("Trabalhe em blocos."),
-      body: tr("Quando quiser dedicar tempo a algo, inicie um bloco de foco. O tempo conta-se por si."),
+      body: tr("Toque para começar um bloco de foco. O tempo conta-se por si."),
+      detect: (s, b) => s.activeId !== null || s.blocks.length > b.blocks,
     },
     {
-      kind: "tour", tab: "mares", ghost: "habit", tag: tr("marés"),
+      kind: "tour", tab: "mares", selector: '[data-tour="add-habit"]',
+      tag: tr("marés"),
       title: tr("Cultive hábitos."),
-      body: tr("Hábitos que sobem como a maré. Um dia falhado faz recuar — um respiro honesto, não."),
+      body: tr("Toque para criar a sua primeira maré."),
+      detect: (s, b) => s.habits.length > b.habits,
     },
     {
       kind: "outro", tag: tr("pronto"),
       title: <>{tr("Tudo")} <em style={{ color: accentColor }}>{tr("seu")}</em>.</>,
-      body: tr("O exemplo desaparece e fica uma pauta em branco. Comece quando quiser — sem pontos, sem pressão."),
+      body: tr("Quer manter o que criou agora ou começar com uma pauta em branco?"),
     },
   ];
-  const s = steps[step];
-  const last = step === steps.length - 1;
+  const s = steps[stepIdx];
+  const last = stepIdx === steps.length - 1;
   const isTour = s.kind === "tour";
 
-  // Conduz a tab real por trás do overlay.
-  useEffect(() => { if (s.tab && onTab) onTab(s.tab); }, [step]);
+  // Conduz a tab real por trás do overlay e captura a baseline do store ao
+  // entrar num passo de tour, para distinguir o que o utilizador faz agora do
+  // que já lá estava (seed). Também reseta `engaged` para que o escurecimento
+  // volte a aparecer no novo controlo.
+  useEffect(() => {
+    if (s.tab && onTab) onTab(s.tab);
+    if (isTour) {
+      const cur = store.state;
+      baselineRef.current = {
+        intentions: cur.today.intentions.length,
+        blocks: cur.blocks.length,
+        habits: cur.habits.length,
+        activeId: cur.activeId,
+      };
+      setEngaged(false);
+      setRect(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIdx]);
 
-  const finish = () => {
+  // Conclusão: avalia-se em cada render. Como o overlay recebe um `store` novo
+  // sempre que o estado muda (App re-renderiza), este boolean atualiza-se
+  // automaticamente sem precisar de subscrição.
+  const completed = isTour && s.detect && s.detect(store.state, baselineRef.current);
+
+  // Mede o controlo destacado num loop de requestAnimationFrame — o conteúdo
+  // pode estar a fazer scroll/animar e o holofote tem de seguir. Só atualiza
+  // o state se algum dos números mudou (evita re-renders inúteis).
+  useEffect(() => {
+    if (!isTour) { setRect(null); return; }
+    let raf;
+    const tick = () => {
+      const el = document.querySelector(s.selector);
+      const container = overlayRef.current;
+      if (el && container) {
+        const r = el.getBoundingClientRect();
+        const cr = container.getBoundingClientRect();
+        const next = {
+          x: Math.round(r.left - cr.left),
+          y: Math.round(r.top - cr.top),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+        };
+        setRect(prev => {
+          if (prev && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h) return prev;
+          return next;
+        });
+      } else {
+        setRect(prev => prev == null ? prev : null);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [stepIdx, isTour, s.selector]);
+
+  // Aproxima o controlo do centro ecrã ao entrar no passo.
+  useEffect(() => {
+    if (!isTour) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(s.selector);
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [stepIdx, isTour, s.selector]);
+
+  // Quando o utilizador toca no controlo destacado, ativamos `engaged` para
+  // libertar toda a interação (o sheet do bloco está em zIndex 100, e o
+  // formulário inline da maré fica no sítio do botão). Usamos captura para
+  // apanhar o toque antes de qualquer outro handler — mas NÃO chamamos
+  // stopPropagation: o clique tem mesmo de chegar ao botão real.
+  useEffect(() => {
+    if (!isTour) return;
+    const onDown = (e) => {
+      const el = document.querySelector(s.selector);
+      if (el && e.target && el.contains(e.target)) setEngaged(true);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [stepIdx, isTour, s.selector]);
+
+  const goNext = () => { haptic(8); setStepIdx(i => i + 1); };
+  const finish = (reset) => {
     setLeaving(true);
-    setTimeout(() => onDone && onDone(), 300);
+    setTimeout(() => onDone && onDone(reset), 300);
   };
-  const next = () => { haptic(8); last ? finish() : setStep(step + 1); };
 
-  const ghost = s.ghost === "intention" ? <GhostIntention accentColor={accentColor}/>
-    : s.ghost === "block" ? <GhostBlock accentColor={accentColor}/>
-    : s.ghost === "habit" ? <GhostHabit accentColor={accentColor}/>
-    : null;
+  // Durante o tour ficamos abaixo do Sheet (zIndex 100). No intro/outro
+  // subimos para 400 para cobrir os tabs e os sheets eventualmente abertos.
+  const overlayZ = isTour ? 90 : 400;
+
+  // Card de explicação (tag + título + corpo). É a "lapela" que aparece
+  // perto do buraco do holofote — escolhe-se em cima ou em baixo do controlo
+  // consoante haja mais espaço. Não recebe pointer events para não bloquear o
+  // controlo destacado mesmo que se sobreponha por engano.
+  const renderTourCard = () => {
+    if (!isTour || !rect) return null;
+    const containerH = overlayRef.current ? overlayRef.current.getBoundingClientRect().height : 600;
+    const above = rect.y > containerH - (rect.y + rect.h);
+    const cardStyle = above
+      ? { bottom: containerH - rect.y + 18 }
+      : { top: rect.y + rect.h + 18 };
+    return (
+      <div style={{
+        position: "absolute", left: 20, right: 20, ...cardStyle,
+        background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: 14,
+        padding: "14px 16px", boxShadow: "0 14px 38px rgba(0,0,0,0.32)",
+        opacity: engaged ? 0 : 1, transition: "opacity 0.18s ease",
+        pointerEvents: "none",
+      }}>
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: accentColor, marginBottom: 6,
+        }}>{s.tag}</div>
+        <div style={{
+          fontFamily: "var(--serif)", fontSize: 21, lineHeight: 1.15,
+          color: "var(--ink)", fontWeight: 400, letterSpacing: "-0.01em",
+        }}>{s.title}</div>
+        <div style={{
+          fontFamily: "var(--serif)", fontSize: 14, lineHeight: 1.45,
+          color: "var(--ink-2)", marginTop: 8,
+        }}>{s.body}</div>
+      </div>
+    );
+  };
+
+  // O escurecimento é desenhado com quatro rectângulos à volta do buraco. Cada
+  // um vai a 0 de pointer-events quando `engaged` é true: o utilizador está
+  // dentro do sheet/formulário e o cenário só serve para mostrar o caminho.
+  const renderScrim = () => {
+    if (!isTour) return null;
+    const dim = engaged ? 0.12 : 1;
+    const pe = engaged ? "none" : "auto";
+    const base = {
+      position: "absolute", background: ONBOARDING_SCRIM, pointerEvents: pe,
+      opacity: dim, transition: "opacity 0.2s ease",
+    };
+    if (!rect) {
+      // Sem alvo ainda: cobre tudo (o passo acabou de começar, evita ver a app
+      // a piscar antes do botão aparecer).
+      return <div style={{ ...base, inset: 0 }}/>;
+    }
+    return (
+      <>
+        <div style={{ ...base, left: 0, top: 0, right: 0, height: Math.max(0, rect.y - SPOTLIGHT_PADDING) }}/>
+        <div style={{ ...base, left: 0, top: rect.y + rect.h + SPOTLIGHT_PADDING, right: 0, bottom: 0 }}/>
+        <div style={{ ...base, left: 0, top: rect.y - SPOTLIGHT_PADDING, width: Math.max(0, rect.x - SPOTLIGHT_PADDING), height: rect.h + 2 * SPOTLIGHT_PADDING }}/>
+        <div style={{ ...base, left: rect.x + rect.w + SPOTLIGHT_PADDING, top: rect.y - SPOTLIGHT_PADDING, right: 0, height: rect.h + 2 * SPOTLIGHT_PADDING }}/>
+        {/* Anel à volta do buraco (não-interativo, não bloqueia toques) */}
+        <div style={{
+          position: "absolute",
+          left: rect.x - SPOTLIGHT_PADDING, top: rect.y - SPOTLIGHT_PADDING,
+          width: rect.w + 2 * SPOTLIGHT_PADDING, height: rect.h + 2 * SPOTLIGHT_PADDING,
+          borderRadius: SPOTLIGHT_RADIUS,
+          boxShadow: `0 0 0 2px ${accentColor}, 0 0 0 6px ${accentColor}33`,
+          pointerEvents: "none",
+          opacity: engaged ? 0 : 1,
+          transition: "opacity 0.2s ease",
+        }}/>
+      </>
+    );
+  };
+
+  // Seta à direita, centrada verticalmente, que aparece quando o passo está
+  // concluído. Avança para o próximo passo da lista.
+  const renderArrow = () => {
+    if (!isTour || !completed) return null;
+    return (
+      <button onClick={goNext} className="tap" style={{
+        position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+        width: 56, height: 56, borderRadius: "50%", border: "none",
+        background: accentColor, color: "var(--on-dark)", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 10px 24px rgba(0,0,0,0.38)",
+        animation: "fadeIn 0.3s ease",
+        zIndex: 6,
+      }} aria-label={tr("Próximo")}>
+        <Icon.Chevron size={22}/>
+      </button>
+    );
+  };
+
+  // Ecrã de boas-vindas e ecrã final partilham este layout cheio (papel sólido).
+  const renderFullScreen = () => (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px" }}>
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
+        textTransform: "uppercase", color: accentColor, marginBottom: 14,
+      }}>{s.tag}</div>
+      <h1 style={{
+        fontFamily: "var(--serif)", fontSize: 40, lineHeight: 1.05,
+        margin: 0, fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
+      }}>{s.title}</h1>
+      <p style={{
+        fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
+        color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
+      }}>{s.body}</p>
+    </div>
+  );
+
+  // Footer comum: pontinhos de progresso + ações.
+  // - Intro: botão "Começar" (e ainda "saltar" do lado, como hoje).
+  // - Outro: duas escolhas — "Manter tudo" / "Começar do zero".
+  // - Tour: barra invisível (footer está vazio; a seta vive sobre o ecrã).
+  const renderFooter = () => (
+    <div style={{ padding: "0 32px 40px", flexShrink: 0 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+        {steps.map((_, i) => (
+          <div key={i} style={{
+            height: 3, flex: 1, borderRadius: 2,
+            background: i <= stepIdx ? accentColor : (isTour ? "rgba(255,255,255,0.35)" : "var(--rule)"),
+            transition: "background 0.2s",
+          }}/>
+        ))}
+      </div>
+      {s.kind === "intro" && (
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={() => finish(false)} className="tap" style={{
+            background: "transparent", border: "none", padding: "12px 0",
+            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: "var(--ink-3)", cursor: "pointer",
+          }}>{tr("saltar")}</button>
+          <Button onClick={goNext} accentColor={accentColor} style={{ flex: 1 }}>
+            {tr("Começar")}
+          </Button>
+        </div>
+      )}
+      {s.kind === "outro" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Button onClick={() => finish(false)} accentColor={accentColor}>
+            {tr("Manter tudo")}
+          </Button>
+          <button onClick={() => finish(true)} className="tap" style={{
+            background: "transparent", border: "1px solid var(--rule)",
+            borderRadius: 10, padding: "12px 14px", cursor: "pointer",
+            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: "var(--ink-2)",
+          }}>{tr("Começar do zero")}</button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div style={{
-      position: "absolute", inset: 0, zIndex: 400,
+    <div ref={overlayRef} data-noswipe="true" style={{
+      position: "absolute", inset: 0, zIndex: overlayZ,
       display: "flex", flexDirection: "column",
-      // Tour: scrim translúcido — a tab real fica visível (esmaecida) por trás.
-      // Intro/outro: papel sólido para um ecrã de boas-vindas limpo.
-      background: isTour ? "rgba(8,6,4,0.34)" : "var(--paper)",
-      backdropFilter: isTour ? "blur(1.5px)" : "none",
-      WebkitBackdropFilter: isTour ? "blur(1.5px)" : "none",
+      // Intro/outro: papel sólido (ecrã cheio). Tour: transparente — quem dá
+      // cor são os 4 rects do escurecimento, que escapam ao buraco.
+      background: isTour ? "transparent" : "var(--paper)",
+      // Não consumir toques quando estamos no tour e sem rect (estado fugaz):
+      // deixamos o overlay activo para evitar cliques na app antes do scrim.
+      pointerEvents: "auto",
       animation: leaving ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
     }}>
       {isTour ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "56px 24px 0", minHeight: 0 }}>
-          <div style={{
-            background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: 16,
-            padding: "16px 18px", boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
-          }}>
-            <div style={{
-              fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
-              textTransform: "uppercase", color: accentColor, marginBottom: 8,
-            }}>{s.tag}</div>
-            <h1 style={{
-              fontFamily: "var(--serif)", fontSize: 25, lineHeight: 1.1,
-              margin: 0, fontWeight: 400, letterSpacing: "-0.01em", color: "var(--ink)",
-            }}>{s.title}</h1>
-            <p style={{
-              fontFamily: "var(--serif)", fontSize: 15, lineHeight: 1.45,
-              color: "var(--ink-2)", margin: "10px 0 0",
-            }}>{s.body}</p>
-          </div>
-          <div style={{ flex: 0.7 }}/>
-          {ghost}
-          <div style={{ flex: 1 }}/>
-        </div>
+        <>
+          {renderScrim()}
+          {renderTourCard()}
+          {renderArrow()}
+        </>
       ) : (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px" }}>
-          <div style={{
-            fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
-            textTransform: "uppercase", color: accentColor, marginBottom: 14,
-          }}>{s.tag}</div>
-          <h1 style={{
-            fontFamily: "var(--serif)", fontSize: 40, lineHeight: 1.05,
-            margin: 0, fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
-          }}>{s.title}</h1>
-          <p style={{
-            fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
-            color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
-          }}>{s.body}</p>
-        </div>
+        renderFullScreen()
       )}
 
-      <div style={{ padding: "0 32px 40px", flexShrink: 0 }}>
-        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {steps.map((_, i) => (
-            <div key={i} style={{
-              height: 3, flex: 1, borderRadius: 2,
-              background: i <= step ? accentColor : (isTour ? "rgba(255,255,255,0.25)" : "var(--rule)"),
-              transition: "background 0.2s",
-            }}/>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {!last && (
-            <button onClick={finish} className="tap" style={{
-              background: "transparent", border: "none", padding: "12px 0",
-              fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
-              textTransform: "uppercase", color: isTour ? "var(--on-dark-2)" : "var(--ink-3)", cursor: "pointer",
-            }}>{tr("saltar")}</button>
-          )}
-          <Button onClick={next} accentColor={accentColor} style={{ flex: 1 }}>
-            {last ? tr("Começar") : tr("Continuar")}
-          </Button>
-        </div>
-      </div>
+      {!isTour && renderFooter()}
     </div>
   );
 }
