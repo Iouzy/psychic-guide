@@ -23,14 +23,9 @@ const LOCAL_ASSETS = [
   "./src/tab-mares.jsx",
   "./src/mares-sheets.jsx",
   "./src/app.jsx",
-];
-
-// Third-party runtime deps. Best-effort during install (a flaky CDN shouldn't
-// block activation); they also get cached on first fetch below.
-const CDN_ASSETS = [
-  "https://unpkg.com/react@18.3.1/umd/react.development.js",
-  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js",
-  "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js",
+  "./vendor/react.development.js",
+  "./vendor/react-dom.development.js",
+  "./vendor/babel.min.js",
 ];
 
 self.addEventListener("install", (event) => {
@@ -38,7 +33,6 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_VERSION);
       await cache.addAll(LOCAL_ASSETS.map((u) => new Request(u, { cache: "reload" })));
-      await Promise.allSettled(CDN_ASSETS.map((u) => cache.add(u)));
       self.skipWaiting();
     })()
   );

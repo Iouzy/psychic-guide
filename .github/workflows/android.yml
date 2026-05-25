@@ -1,0 +1,75 @@
+name: Build Android APK
+
+# Builds an installable .apk on every push and publishes it as a rolling
+# "latest" GitHub Release, so you never need Android Studio locally.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Assemble web bundle
+        run: npm run build:web
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Generate app icon from icons/icon-512.png
+        continue-on-error: true
+        run: |
+          mkdir -p resources
+          cp icons/icon-512.png resources/icon.png
+          npx @capacitor/assets generate --android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Use stable debug keystore (so app updates keep your data)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Stage APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk pauta.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pauta-apk
+          path: pauta.apk
+
+      - name: Publish to rolling "latest" Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Pauta (latest build)
+          body: Automatically built Android APK. Download pauta.apk below and install it on your phone.
+          files: pauta.apk
+          fail_on_unmatched_files: true
