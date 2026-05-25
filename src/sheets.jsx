@@ -162,7 +162,7 @@ function PauseSheet({ open, onClose, block, onConfirm, confirmLabel }) {
 }
 
 // ─── CONCLUDE SHEET ───────────────────────────────────────
-function ConcludeSheet({ open, onClose, block, intention, onConfirm, accentColor }) {
+function ConcludeSheet({ open, onClose, block, intention, onConfirm, accentColor, cancelLabel }) {
   const [reflection, setReflection] = useState("");
   const [markDone, setMarkDone] = useState(true);
   useEffect(() => {
@@ -222,7 +222,7 @@ function ConcludeSheet({ open, onClose, block, intention, onConfirm, accentColor
         )}
 
         <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{cancelLabel || tr("Cancelar")}</Button>
           <Button onClick={() => onConfirm(reflection, markDone)} accentColor={accentColor} style={{ flex: 2 }}>
             {tr("Concluir")}
           </Button>

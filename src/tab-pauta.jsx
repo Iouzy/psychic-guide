@@ -147,7 +147,12 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
                 if (id) { pauseActive(""); setSheetPause(id); }
               }}
             onSwitch={() => setSheetSwitch(true)}
-            onConclude={() => setSheetConclude({ blockId: activeBlock.id })}
+            onConclude={() => {
+                // Optimistic conclude: stop timer immediately on first tap.
+                // ConcludeSheet opens for optional reflection; cancelling resumes the block.
+                const id = activeBlock?.id;
+                if (id) { concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }
+              }}
             onCancel={() => {
               if (confirm(tr("Descartar este bloco? Não fica guardado."))) {
                 deleteBlock(activeBlock.id);
@@ -248,19 +253,24 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         confirmLabel={tr("Confirmar")}
       />
       <ConcludeSheet
-        open={!!sheetConclude} onClose={() => setSheetConclude(null)}
+        open={!!sheetConclude}
+        onClose={() => {
+          // Cancel = mis-click on an active block → resume the timer.
+          // For paused blocks just close (they stay paused as before).
+          if (sheetConclude?.wasActive) resumeBlock(sheetConclude.blockId);
+          setSheetConclude(null);
+        }}
         block={sheetConclude && blocks.find(b => b.id === sheetConclude.blockId)}
         intention={sheetConclude && (() => {
           const b = blocks.find(b => b.id === sheetConclude.blockId);
           return b && b.linkedToId && intentionById[b.linkedToId];
         })()}
         onConfirm={(reflection, markDone) => {
-          if (sheetConclude.blockId === activeBlock?.id) {
-            handleConcludeActive(reflection, markDone);
-          } else {
-            handleConcludeBlock(sheetConclude.blockId, reflection, markDone);
-          }
+          // After optimistic conclude activeBlock is null, so always route through
+          // handleConcludeBlock which correctly saves reflection + intention.
+          handleConcludeBlock(sheetConclude.blockId, reflection, markDone);
         }}
+        cancelLabel={sheetConclude?.wasActive ? tr("Retomar") : undefined}
         accentColor={accentColor}
       />
       <SwitchSheet
@@ -268,7 +278,11 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         intentions={today.intentions}
         currentBlock={activeBlock}
         onPick={handleSwitch}
-        onConcludeFirst={() => { setSheetSwitch(false); setSheetConclude({ blockId: activeBlock.id }); }}
+        onConcludeFirst={() => {
+          setSheetSwitch(false);
+          const id = activeBlock?.id;
+          if (id) { concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }
+        }}
         accentColor={accentColor}
       />
       <EditBlockSheet
