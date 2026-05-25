@@ -81,6 +81,17 @@ const I18N_EN = {
   "Hoje · Pauta · Marés": "Today · Pauta · Tides",
   "Código-fonte e instruções:": "Source code and instructions:",
 
+  // ─── Update checker ───
+  "Verificar atualizações": "Check for updates",
+  "A verificar…": "Checking…",
+  "Está atualizado.": "Up to date.",
+  "Atualização disponível.": "Update available.",
+  "Transferir nova versão": "Download new version",
+  "Não foi possível verificar atualizações.": "Could not check for updates.",
+  "Sem APK disponível no repositório.": "No APK available in the repository.",
+  "Versão atual: build {n}": "Current version: build {n}",
+  "Versão de desenvolvimento.": "Development build.",
+
   // ─── Tweaks panel ───
   "Cor de destaque": "Accent colour",
   "Acento": "Accent",

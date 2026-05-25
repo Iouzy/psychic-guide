@@ -47,6 +47,92 @@ function PrefToggle({ label, sub, value, onChange, accentColor }) {
   );
 }
 
+// ─── UPDATE CHECKER ─────────────────────────────────────────
+// Queries the GitHub Releases API for the rolling "latest" tag and compares
+// its publication time against the build stamp injected at build time. When a
+// newer APK is available the user can tap to download it via the system
+// browser, which fixes the "package conflicts with an existing package" loop
+// some users hit when sideloading APKs through Firefox on MIUI.
+function UpdateChecker({ accentColor }) {
+  const build = window.PAUTA_BUILD || { ts: 0, run: 0 };
+  const repo  = window.PAUTA_REPO  || "Iouzy/psychic-guide";
+  const [state, setState] = useState({ kind: "idle" });
+
+  const check = async () => {
+    setState({ kind: "checking" });
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repo}/releases/tags/latest`, {
+        headers: { Accept: "application/vnd.github+json" },
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      const releasedAt = j.published_at ? Math.floor(new Date(j.published_at).getTime() / 1000) : 0;
+      const apk = (j.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+      if (!apk) { setState({ kind: "err", text: tr("Sem APK disponível no repositório.") }); return; }
+      // build.ts === 0 in local dev / sideloaded APKs without a stamp — treat
+      // every release as newer so the user can always pull the freshest APK.
+      if (build.ts > 0 && releasedAt > 0 && releasedAt <= build.ts) {
+        setState({ kind: "uptodate" });
+      } else {
+        setState({ kind: "available", url: apk.browser_download_url, releasedAt });
+      }
+    } catch (e) {
+      setState({ kind: "err", text: tr("Não foi possível verificar atualizações.") });
+    }
+  };
+
+  const buildLabel = build.run > 0
+    ? trf("Versão atual: build {n}", { n: build.run })
+    : tr("Versão de desenvolvimento.");
+
+  let subtitle = buildLabel;
+  let status = null;
+  if (state.kind === "checking") subtitle = tr("A verificar…");
+  else if (state.kind === "uptodate") { subtitle = tr("Está atualizado."); status = "ok"; }
+  else if (state.kind === "available") { subtitle = tr("Atualização disponível."); status = "ok"; }
+  else if (state.kind === "err") { subtitle = state.text; status = "err"; }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <button onClick={check} className="tap"
+        disabled={state.kind === "checking"}
+        style={{
+          display: "flex", alignItems: "center", gap: 14, width: "100%",
+          textAlign: "left", background: "var(--paper-2)",
+          border: "1px solid var(--rule)", borderRadius: 12,
+          padding: "13px 14px", cursor: "pointer", color: "var(--ink)",
+        }}>
+        <span style={{
+          flexShrink: 0, width: 34, height: 34, borderRadius: 9,
+          background: "var(--paper-3)", color: "var(--ink-2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}><Icon.Download size={16}/></span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 15, fontWeight: 500, color: "var(--ink)", lineHeight: 1.2 }}>
+            {tr("Verificar atualizações")}
+          </span>
+          <span style={{
+            display: "block", fontSize: 12.5, marginTop: 2, lineHeight: 1.3,
+            color: status === "err" ? "var(--accent)" : status === "ok" ? "var(--good)" : "var(--ink-3)",
+          }}>{subtitle}</span>
+        </span>
+        <Icon.Chevron size={14}/>
+      </button>
+      {state.kind === "available" && (
+        <button onClick={() => window.open(state.url, "_blank")} className="tap"
+          style={{
+            background: accentColor, color: "var(--on-dark)", border: "none",
+            borderRadius: 12, padding: "12px 14px", cursor: "pointer",
+            fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}>
+          {tr("Transferir nova versão")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── DATA / SETTINGS SHEET ──────────────────────────────────
 // User-facing home for analysis, preferences, reminders, backup, install, reset.
 function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTierGuide }) {
@@ -80,6 +166,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
     (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
     window.navigator.standalone === true;
   const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
   useEffect(() => {
     const onAvail = () => setCanInstall(true);
@@ -230,7 +317,13 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             onChange={onFileChosen} style={{ display: "none" }}/>
         </DataGroup>
 
-        {!isStandalone && (
+        {isNative && (
+          <DataGroup label={tr("Aplicação")} icon={<Icon.Download size={13}/>}>
+            <UpdateChecker accentColor={accentColor}/>
+          </DataGroup>
+        )}
+
+        {!isStandalone && !isNative && (
           <DataGroup label={tr("Instalar")} icon={<Icon.Plus size={13}/>}>
             {canInstall && (
               <DataAction icon={<Icon.Plus size={16}/>} accentColor={accentColor}
