@@ -89,15 +89,12 @@ const Icon = {
 };
 
 // ─── Status bar ─────────────────────────────────────────────
-function StatusBar({ time, onMenu }) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(id);
-  }, []);
+function StatusBar({ onMenu }) {
+  // The clock used to live here, but a mock time in the corner added no real
+  // value over the device's own status bar — so the row now only holds the
+  // settings affordance, pushed to the right.
   return (
-    <div className="statusbar">
-      <span>{fmtClock(time || now)}</span>
+    <div className="statusbar" style={{ justifyContent: "flex-end" }}>
       {onMenu && (
         <button onClick={onMenu} className="tap" aria-label={tr("Definições")} title={tr("Definições")}
           style={{

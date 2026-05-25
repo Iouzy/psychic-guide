@@ -4,7 +4,7 @@
 //   hábitos com recorrência (permanente / período / mês único).
 
 function TabMares({ store, accentColor }) {
-  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit, incHabitDay, setHabitCount } = store;
+  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit, reorderHabits, incHabitDay, setHabitCount } = store;
   const { habits } = state;
 
   const now = useNow(60000, true);
@@ -30,6 +30,11 @@ function TabMares({ store, accentColor }) {
   const homePhrase = useMemo(() => pickHomePhrase(habits, now), [habits, now]);
 
   const isCurrentMonth = view.y === todayD.getFullYear() && view.m === todayD.getMonth();
+
+  // Drag-to-reorder the visible tides. Reordering reflows the global habit list
+  // (hidden habits keep their slots), so it works the same in any month view.
+  const visibleIds = useMemo(() => visibleHabits.map(h => h.id), [visibleHabits]);
+  const { dragId, start: startDrag } = useDragReorder(visibleIds, reorderHabits);
 
   return (
     <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "8px 0 30px", position: "relative", zIndex: 1 }}>
@@ -115,6 +120,9 @@ function TabMares({ store, accentColor }) {
               monthIdx={view.m}
               todayTs={now}
               accentColor={accentColor}
+              draggable={visibleHabits.length > 1}
+              dragging={dragId === h.id}
+              onDragStart={(e) => startDrag(e, h.id)}
               onToggleDay={(k) => toggleHabitDay(h.id, k)}
               onIncDay={(k) => incHabitDay(h.id, k)}
               onLongPressEmpty={(dayKey, anchorRect) => setRespiroAt({ habitId: h.id, dayKey, anchorRect })}
@@ -442,6 +450,7 @@ function RespiroPattern({ color, small }) {
 
 // ─── Habit row (month grid) ─────────────────────────────────
 function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
+  draggable, dragging, onDragStart,
   onToggleDay, onIncDay, onLongPressEmpty, onUnmarkRespiro, onOpenDetail, onRemove, onUpdate }) {
   const [hover, setHover] = useState(false);
   const [tooltip, setTooltip] = useState(null);
@@ -451,12 +460,14 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   const todayKey = dayKeyOf(todayTs);
   const createdKey = habitCreatedKey(habit);
   const habitEnd = habitEndKey(habit);
-  const isCount = !!habit.target;
+  const cadence = habitCadence(habit);
+  const isCount = !!habit.target && cadence === "daily";  // counts only apply to daily tides
   const todayCount = (habit.counts && habit.counts[todayKey]) || 0;
 
   const pct = habitPctInMonth(habit, year, monthIdx, todayTs);
   const obs = habitDaysObservedInMonth(habit, year, monthIdx, todayTs) - habitRespirosInMonth(habit, year, monthIdx, todayTs);
-  const isMature = obs >= HABIT_MATURITY_DAYS;
+  const maturityTotal = habitMaturityUnits(habit);
+  const isMature = obs >= maturityTotal;
 
   const isCurrentMonth = year === todayD.getFullYear() && monthIdx === todayD.getMonth();
   const streak = isCurrentMonth ? habitCurrentStreak(habit, todayTs) : { days: 0, respiros: 0 };
@@ -470,6 +481,14 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
       if (key > todayKey) state = "future";
       else if (key < createdKey) state = "pre";
       else if (habitEnd && key > habitEnd) state = "after";
+      else if (cadence !== "daily") {
+        // Weekly/monthly: one completion per period; the rest of the period is
+        // locked. For fixed-day tides only the designated day is completable.
+        const mark = habitPeriodMark(habit, key);
+        if (mark.kind === "done") state = mark.key === key ? "done" : "locked";
+        else if (mark.kind === "respiro") state = mark.key === key ? "respiro" : "locked";
+        else state = habitIsAnchorDay(habit, key) ? "empty" : "locked";
+      }
       else if (habit.log && habit.log[key]) state = "done";
       else if (habit.respiros && habit.respiros[key]) state = "respiro";
       else if (isCount && habit.counts && habit.counts[key] > 0) state = "partial";
@@ -479,11 +498,33 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
       out.push({ d, key, state, isToday, count });
     }
     return out;
-  }, [habit, year, monthIdx, ndays, todayKey, createdKey, habitEnd, isCount]);
+  }, [habit, year, monthIdx, ndays, todayKey, createdKey, habitEnd, isCount, cadence]);
 
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setTooltip(null); }}>
+    <div
+      data-drag-id={habit.id}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setTooltip(null); }}
+      style={{
+        background: dragging ? "var(--paper-2)" : "transparent",
+        opacity: dragging ? 0.75 : 1,
+        borderRadius: dragging ? 12 : 0,
+        boxShadow: dragging ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
+        padding: dragging ? "8px 10px" : 0,
+        margin: dragging ? "-8px -10px" : 0,
+        transition: "background 0.12s, box-shadow 0.12s",
+      }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 10 }}>
+        {draggable && (
+          <button onPointerDown={onDragStart} className="tap" title={tr("arrastar para reordenar")}
+            aria-label={tr("arrastar para reordenar")}
+            style={{
+              width: 20, alignSelf: "stretch", border: "none", background: "transparent",
+              color: "var(--ink-4)", display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "grab", padding: 0, touchAction: "none", flexShrink: 0, marginLeft: -4,
+            }}>
+            <Icon.Grip size={13}/>
+          </button>
+        )}
         <button
           onClick={onOpenDetail}
           className="tap"
@@ -529,7 +570,9 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
                 </div>
                 {!isMature && (
                   <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>
-                    {trf("dia {obs}/{total}", { obs, total: HABIT_MATURITY_DAYS })}
+                    {cadence === "weekly" ? trf("semana {obs}/{total}", { obs, total: maturityTotal })
+                      : cadence === "monthly" ? trf("mês {obs}/{total}", { obs, total: maturityTotal })
+                      : trf("dia {obs}/{total}", { obs, total: maturityTotal })}
                   </div>
                 )}
                 {isMature && streak.days >= 1 && (
@@ -598,8 +641,9 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             {fmtDateShort(tsFromDayKey(tooltip.key))}
             {tooltip.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · " + tr("feito"))}
             {tooltip.state === "partial" && ` · ${tooltip.count}/${habit.target}`}
-            {tooltip.state === "empty" && " · " + tr("não feito")}
+            {tooltip.state === "empty" && " · " + tr(cadence === "daily" ? "não feito" : "por fazer")}
             {tooltip.state === "respiro" && " · " + tr("respiro")}
+            {tooltip.state === "locked" && " · " + tr("coberto pela maré")}
             {tooltip.state === "pre" && " · " + tr("antes da maré")}
             {tooltip.state === "after" && " · " + tr("maré já terminou")}
             {tooltip.state === "future" && " · " + tr("ainda não")}
@@ -686,6 +730,7 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
           day.state === "pre" ? "1px solid var(--ink-3)" :
           day.state === "after" ? "1px solid var(--rule)" :
           day.state === "future" ? "1px dashed var(--rule)" :
+          day.state === "locked" ? "1px solid var(--rule)" :
           isRespiro ? "1px solid var(--ink-3)" :
           isPartial ? "1px solid var(--ink-3)" :
           "none",
@@ -693,7 +738,8 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
         opacity:
           day.state === "future" ? 0.45 :
           day.state === "pre" ? 0.55 :
-          day.state === "after" ? 0.35 : 1,
+          day.state === "after" ? 0.35 :
+          day.state === "locked" ? 0.3 : 1,
         cursor: clickable ? "pointer" : "default",
         position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -813,6 +859,10 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
   const [description, setDescription] = useState("");
   const [recurrence, setRecurrence] = useState("forever");
   const [periodDays, setPeriodDays] = useState(30);
+  const [cadence, setCadence] = useState("daily");   // daily | weekly | monthly
+  const [dayMode, setDayMode] = useState("manual");  // manual | fixed
+  const [weekday, setWeekday] = useState(1);          // 0=Sun … 6=Sat (default Monday)
+  const [monthday, setMonthday] = useState(1);        // 1 … 31
   const [countable, setCountable] = useState(false);
   const [target, setTarget] = useState(3);
   const [unit, setUnit] = useState("");
@@ -824,8 +874,14 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
     if (recurrence === "period") {
       endsAt = Date.now() + (periodDays - 1) * 86400000;
     }
-    onSubmit({ name, time, clock, description, recurrence, endsAt,
-      target: countable ? Math.max(2, target) : null, unit: countable ? unit : "" });
+    let anchor = null;
+    if (dayMode === "fixed") {
+      if (cadence === "weekly") anchor = weekday;
+      else if (cadence === "monthly") anchor = monthday;
+    }
+    const isCountable = countable && cadence === "daily";
+    onSubmit({ name, time, clock, description, recurrence, endsAt, cadence, anchor,
+      target: isCountable ? Math.max(2, target) : null, unit: isCountable ? unit : "" });
   };
 
   return (
@@ -885,6 +941,87 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
             <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-4)" }}>{tr("opcional")}</span>
           </div>
 
+          {/* Frequência (cadência): diária / semanal / mensal */}
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
+            color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
+          }}>
+            {tr("frequência")}
+          </div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+            {[
+              { key: "daily", label: tr("diária") },
+              { key: "weekly", label: tr("semanal") },
+              { key: "monthly", label: tr("mensal") },
+            ].map(opt => (
+              <button key={opt.key} onClick={() => setCadence(opt.key)} className="tap"
+                style={{
+                  flex: 1, padding: "8px 6px",
+                  border: `1px solid ${cadence === opt.key ? accentColor : "var(--rule)"}`,
+                  background: cadence === opt.key ? `${accentColor}11` : "var(--paper)",
+                  color: cadence === opt.key ? accentColor : "var(--ink-2)",
+                  borderRadius: 6, fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.04em",
+                  cursor: "pointer",
+                }}>{opt.label}</button>
+            ))}
+          </div>
+
+          {cadence !== "daily" && (
+            <>
+              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                {[
+                  { key: "manual", label: tr("escolho eu") },
+                  { key: "fixed", label: tr("dia fixo") },
+                ].map(opt => (
+                  <button key={opt.key} onClick={() => setDayMode(opt.key)} className="tap"
+                    style={{
+                      flex: 1, padding: "8px 6px",
+                      border: `1px solid ${dayMode === opt.key ? accentColor : "var(--rule)"}`,
+                      background: dayMode === opt.key ? `${accentColor}11` : "var(--paper)",
+                      color: dayMode === opt.key ? accentColor : "var(--ink-2)",
+                      borderRadius: 6, fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.04em",
+                      cursor: "pointer",
+                    }}>{opt.label}</button>
+                ))}
+              </div>
+
+              {cadence === "weekly" && dayMode === "fixed" && (
+                <div style={{ display: "flex", gap: 4, marginBottom: 10, flexWrap: "wrap" }}>
+                  {[[1, tr("seg")], [2, tr("ter")], [3, tr("qua")], [4, tr("qui")], [5, tr("sex")], [6, tr("sáb")], [0, tr("dom")]].map(([wd, lbl]) => (
+                    <button key={wd} onClick={() => setWeekday(wd)} className="tap"
+                      style={{
+                        flex: 1, minWidth: 38, padding: "8px 4px",
+                        border: `1px solid ${weekday === wd ? accentColor : "var(--rule)"}`,
+                        background: weekday === wd ? `${accentColor}11` : "var(--paper)",
+                        color: weekday === wd ? accentColor : "var(--ink-2)",
+                        borderRadius: 6, fontFamily: "var(--mono)", fontSize: 10, cursor: "pointer",
+                      }}>{lbl}</button>
+                  ))}
+                </div>
+              )}
+
+              {cadence === "monthly" && dayMode === "fixed" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>{tr("dia")}</span>
+                  <input type="number" min="1" max="31" value={monthday}
+                    onChange={e => setMonthday(Math.min(31, Math.max(1, parseInt(e.target.value) || 1)))}
+                    style={{
+                      width: 60, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6,
+                      background: "var(--paper)", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)",
+                    }}/>
+                  <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-4)" }}>{tr("do mês")}</span>
+                </div>
+              )}
+
+              <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4, marginBottom: 12 }}>
+                {dayMode === "fixed"
+                  ? tr("Repete sempre no mesmo dia. Os outros dias do período ficam bloqueados.")
+                  : tr("Marca um dia qualquer do período. Depois disso, os restantes ficam bloqueados.")}
+              </div>
+            </>
+          )}
+
+          {cadence === "daily" && (<>
           <div style={{
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
             color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
@@ -916,6 +1053,7 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
                 style={{ flex: 1, minWidth: 0, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)", fontSize: 13, color: "var(--ink-2)" }}/>
             </div>
           )}
+          </>)}
 
           <div style={{
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",

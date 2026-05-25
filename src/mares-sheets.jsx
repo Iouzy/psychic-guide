@@ -393,7 +393,12 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
                   fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                   letterSpacing: "0.04em", marginTop: 2,
                 }}>
-                  {done}/{obs - resp} {(obs - resp) === 1 ? tr("dia") : tr("dias")}
+                  {done}/{obs - resp} {(() => {
+                    const c = habitCadence(h), one = (obs - resp) === 1;
+                    if (c === "weekly") return one ? tr("semana") : tr("semanas");
+                    if (c === "monthly") return one ? tr("mês") : tr("meses");
+                    return one ? tr("dia") : tr("dias");
+                  })()}
                   {resp > 0 && (
                     <span style={{ fontStyle: "italic", marginLeft: 6 }}>
                       · {resp} {resp === 1 ? tr("respiro") : tr("respiros")}
@@ -488,6 +493,10 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
   const current = habitCurrentStreak(habit, todayTs);
   const best = habitBestStreak(habit, todayTs);
   const tier = tideTier(current.days);
+  // Cadence-aware unit for the streak displays ("d" / "sem" / "mês").
+  const unit = cadenceUnitShort(habitCadence(habit));
+  const perLen = unit === "sem" ? 7 : unit === "mês" ? 30 : 1;
+  const curCount = current.units != null ? current.units : current.days;
 
   const [editing, setEditing] = useState(false);
   const [respiroAt, setRespiroAt] = useState(null);  // dayKey when picking reason
@@ -601,7 +610,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontFamily: "var(--mono)", fontSize: 20, color: "var(--ink)" }}>
-                    {current.days}<span style={{ fontSize: 11, color: "var(--ink-3)" }}> {tr("d")}</span>
+                    {curCount}<span style={{ fontSize: 11, color: "var(--ink-3)" }}> {unit}</span>
                   </div>
                   {current.respiros > 0 && (
                     <div style={{
@@ -616,7 +625,9 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                       fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                       marginTop: 4,
                     }}>
-                      {trf("→ {name} em {n}d", { name: tier.next.name, n: tier.next.min - current.days })}
+                      {unit === "d"
+                        ? trf("→ {name} em {n}d", { name: tier.next.name, n: tier.next.min - current.days })
+                        : trf("→ {name} em {n} {u}", { name: tier.next.name, n: Math.max(1, Math.ceil((tier.next.min - current.days) / perLen)), u: unit })}
                     </div>
                   )}
                 </div>
@@ -668,8 +679,8 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
               overflow: "hidden",
             }}>
               <Stat label={tr("Total")} value={stats.pct === null ? "—" : stats.pct + "%"} accentColor={accentColor}/>
-              <Stat label={tr("Actual")} value={current.days > 0 ? current.days + "d" : "—"} accentColor={accentColor}/>
-              <Stat label={tr("Melhor")} value={best > 0 ? best + "d" : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Actual")} value={curCount > 0 ? curCount + " " + unit : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Melhor")} value={best > 0 ? best + " " + unit : "—"} accentColor={accentColor}/>
               <Stat label={tr("Respiros")} value={stats.respiros > 0 ? stats.respiros : "—"} accentColor={accentColor}/>
             </div>
 
