@@ -454,6 +454,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   onToggleDay, onIncDay, onLongPressEmpty, onUnmarkRespiro, onOpenDetail, onRemove, onUpdate }) {
   const [hover, setHover] = useState(false);
   const [tooltip, setTooltip] = useState(null);
+  const stripRef = useRef(null);
 
   const ndays = daysInMonth(year, monthIdx);
   const todayD = new Date(todayTs);
@@ -472,6 +473,17 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   const isCurrentMonth = year === todayD.getFullYear() && monthIdx === todayD.getMonth();
   const streak = isCurrentMonth ? habitCurrentStreak(habit, todayTs) : { days: 0, respiros: 0 };
   const bestStreak = habitBestStreak(habit, todayTs);
+
+  // Scroll so today's cell is visible (centred) when the strip mounts or the month changes.
+  useEffect(() => {
+    if (isCurrentMonth && stripRef.current) {
+      const el = stripRef.current;
+      const cellW = 14 + 2; // cell width + gap
+      const todayLeft = (todayD.getDate() - 1) * cellW;
+      el.scrollLeft = Math.max(0, todayLeft - el.clientWidth / 2 + cellW / 2);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCurrentMonth, monthIdx]);
 
   const days = useMemo(() => {
     const out = [];
@@ -594,7 +606,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
 
       {/* Month strip — pulse of days */}
       <div style={{ position: "relative" }}>
-        <div style={{ display: "flex", gap: 2, alignItems: "center", padding: "4px 0" }}>
+        <div ref={stripRef} style={{ display: "flex", gap: 2, alignItems: "center", padding: "4px 0", overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {days.map((day) => (
             <DayCell
               key={day.key}
@@ -721,7 +733,7 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
       }}
       title={fmtDateShort(tsFromDayKey(day.key))}
       style={{
-        flex: 1, aspectRatio: "1", minWidth: 0,
+        width: 14, height: 14, flexShrink: 0,
         borderRadius: 2,
         background: filled ? (isToday ? accentColor : "var(--ink)") : "transparent",
         // Borders per state (incl. pre-criação with outline + dot, per user request)

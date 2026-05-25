@@ -123,7 +123,7 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
 }
 
 // ─── PAUSE SHEET ──────────────────────────────────────────
-function PauseSheet({ open, onClose, block, onConfirm }) {
+function PauseSheet({ open, onClose, block, onConfirm, confirmLabel }) {
   const [note, setNote] = useState("");
   useEffect(() => { if (open) setNote(""); }, [open]);
   if (!block) return null;
@@ -131,7 +131,7 @@ function PauseSheet({ open, onClose, block, onConfirm }) {
     <Sheet open={open} onClose={onClose} title={tr("Pausar bloco")}>
       <div style={{ padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", marginBottom: 4 }}>
-          {tr("a pausa")}
+          {tr("pausado")}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontSize: 22, color: "var(--ink)", lineHeight: 1.2, marginBottom: 18 }}>
           {block.title}
@@ -153,8 +153,8 @@ function PauseSheet({ open, onClose, block, onConfirm }) {
           }}/>
 
         <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
-          <Button variant="inkPrimary" onClick={() => onConfirm(note)} style={{ flex: 2 }}>{tr("Pausar")}</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Retomar")}</Button>
+          <Button variant="inkPrimary" onClick={() => onConfirm(note)} style={{ flex: 2 }}>{confirmLabel || tr("Pausar")}</Button>
         </div>
       </div>
     </Sheet>
