@@ -68,7 +68,14 @@ class FocusActivityPlugin : Plugin() {
             putExtra(FocusService.EXTRA_ELAPSED_MS, elapsedMs)
             putExtra(FocusService.EXTRA_PAUSED,     paused)
         }
-        context.startService(intent)
+        // Must use startForegroundService on O+; plain startService throws
+        // IllegalStateException when called from background, which is the
+        // common case (JS reacts to a notification button while WebView is hidden).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
         call.resolve()
     }
 
@@ -77,7 +84,11 @@ class FocusActivityPlugin : Plugin() {
         val intent = Intent(context, FocusService::class.java).apply {
             action = FocusService.ACTION_STOP
         }
-        context.startService(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
         call.resolve()
     }
 

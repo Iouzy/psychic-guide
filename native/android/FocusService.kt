@@ -38,35 +38,38 @@ class FocusService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Mutate last-known state from intent extras (no-op if extras are absent).
         when (intent?.action) {
-
             ACTION_START -> {
-                lastTitle     = intent.getStringExtra(EXTRA_TITLE) ?: "Focus"
+                lastTitle     = intent.getStringExtra(EXTRA_TITLE) ?: lastTitle
                 lastStartedAt = intent.getLongExtra(EXTRA_STARTED_AT, System.currentTimeMillis())
                 lastElapsedMs = intent.getLongExtra(EXTRA_ELAPSED_MS, 0L)
                 lastPaused    = false
-                ensureChannel()
-                startForeground(NOTIF_ID,
-                    buildNotification(lastTitle, lastStartedAt, lastElapsedMs, false))
             }
-
             ACTION_UPDATE -> {
                 lastElapsedMs = intent.getLongExtra(EXTRA_ELAPSED_MS, lastElapsedMs)
                 lastPaused    = intent.getBooleanExtra(EXTRA_PAUSED, lastPaused)
-                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                nm.notify(NOTIF_ID,
-                    buildNotification(lastTitle, lastStartedAt, lastElapsedMs, lastPaused))
+                if (lastStartedAt == 0L) lastStartedAt = System.currentTimeMillis()
             }
+        }
 
-            ACTION_STOP -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                } else {
-                    @Suppress("DEPRECATION")
-                    stopForeground(true)
-                }
-                stopSelf()
+        // Always enter (or re-enter) the foreground before dispatching the action.
+        // This satisfies the startForegroundService 5-second contract for every
+        // delivery — including ACTION_UPDATE on a freshly-spawned process and
+        // ACTION_STOP after the OS killed us — preventing
+        // ForegroundServiceDidNotStartInTimeException ANRs.
+        ensureChannel()
+        startForeground(NOTIF_ID,
+            buildNotification(lastTitle, lastStartedAt, lastElapsedMs, lastPaused))
+
+        if (intent?.action == ACTION_STOP) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
             }
+            stopSelf()
         }
         return START_NOT_STICKY
     }
@@ -102,9 +105,13 @@ class FocusService : Service() {
         paused: Boolean,
     ): Notification {
 
-        // Tap → bring the app to the front
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-            ?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        // Tap → bring the app to the front. NEW_TASK is required when launching
+        // from a non-Activity context (service / notification); SINGLE_TOP avoids
+        // stacking duplicate instances. Fall back to an explicit MainActivity
+        // intent if the launcher intent is null (rare OEM edge case).
+        val launchIntent = (packageManager.getLaunchIntentForPackage(packageName)
+            ?: Intent(this, MainActivity::class.java))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val launchPi = PendingIntent.getActivity(
             this, 0, launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or
