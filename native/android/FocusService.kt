@@ -26,14 +26,24 @@ import androidx.core.app.NotificationCompat
 class FocusService : Service() {
 
     private val CHANNEL_ID = "focus_timer"
-    private val NOTIF_ID   = 1
+    // Distinctive ID to avoid colliding with @capacitor/local-notifications,
+    // which lets the JS side pick its own IDs from a low range.
+    private val NOTIF_ID   = 0xF0C05
 
     // Last-known state so ACTION_UPDATE can rebuild the notification without
-    // repeating all the start parameters.
+    // repeating all the start parameters. Mirrored to SharedPreferences so it
+    // survives process death — notification PendingIntents outlive the process,
+    // and a user tapping Pause/Resume/Conclude after the OS reclaimed us would
+    // otherwise restart the service with a zeroed chronometer.
     private var lastTitle     = "Focus"
     private var lastStartedAt = 0L
     private var lastElapsedMs = 0L
     private var lastPaused    = false
+
+    override fun onCreate() {
+        super.onCreate()
+        loadPersistedState()
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -45,11 +55,13 @@ class FocusService : Service() {
                 lastStartedAt = intent.getLongExtra(EXTRA_STARTED_AT, System.currentTimeMillis())
                 lastElapsedMs = intent.getLongExtra(EXTRA_ELAPSED_MS, 0L)
                 lastPaused    = false
+                persistState()
             }
             ACTION_UPDATE -> {
                 lastElapsedMs = intent.getLongExtra(EXTRA_ELAPSED_MS, lastElapsedMs)
                 lastPaused    = intent.getBooleanExtra(EXTRA_PAUSED, lastPaused)
                 if (lastStartedAt == 0L) lastStartedAt = System.currentTimeMillis()
+                persistState()
             }
         }
 
@@ -63,6 +75,7 @@ class FocusService : Service() {
             buildNotification(lastTitle, lastStartedAt, lastElapsedMs, lastPaused))
 
         if (intent?.action == ACTION_STOP) {
+            clearPersistedState()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 stopForeground(STOP_FOREGROUND_REMOVE)
             } else {
@@ -72,6 +85,31 @@ class FocusService : Service() {
             stopSelf()
         }
         return START_NOT_STICKY
+    }
+
+    // ── State persistence (survives process death) ───────────────
+
+    private fun prefs() = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+
+    private fun loadPersistedState() {
+        val p = prefs()
+        lastTitle     = p.getString(EXTRA_TITLE, lastTitle) ?: lastTitle
+        lastStartedAt = p.getLong(EXTRA_STARTED_AT, lastStartedAt)
+        lastElapsedMs = p.getLong(EXTRA_ELAPSED_MS, lastElapsedMs)
+        lastPaused    = p.getBoolean(EXTRA_PAUSED, lastPaused)
+    }
+
+    private fun persistState() {
+        prefs().edit()
+            .putString(EXTRA_TITLE, lastTitle)
+            .putLong(EXTRA_STARTED_AT, lastStartedAt)
+            .putLong(EXTRA_ELAPSED_MS, lastElapsedMs)
+            .putBoolean(EXTRA_PAUSED, lastPaused)
+            .apply()
+    }
+
+    private fun clearPersistedState() {
+        prefs().edit().clear().apply()
     }
 
     // ── Notification helpers ─────────────────────────────────────
@@ -160,5 +198,7 @@ class FocusService : Service() {
         const val EXTRA_STARTED_AT = "startedAt"
         const val EXTRA_ELAPSED_MS = "elapsedMs"
         const val EXTRA_PAUSED     = "paused"
+
+        private const val PREFS_NAME = "focus_service_state"
     }
 }
