@@ -25,7 +25,7 @@ import androidx.core.app.NotificationCompat
  */
 class FocusService : Service() {
 
-    private val CHANNEL_ID = "focus_timer"
+    private val CHANNEL_ID = "focus_timer_v2"
     // Distinctive ID to avoid colliding with @capacitor/local-notifications,
     // which lets the JS side pick its own IDs from a low range.
     private val NOTIF_ID   = 0xF0C05
@@ -119,10 +119,15 @@ class FocusService : Service() {
             val ch = NotificationChannel(
                 CHANNEL_ID,
                 "Focus Timer",
-                NotificationManager.IMPORTANCE_LOW
+                // DEFAULT = shows on lock screen; sound/vibration disabled below
+                // so it behaves silently but is still visible on the lock screen.
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Shows the ongoing focus session and timer"
+                description = "Shows the ongoing focus session and timer controls"
                 setShowBadge(false)
+                setSound(null, null)          // no sound
+                enableVibration(false)        // no vibration
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
                 .createNotificationChannel(ch)

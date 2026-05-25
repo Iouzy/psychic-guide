@@ -1,7 +1,11 @@
 package com.pauta.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -30,6 +34,19 @@ class FocusActivityPlugin : Plugin() {
 
     override fun load() {
         instance = this
+        // Android 13+ requires POST_NOTIFICATIONS at runtime. Request it eagerly
+        // on plugin load (i.e. app start) so the user sees the permission dialog
+        // before they ever try to start a timer, not mid-session.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIF_PERM_REQUEST
+                )
+            }
+        }
     }
 
     override fun handleOnDestroy() {
@@ -111,5 +128,7 @@ class FocusActivityPlugin : Plugin() {
         fun onAction(kind: String) {
             instance?.emitAction(kind)
         }
+
+        private const val NOTIF_PERM_REQUEST = 1001
     }
 }

@@ -6,7 +6,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
 
   // ─ Sheets state ─
   const [sheetStart, setSheetStart] = useState(null); // { intentionId? }
-  const [sheetPause, setSheetPause] = useState(false);
+  const [sheetPause, setSheetPause] = useState(null); // null | blockId (optimistic pause: timer stops on first click)
   const [sheetConclude, setSheetConclude] = useState(null); // { blockId, afterPause? }
   const [sheetSwitch, setSheetSwitch] = useState(false);
   const [sheetEdit, setSheetEdit] = useState(null); // blockId
@@ -81,9 +81,20 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     setSheetConclude(null);
   };
 
+  // Optimistic pause: timer already stopped when this is called.
+  // Just persist the optional note and close the sheet.
   const handlePause = (note) => {
-    pauseActive(note);
-    setSheetPause(false);
+    if (note?.trim() && sheetPause) {
+      const block = state.blocks.find(b => b.id === sheetPause);
+      if (block) updateSessionNote(sheetPause, block.sessions.length - 1, note.trim());
+    }
+    setSheetPause(null);
+  };
+
+  // Cancel = mis-click → resume the block that was optimistically paused.
+  const handlePauseCancel = () => {
+    if (sheetPause) resumeBlock(sheetPause);
+    setSheetPause(null);
   };
 
   const handleSwitch = (linkedToId, title) => {
@@ -128,9 +139,20 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             intention={activeBlock.linkedToId && intentionById[activeBlock.linkedToId]}
             accentColor={accentColor}
             showElapsed={showElapsed}
-            onPause={() => setSheetPause(true)}
+            onPause={() => {
+                // Pause immediately so the timer stops on first tap.
+                // PauseSheet then lets the user optionally add a note;
+                // closing/cancelling the sheet resumes the block.
+                const id = activeBlock?.id;
+                if (id) { pauseActive(""); setSheetPause(id); }
+              }}
             onSwitch={() => setSheetSwitch(true)}
-            onConclude={() => setSheetConclude({ blockId: activeBlock.id })}
+            onConclude={() => {
+                // Optimistic conclude: stop timer immediately on first tap.
+                // ConcludeSheet opens for optional reflection; cancelling resumes the block.
+                const id = activeBlock?.id;
+                if (id) { concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }
+              }}
             onCancel={() => {
               if (confirm(tr("Descartar este bloco? Não fica guardado."))) {
                 deleteBlock(activeBlock.id);
@@ -225,24 +247,30 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         activeTitle={activeBlock?.title}
       />
       <PauseSheet
-        open={sheetPause} onClose={() => setSheetPause(false)}
-        block={activeBlock}
+        open={!!sheetPause} onClose={handlePauseCancel}
+        block={sheetPause ? state.blocks.find(b => b.id === sheetPause) : null}
         onConfirm={handlePause}
+        confirmLabel={tr("Confirmar")}
       />
       <ConcludeSheet
-        open={!!sheetConclude} onClose={() => setSheetConclude(null)}
+        open={!!sheetConclude}
+        onClose={() => {
+          // Cancel = mis-click on an active block → resume the timer.
+          // For paused blocks just close (they stay paused as before).
+          if (sheetConclude?.wasActive) resumeBlock(sheetConclude.blockId);
+          setSheetConclude(null);
+        }}
         block={sheetConclude && blocks.find(b => b.id === sheetConclude.blockId)}
         intention={sheetConclude && (() => {
           const b = blocks.find(b => b.id === sheetConclude.blockId);
           return b && b.linkedToId && intentionById[b.linkedToId];
         })()}
         onConfirm={(reflection, markDone) => {
-          if (sheetConclude.blockId === activeBlock?.id) {
-            handleConcludeActive(reflection, markDone);
-          } else {
-            handleConcludeBlock(sheetConclude.blockId, reflection, markDone);
-          }
+          // After optimistic conclude activeBlock is null, so always route through
+          // handleConcludeBlock which correctly saves reflection + intention.
+          handleConcludeBlock(sheetConclude.blockId, reflection, markDone);
         }}
+        cancelLabel={sheetConclude?.wasActive ? tr("Retomar") : undefined}
         accentColor={accentColor}
       />
       <SwitchSheet
@@ -250,7 +278,11 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         intentions={today.intentions}
         currentBlock={activeBlock}
         onPick={handleSwitch}
-        onConcludeFirst={() => { setSheetSwitch(false); setSheetConclude({ blockId: activeBlock.id }); }}
+        onConcludeFirst={() => {
+          setSheetSwitch(false);
+          const id = activeBlock?.id;
+          if (id) { concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }
+        }}
         accentColor={accentColor}
       />
       <EditBlockSheet

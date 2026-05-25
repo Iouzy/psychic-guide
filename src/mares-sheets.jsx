@@ -1064,7 +1064,7 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
     return { columns: cols, monthLabels: labels };
   }, [habit, todayTs, createdKey, todayKey, habitEnd, isCount]);
 
-  const CELL = 11, GAP = 3;
+  const CELL = 13, GAP = 3;
 
   return (
     <div style={{ overflowX: "auto", paddingBottom: 6 }}>
@@ -1086,10 +1086,10 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
         <div style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
           <div style={{
             display: "flex", flexDirection: "column", gap: GAP,
-            width: 12, fontFamily: "var(--mono)", fontSize: 8,
+            width: 16, fontFamily: "var(--mono)", fontSize: 8,
             color: "var(--ink-3)", paddingTop: 0,
           }}>
-            {["", tr("s"), "", tr("q"), "", tr("s"), ""].map((lbl, i) => (
+            {["D", "2", "3", "4", "5", "6", "S"].map((lbl, i) => (
               <div key={i} style={{ height: CELL, lineHeight: CELL + "px" }}>{lbl}</div>
             ))}
           </div>

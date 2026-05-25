@@ -172,6 +172,7 @@ const I18N_EN_BULK = {
   "projecto (opcional)": "project (optional)",
   "ex.: Livro, Cliente X, Casa": "e.g.: Book, Client X, House",
   "Cancelar": "Cancel",
+  "Confirmar": "Confirm",
   "Iniciar agora": "Start now",
   "Pausar bloco": "Pause block",
   "a pausa": "pausing",
