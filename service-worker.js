@@ -12,6 +12,7 @@ const LOCAL_ASSETS = [
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
   "./icons/apple-touch-icon.png",
+  "./src/focus-activity.js",
   "./src/i18n.jsx",
   "./src/tweaks-panel.jsx",
   "./src/store.jsx",

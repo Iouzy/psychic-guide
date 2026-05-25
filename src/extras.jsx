@@ -854,8 +854,57 @@ function useReminders(store) {
   }, [rem.enabled, rem.habitsTime, rem.reflectionTime, state.habits, state.today]);
 }
 
+// ─── Native focus timer notification (Android island) ────────
+// Drives the FocusActivity Capacitor plugin while a block is running.
+// Falls back silently in plain PWA / browser contexts where the plugin is absent.
+function useFocusActivity(store) {
+  const { activeBlock, state, pauseActive, resumeBlock, concludeActive } = store;
+  // Track the last known active block id so the receiver can resume it by id.
+  const lastIdRef = useRef(null);
+
+  // Wire native notification button taps → store actions (once on mount).
+  useEffect(() => {
+    const h = window.FocusActivity.addListener("action", ({ kind }) => {
+      if (kind === "pause")   pauseActive("");
+      else if (kind === "resume" && lastIdRef.current) resumeBlock(lastIdRef.current);
+      else if (kind === "conclude") concludeActive("");
+    });
+    return () => { try { h.remove(); } catch (_) {} };
+  }, []);
+
+  // Sync native service state with activeBlock changes.
+  // Deps: block id changes on start/switch; sessions.length changes on resume.
+  useEffect(() => {
+    if (activeBlock) {
+      lastIdRef.current = activeBlock.id;
+      const lastSeg  = activeBlock.sessions[activeBlock.sessions.length - 1];
+      const elapsedMs = activeBlock.sessions.reduce(
+        (acc, s) => acc + ((s.endedAt || Date.now()) - s.startedAt), 0
+      );
+      // start() handles both "new block" and "resumed block": it resets the
+      // chronometer base to now − elapsedMs so the total accumulated time shows.
+      window.FocusActivity.start({ title: activeBlock.title, startedAt: lastSeg.startedAt, elapsedMs });
+    } else {
+      const blockId = lastIdRef.current;
+      if (!blockId) return;
+      const block = (state.blocks || []).find(b => b.id === blockId);
+      if (block?.status === "paused") {
+        const elapsedMs = block.sessions.reduce(
+          (acc, s) => acc + ((s.endedAt || Date.now()) - s.startedAt), 0
+        );
+        window.FocusActivity.update({ elapsedMs, paused: true });
+      } else {
+        // concluded or deleted
+        lastIdRef.current = null;
+        window.FocusActivity.stop();
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock?.id, activeBlock?.sessions?.length]);
+}
+
 Object.assign(window, {
   haptic, OnboardingOverlay, TierGuideSheet,
   BestHourChart, CorrelationList, FocusCalendar, WeekReview, InsightsSheet,
-  GoalsSection, useReminders,
+  GoalsSection, useReminders, useFocusActivity,
 });

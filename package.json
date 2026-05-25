@@ -5,6 +5,7 @@
   "description": "Pauta — self-contained native Android build of the Pauta web app.",
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
+    "inject:native": "node scripts/inject-native.mjs",
     "sync": "npm run build:web && npx cap sync android"
   },
   "dependencies": {
