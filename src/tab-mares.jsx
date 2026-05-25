@@ -4,7 +4,7 @@
 //   hábitos com recorrência (permanente / período / mês único).
 
 function TabMares({ store, accentColor }) {
-  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit } = store;
+  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit, incHabitDay, setHabitCount } = store;
   const { habits } = state;
 
   const now = useNow(60000, true);
@@ -116,6 +116,7 @@ function TabMares({ store, accentColor }) {
               todayTs={now}
               accentColor={accentColor}
               onToggleDay={(k) => toggleHabitDay(h.id, k)}
+              onIncDay={(k) => incHabitDay(h.id, k)}
               onLongPressEmpty={(dayKey, anchorRect) => setRespiroAt({ habitId: h.id, dayKey, anchorRect })}
               onUnmarkRespiro={(dayKey) => unmarkRespiro(h.id, dayKey)}
               onOpenDetail={() => setDetailHabitId(h.id)}
@@ -189,6 +190,8 @@ function TabMares({ store, accentColor }) {
         accentColor={accentColor}
         todayTs={now}
         onToggleDay={(k) => detailHabitId && toggleHabitDay(detailHabitId, k)}
+        onIncDay={(k) => detailHabitId && incHabitDay(detailHabitId, k)}
+        onSetCount={(k, n) => detailHabitId && setHabitCount(detailHabitId, k, n)}
         onMarkRespiro={(k, reason) => detailHabitId && markRespiro(detailHabitId, k, reason)}
         onUnmarkRespiro={(k) => detailHabitId && unmarkRespiro(detailHabitId, k)}
         onUpdate={(patch) => detailHabitId && updateHabit(detailHabitId, patch)}
@@ -234,6 +237,7 @@ function MonthStrip({ habits, view, setView, accentColor, todayTs }) {
     }}>
       <div
         ref={scrollRef}
+        data-noswipe="true"
         style={{
           display: "flex", overflowX: "auto", gap: 4,
           scrollbarWidth: "none",
@@ -437,7 +441,7 @@ function RespiroPattern({ color, small }) {
 
 // ─── Habit row (month grid) ─────────────────────────────────
 function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
-  onToggleDay, onLongPressEmpty, onUnmarkRespiro, onOpenDetail, onRemove, onUpdate }) {
+  onToggleDay, onIncDay, onLongPressEmpty, onUnmarkRespiro, onOpenDetail, onRemove, onUpdate }) {
   const [hover, setHover] = useState(false);
   const [tooltip, setTooltip] = useState(null);
 
@@ -446,6 +450,8 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   const todayKey = dayKeyOf(todayTs);
   const createdKey = habitCreatedKey(habit);
   const habitEnd = habitEndKey(habit);
+  const isCount = !!habit.target;
+  const todayCount = (habit.counts && habit.counts[todayKey]) || 0;
 
   const pct = habitPctInMonth(habit, year, monthIdx, todayTs);
   const obs = habitDaysObservedInMonth(habit, year, monthIdx, todayTs) - habitRespirosInMonth(habit, year, monthIdx, todayTs);
@@ -465,12 +471,14 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
       else if (habitEnd && key > habitEnd) state = "after";
       else if (habit.log && habit.log[key]) state = "done";
       else if (habit.respiros && habit.respiros[key]) state = "respiro";
+      else if (isCount && habit.counts && habit.counts[key] > 0) state = "partial";
       else state = "empty";
       const isToday = key === todayKey;
-      out.push({ d, key, state, isToday });
+      const count = (isCount && habit.counts && habit.counts[key]) || 0;
+      out.push({ d, key, state, isToday, count });
     }
     return out;
-  }, [habit, year, monthIdx, ndays, todayKey, createdKey, habitEnd]);
+  }, [habit, year, monthIdx, ndays, todayKey, createdKey, habitEnd, isCount]);
 
   return (
     <div onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setTooltip(null); }}>
@@ -488,9 +496,19 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
               {habit.name}
             </div>
             <RecurrenceChip habit={habit} accentColor={accentColor} todayTs={todayTs}/>
+            {isCount && (
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.06em",
+                color: accentColor, padding: "2px 6px", borderRadius: 4,
+                border: `1px solid ${accentColor}55`,
+              }}>
+                {todayCount}/{habit.target}{habit.unit ? " " + habit.unit : "×"}
+              </span>
+            )}
           </div>
-          {habit.time && (
+          {(habit.time || habit.clock) && (
             <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>
+              {habit.clock && <span style={{ fontFamily: "var(--mono)", fontStyle: "normal", fontSize: 11, marginRight: habit.time ? 6 : 0 }}>{habit.clock}</span>}
               {habit.time}
             </div>
           )}
@@ -539,10 +557,16 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
               day={day}
               accentColor={accentColor}
               ndays={ndays}
+              target={isCount ? habit.target : null}
               onTap={() => {
-                if (day.state === "empty") onToggleDay(day.key);
-                else if (day.state === "done") onToggleDay(day.key);
-                else if (day.state === "respiro") onUnmarkRespiro(day.key);
+                if (isCount) {
+                  if (day.state === "respiro") onUnmarkRespiro(day.key);
+                  else onIncDay(day.key);
+                } else {
+                  if (day.state === "empty") onToggleDay(day.key);
+                  else if (day.state === "done") onToggleDay(day.key);
+                  else if (day.state === "respiro") onUnmarkRespiro(day.key);
+                }
               }}
               onLongPress={(rect) => {
                 if (day.state === "empty") onLongPressEmpty(day.key, rect);
@@ -559,8 +583,8 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             bottom: "calc(100% + 2px)",
             left: `${((tooltip.d - 0.5) / ndays) * 100}%`,
             transform: "translateX(-50%)",
-            background: "var(--ink)",
-            color: "var(--paper)",
+            background: "var(--surface-dark)",
+            color: "var(--on-dark)",
             padding: "3px 7px",
             borderRadius: 4,
             fontFamily: "var(--mono)",
@@ -571,7 +595,8 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             zIndex: 5,
           }}>
             {fmtDateShort(tsFromDayKey(tooltip.key))}
-            {tooltip.state === "done" && " · feito"}
+            {tooltip.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · feito")}
+            {tooltip.state === "partial" && ` · ${tooltip.count}/${habit.target}`}
             {tooltip.state === "empty" && " · não feito"}
             {tooltip.state === "respiro" && " · respiro"}
             {tooltip.state === "pre" && " · antes da maré"}
@@ -596,15 +621,17 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
 }
 
 // Individual day cell with long-press detection.
-function DayCell({ day, accentColor, ndays, onTap, onLongPress, onTooltip }) {
+function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onTooltip }) {
   const pressTimer = useRef(null);
   const pressed = useRef(false);
   const cellRef = useRef(null);
 
-  const clickable = day.state === "empty" || day.state === "done" || day.state === "respiro";
+  const isPartial = day.state === "partial";
+  const clickable = day.state === "empty" || day.state === "done" || day.state === "respiro" || isPartial;
   const filled = day.state === "done";
   const isRespiro = day.state === "respiro";
   const isToday = day.isToday;
+  const partialFrac = isPartial && target ? Math.min(1, day.count / target) : 0;
 
   const startPress = (e) => {
     if (day.state !== "empty") return;
@@ -630,7 +657,7 @@ function DayCell({ day, accentColor, ndays, onTap, onLongPress, onTooltip }) {
       ref={cellRef}
       onClick={(e) => {
         if (pressed.current) { pressed.current = false; return; }
-        if (clickable) onTap();
+        if (clickable) { if (window.haptic) window.haptic(8); onTap(); }
       }}
       onMouseDown={startPress}
       onMouseUp={endPress}
@@ -659,6 +686,7 @@ function DayCell({ day, accentColor, ndays, onTap, onLongPress, onTooltip }) {
           day.state === "after" ? "1px solid var(--rule)" :
           day.state === "future" ? "1px dashed var(--rule)" :
           isRespiro ? "1px solid var(--ink-3)" :
+          isPartial ? "1px solid var(--ink-3)" :
           "none",
         boxSizing: "border-box",
         opacity:
@@ -689,6 +717,13 @@ function DayCell({ day, accentColor, ndays, onTap, onLongPress, onTooltip }) {
       )}
       {isRespiro && (
         <RespiroPattern color={accentColor}/>
+      )}
+      {isPartial && (
+        <div style={{
+          position: "absolute", left: 0, right: 0, bottom: 0,
+          height: `${Math.max(15, partialFrac * 100)}%`,
+          background: accentColor, opacity: 0.55,
+        }}/>
       )}
     </div>
   );
@@ -773,9 +808,13 @@ function RespiroPopover({ data, accentColor, onClose, onConfirm }) {
 function NewHabitForm({ accentColor, onSubmit, onCancel }) {
   const [name, setName] = useState("");
   const [time, setTime] = useState("");
+  const [clock, setClock] = useState("");
   const [description, setDescription] = useState("");
   const [recurrence, setRecurrence] = useState("forever");
   const [periodDays, setPeriodDays] = useState(30);
+  const [countable, setCountable] = useState(false);
+  const [target, setTarget] = useState(3);
+  const [unit, setUnit] = useState("");
   const [expanded, setExpanded] = useState(false);
 
   const submit = () => {
@@ -784,7 +823,8 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
     if (recurrence === "period") {
       endsAt = Date.now() + (periodDays - 1) * 86400000;
     }
-    onSubmit({ name, time, description, recurrence, endsAt });
+    onSubmit({ name, time, clock, description, recurrence, endsAt,
+      target: countable ? Math.max(2, target) : null, unit: countable ? unit : "" });
   };
 
   return (
@@ -831,6 +871,51 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
               minHeight: 50,
               marginBottom: 12,
             }}/>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--ink-3)", textTransform: "uppercase" }}>
+              hora certa
+            </span>
+            <input type="time" value={clock} onChange={e => setClock(e.target.value)}
+              style={{
+                border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)",
+                padding: "4px 8px", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)",
+              }}/>
+            <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-4)" }}>opcional</span>
+          </div>
+
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
+            color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
+          }}>
+            contável
+          </div>
+          <button onClick={() => setCountable(c => !c)} className="tap"
+            style={{
+              display: "flex", alignItems: "center", gap: 8, marginBottom: countable ? 8 : 12,
+              border: "none", background: "transparent", cursor: "pointer", padding: 0,
+              fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-2)",
+            }}>
+            <span style={{
+              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+              border: `1.5px solid ${countable ? accentColor : "var(--ink-3)"}`,
+              background: countable ? accentColor : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>{countable && <Icon.Check size={9} color="var(--on-dark)"/>}</span>
+            uma meta com quantidade (ex.: 2L de água, 3 treinos)
+          </button>
+          {countable && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <input type="number" min="2" max="99" value={target}
+                onChange={e => setTarget(Math.max(2, parseInt(e.target.value) || 2))}
+                style={{ width: 56, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)" }}/>
+              <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>×</span>
+              <input value={unit} onChange={e => setUnit(e.target.value)}
+                placeholder="unidade (copos, treinos…)"
+                style={{ flex: 1, minWidth: 0, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)", fontSize: 13, color: "var(--ink-2)" }}/>
+            </div>
+          )}
+
           <div style={{
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
             color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,

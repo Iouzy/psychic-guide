@@ -31,9 +31,16 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     return allEvents.filter(e => {
       if (filter.kind === "block") return e.blockId === filter.id;
       if (filter.kind === "intention") return e.block.linkedToId === filter.id;
+      if (filter.kind === "project") return e.block.project === filter.id;
       return true;
     });
   }, [allEvents, filter]);
+
+  const projects = useMemo(() => {
+    const set = new Set();
+    for (const b of blocks) if (b.project) set.add(b.project);
+    return Array.from(set);
+  }, [blocks]);
 
   const totalFocus = useMemo(() => {
     const set = new Set(events.map(e => e.blockId));
@@ -53,13 +60,13 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     [blocks, dayK]);
 
   // ─ Handlers ─
-  const handleStart = (title, linkedToId) => {
+  const handleStart = (title, linkedToId, project) => {
     if (activeBlock) {
       // auto-pause current then start new
       pauseActive("");
-      setTimeout(() => startBlock(title, linkedToId), 50);
+      setTimeout(() => startBlock(title, linkedToId, { project }), 50);
     } else {
-      startBlock(title, linkedToId);
+      startBlock(title, linkedToId, { project });
     }
     setSheetStart(null);
   };
@@ -137,21 +144,21 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
           <button onClick={() => setSheetStart({})} className="tap"
             style={{
               width: "100%", marginBottom: 22,
-              background: "var(--ink)", color: "var(--paper)",
+              background: "var(--surface-dark)", color: "var(--on-dark)",
               border: "none", borderRadius: 14,
               padding: "20px 22px",
               display: "flex", alignItems: "center", justifyContent: "space-between",
               cursor: "pointer",
             }}>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
                 começar
               </div>
               <div style={{ fontFamily: "var(--serif)", fontSize: 22, marginTop: 4 }}>
                 Um novo bloco
               </div>
             </div>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: accentColor, color: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "50%", background: accentColor, color: "var(--on-dark)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon.Play size={14}/>
             </div>
           </button>
@@ -180,6 +187,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
           <FilterChips
             intentions={today.intentions}
             blocks={blocks.filter(b => dayKeyOf(b.createdAt) === dayK)}
+            projects={projects}
             filter={filter}
             setFilter={setFilter}
             accentColor={accentColor}
@@ -209,6 +217,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         open={!!sheetStart} onClose={() => setSheetStart(null)}
         intentions={today.intentions}
         prefilledIntention={sheetStart?.intention}
+        projects={projects}
         onStart={handleStart}
         accentColor={accentColor}
         hasActive={!!activeBlock}

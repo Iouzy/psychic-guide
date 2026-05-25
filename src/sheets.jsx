@@ -1,12 +1,14 @@
 // Pauta — sheets (bottom modals)
 
 // ─── START SHEET ──────────────────────────────────────────
-function StartSheet({ open, onClose, intentions, prefilledIntention, onStart, accentColor, hasActive, activeTitle }) {
+function StartSheet({ open, onClose, intentions, prefilledIntention, projects = [], onStart, accentColor, hasActive, activeTitle }) {
   const [title, setTitle] = useState("");
   const [selectedIntention, setSelectedIntention] = useState(null);
+  const [project, setProject] = useState("");
 
   useEffect(() => {
     if (open) {
+      setProject("");
       if (prefilledIntention) {
         setTitle(prefilledIntention.text);
         setSelectedIntention(prefilledIntention.id);
@@ -24,7 +26,7 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, onStart, ac
 
   const submit = () => {
     if (!title.trim()) return;
-    onStart(title.trim(), selectedIntention);
+    onStart(title.trim(), selectedIntention, project.trim() || null);
   };
 
   return (
@@ -82,6 +84,32 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, onStart, ac
             </div>
           </div>
         )}
+
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
+            projecto (opcional)
+          </div>
+          <input value={project} onChange={e => setProject(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") submit(); }}
+            placeholder="ex.: Livro, Cliente X, Casa"
+            style={{
+              width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
+              borderRadius: 10, padding: "10px 12px", fontSize: 14, color: "var(--ink)",
+            }}/>
+          {projects.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+              {projects.map(p => (
+                <button key={p} onClick={() => setProject(p)} className="tap"
+                  style={{
+                    border: "1px solid " + (project === p ? accentColor : "var(--rule)"),
+                    background: project === p ? `${accentColor}11` : "transparent",
+                    color: project === p ? accentColor : "var(--ink-2)",
+                    borderRadius: 999, padding: "4px 10px", fontSize: 12, cursor: "pointer",
+                  }}>{p}</button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div style={{ marginTop: 22, display: "flex", gap: 10 }}>
           <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
@@ -314,12 +342,14 @@ window.EditBlockSheet = EditBlockSheet;
 function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNote, onDelete, accentColor }) {
   const [title, setTitle] = useState("");
   const [reflection, setReflection] = useState("");
+  const [project, setProject] = useState("");
   const [notes, setNotes] = useState([]);
 
   useEffect(() => {
     if (open && block) {
       setTitle(block.title);
       setReflection(block.reflection || "");
+      setProject(block.project || "");
       setNotes(block.sessions.map(s => s.note || ""));
     }
   }, [open, block]);
@@ -332,6 +362,8 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
     const patch = {};
     if (title.trim() && title.trim() !== block.title) patch.title = title.trim();
     if (reflection !== (block.reflection || "")) patch.reflection = reflection;
+    const proj = project.trim() || null;
+    if (proj !== (block.project || null)) patch.project = proj;
     if (Object.keys(patch).length) onUpdateBlock(block.id, patch);
     notes.forEach((n, i) => {
       if (n !== (block.sessions[i]?.note || "")) onUpdateSessionNote(block.id, i, n);
@@ -364,6 +396,19 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
               background: "transparent", padding: "8px 0",
               fontFamily: "var(--serif)", fontSize: 22, color: "var(--ink)",
               lineHeight: 1.2, letterSpacing: "-0.005em",
+            }}/>
+        </div>
+
+        {/* Project */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
+            Projecto
+          </div>
+          <input value={project} onChange={e => setProject(e.target.value)}
+            placeholder="(sem projecto)"
+            style={{
+              width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
+              borderRadius: 10, padding: "10px 12px", fontSize: 14, color: "var(--ink)",
             }}/>
         </div>
 

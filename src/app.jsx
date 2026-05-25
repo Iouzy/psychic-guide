@@ -1,12 +1,80 @@
 // Pauta — App root
 // Tab navigation, shared store, tweaks panel.
 
+// ─── Settings controls ─────────────────────────────────────
+function Segmented({ value, options, onChange, accentColor }) {
+  return (
+    <div style={{ display: "flex", gap: 6 }}>
+      {options.map(o => {
+        const on = o.value === value;
+        return (
+          <button key={o.value} onClick={() => onChange(o.value)} className="tap"
+            style={{
+              flex: 1, padding: "9px 6px", borderRadius: 8,
+              border: "1px solid " + (on ? accentColor : "var(--rule)"),
+              background: on ? `${accentColor}11` : "var(--paper-2)",
+              color: on ? accentColor : "var(--ink-2)",
+              fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.04em", cursor: "pointer",
+            }}>{o.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+function PrefToggle({ label, sub, value, onChange, accentColor }) {
+  return (
+    <button onClick={() => onChange(!value)} className="tap"
+      style={{
+        display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left",
+        background: "var(--paper-2)", border: "1px solid var(--rule)", borderRadius: 12,
+        padding: "12px 14px", cursor: "pointer", color: "var(--ink)",
+      }}>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 15, fontWeight: 500 }}>{label}</span>
+        {sub && <span style={{ display: "block", fontSize: 12.5, color: "var(--ink-3)", marginTop: 2 }}>{sub}</span>}
+      </span>
+      <span style={{
+        width: 40, height: 24, borderRadius: 999, flexShrink: 0, position: "relative",
+        background: value ? accentColor : "var(--rule)", transition: "background 0.15s",
+      }}>
+        <span style={{
+          position: "absolute", top: 2, left: value ? 18 : 2, width: 20, height: 20,
+          borderRadius: "50%", background: "var(--paper)", transition: "left 0.15s",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+        }}/>
+      </span>
+    </button>
+  );
+}
+
 // ─── DATA / SETTINGS SHEET ──────────────────────────────────
-// User-facing home for backup (export/import), install, and reset actions.
-function DataSheet({ open, onClose, store, accentColor }) {
+// User-facing home for analysis, preferences, reminders, backup, install, reset.
+function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTierGuide }) {
   const fileRef = useRef(null);
   const [msg, setMsg] = useState(null); // { kind:"ok"|"err", text }
   const [canInstall, setCanInstall] = useState(!!window.PAUTA_DEFERRED_INSTALL);
+  const prefs = store.state.prefs;
+
+  const timeRow = { display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-2)" };
+  const timeInput = { border: "1px solid var(--rule)", background: "var(--paper-2)", borderRadius: 8, padding: "6px 10px", fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink)" };
+
+  // Enabling reminders requests notification permission first.
+  const onToggleReminders = async (next) => {
+    if (next) {
+      if (typeof Notification === "undefined") {
+        setMsg({ kind: "err", text: "Este dispositivo não suporta notificações." });
+        return;
+      }
+      let perm = Notification.permission;
+      if (perm === "default") { try { perm = await Notification.requestPermission(); } catch (e) {} }
+      if (perm !== "granted") {
+        setMsg({ kind: "err", text: "Permissão de notificações negada." });
+        store.setReminderPref("enabled", false);
+        return;
+      }
+    }
+    store.setReminderPref("enabled", next);
+  };
 
   const isStandalone =
     (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
@@ -58,6 +126,54 @@ function DataSheet({ open, onClose, store, accentColor }) {
   return (
     <Sheet open={open} onClose={onClose} title="Definições">
       <div style={{ padding: "4px 22px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
+
+        <DataGroup label="Análise">
+          <DataAction accentColor={accentColor}
+            title="Revisão semanal"
+            subtitle="Foco, hábitos e padrões dos últimos 7 dias."
+            onClick={() => { onClose(); onOpenInsights && onOpenInsights(); }}/>
+          <DataAction accentColor={accentColor}
+            title="Como funcionam as marés"
+            subtitle="O que significam os tiers, de Onda a Oceano."
+            onClick={() => { onClose(); onOpenTierGuide && onOpenTierGuide(); }}/>
+        </DataGroup>
+
+        <DataGroup label="Preferências">
+          <div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>Tema</div>
+            <Segmented value={prefs.theme} accentColor={accentColor}
+              onChange={v => store.setPref("theme", v)}
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "light", label: "Claro" },
+                { value: "dark", label: "Escuro" },
+              ]}/>
+          </div>
+          <PrefToggle label="Vibração" sub="Pequeno toque ao concluir." accentColor={accentColor}
+            value={prefs.haptics} onChange={v => store.setPref("haptics", v)}/>
+        </DataGroup>
+
+        <DataGroup label="Lembretes">
+          <PrefToggle label="Notificações" sub="Avisos locais enquanto a app está aberta." accentColor={accentColor}
+            value={prefs.reminders.enabled} onChange={onToggleReminders}/>
+          {prefs.reminders.enabled && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 2px" }}>
+              <label style={timeRow}>
+                <span>Hábitos pendentes</span>
+                <input type="time" value={prefs.reminders.habitsTime}
+                  onChange={e => store.setReminderPref("habitsTime", e.target.value)} style={timeInput}/>
+              </label>
+              <label style={timeRow}>
+                <span>Reflexão noturna</span>
+                <input type="time" value={prefs.reminders.reflectionTime}
+                  onChange={e => store.setReminderPref("reflectionTime", e.target.value)} style={timeInput}/>
+              </label>
+              <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
+                Sem servidor: os avisos só chegam com a app aberta no telemóvel ou no browser.
+              </div>
+            </div>
+          )}
+        </DataGroup>
 
         <DataGroup label="Backup">
           <DataAction icon={<Icon.Download size={16}/>} accentColor={accentColor}
@@ -165,6 +281,8 @@ function DataAction({ icon, title, subtitle, onClick, accentColor, danger }) {
   );
 }
 
+const TAB_ORDER = ["hoje", "pauta", "mares"];
+
 function App() {
   const store = useStore();
   const [t, setTweak] = useTweaks(window.PAUTA_TWEAK_DEFAULTS || {
@@ -174,6 +292,10 @@ function App() {
   const [tab, setTab] = useState("pauta");
   const [pendingIntention, setPendingIntention] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [tierGuideOpen, setTierGuideOpen] = useState(false);
+
+  const prefs = store.state.prefs;
 
   const jumpToPauta = ({ intention }) => {
     setPendingIntention(intention);
@@ -187,11 +309,58 @@ function App() {
     document.documentElement.style.setProperty("--accent", accentColor);
   }, [accentColor]);
 
+  // Apply theme + mirror haptics flag whenever prefs change.
+  useEffect(() => {
+    if (window.PAUTA_APPLY_THEME) window.PAUTA_APPLY_THEME(prefs.theme);
+  }, [prefs.theme]);
+  useEffect(() => { window.PAUTA_HAPTICS = !!prefs.haptics; }, [prefs.haptics]);
+
+  // Local reminders (only while the app is open).
+  useReminders(store);
+
+  // Keyboard shortcuts (desktop): 1/2/3 tabs, g settings, i insights, ? guide.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      if (e.key === "1") setTab("hoje");
+      else if (e.key === "2") setTab("pauta");
+      else if (e.key === "3") setTab("mares");
+      else if (e.key === "g") setSettingsOpen(true);
+      else if (e.key === "i") setInsightsOpen(true);
+      else if (e.key === "?") setTierGuideOpen(true);
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Swipe between tabs (mobile). Ignored over horizontal scrollers / open sheets.
+  const swipeRef = useRef(null);
+  const onTouchStart = (e) => {
+    const t0 = e.touches[0];
+    swipeRef.current = { x: t0.clientX, y: t0.clientY, noswipe: !!(e.target.closest && e.target.closest("[data-noswipe]")) };
+  };
+  const onTouchEnd = (e) => {
+    const s = swipeRef.current; swipeRef.current = null;
+    if (!s || s.noswipe) return;
+    if (document.querySelector(".om-sheet-card")) return; // a sheet is open
+    const t1 = e.changedTouches[0];
+    const dx = t1.clientX - s.x, dy = t1.clientY - s.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    const idx = TAB_ORDER.indexOf(tab);
+    const next = dx < 0 ? idx + 1 : idx - 1;
+    if (next >= 0 && next < TAB_ORDER.length) { setTab(TAB_ORDER[next]); haptic(6); }
+  };
+
   return (
     <div className="frame">
       <StatusBar onMenu={() => setSettingsOpen(true)}/>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+        style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
         {tab === "hoje" && (
           <TabHoje store={store} accentColor={accentColor}
             onJumpToPauta={jumpToPauta}/>
@@ -210,7 +379,17 @@ function App() {
       <TabBar tab={tab} onTab={setTab} accentColor={accentColor}/>
 
       <DataSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}
+        store={store} accentColor={accentColor}
+        onOpenInsights={() => setInsightsOpen(true)}
+        onOpenTierGuide={() => setTierGuideOpen(true)}/>
+      <InsightsSheet open={insightsOpen} onClose={() => setInsightsOpen(false)}
         store={store} accentColor={accentColor}/>
+      <TierGuideSheet open={tierGuideOpen} onClose={() => setTierGuideOpen(false)}
+        accentColor={accentColor}/>
+      {!prefs.onboardingSeen && (
+        <OnboardingOverlay accentColor={accentColor}
+          onDone={() => store.setPref("onboardingSeen", true)}/>
+      )}
 
       <TweaksPanel title="Tweaks">
         <TweakSection label="Cor de destaque"/>
