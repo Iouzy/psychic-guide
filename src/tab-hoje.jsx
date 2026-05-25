@@ -50,18 +50,16 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             </div>
           )}
         </div>
-        {pastKeys.length > 0 && (
-          <button onClick={() => setHistoryOpen(true)} className="tap" title="ver dias anteriores"
-            style={{
-              border: "1px solid var(--rule)", background: "transparent",
-              borderRadius: 8, padding: "6px 10px",
-              fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
-              textTransform: "uppercase", color: "var(--ink-3)",
-              cursor: "pointer", flexShrink: 0, marginTop: 2,
-            }}>
-            dias anteriores ↗
-          </button>
-        )}
+        <button onClick={() => setHistoryOpen(true)} className="tap" title="ver dias anteriores"
+          style={{
+            border: "1px solid var(--rule)", background: "transparent",
+            borderRadius: 8, padding: "6px 10px",
+            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "var(--ink-3)",
+            cursor: "pointer", flexShrink: 0, marginTop: 2,
+          }}>
+          dias anteriores ↗
+        </button>
       </div>
 
       {/* Intentions */}
@@ -71,8 +69,8 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 18,
           color: "var(--ink-3)", lineHeight: 1.4,
         }}>
-          Comece a listar 1 a 4 coisas que importam hoje.<br/>
-          Não tarefas de rotina — coisas que <em>moverão</em> o seu dia.
+          Comece por listar 1 a 4 coisas que importam hoje.<br/>
+          Não tarefas de rotina — coisas que <em>movem</em> o seu dia.
         </div>
       )}
 
