@@ -250,6 +250,10 @@ function OnboardingOverlay({ onDone, accentColor, onTab, store }) {
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "0 10px 24px rgba(0,0,0,0.38)",
         animation: "fadeIn 0.3s ease",
+        // O container-pai tem pointerEvents:none durante o tour (para o buraco
+        // ficar transparente). Os filhos que precisam de receber cliques têm de
+        // repor explicitamente auto.
+        pointerEvents: "auto",
         zIndex: 6,
       }} aria-label={tr("Próximo")}>
         <Icon.Chevron size={22}/>
@@ -325,9 +329,12 @@ function OnboardingOverlay({ onDone, accentColor, onTab, store }) {
       // Intro/outro: papel sólido (ecrã cheio). Tour: transparente — quem dá
       // cor são os 4 rects do escurecimento, que escapam ao buraco.
       background: isTour ? "transparent" : "var(--paper)",
-      // Não consumir toques quando estamos no tour e sem rect (estado fugaz):
-      // deixamos o overlay activo para evitar cliques na app antes do scrim.
-      pointerEvents: "auto",
+      // Durante o tour o container raiz NUNCA captura cliques — os quatro
+      // rects do scrim tratam disso nas zonas escuras, e o buraco fica
+      // literalmente transparente às interações. Sem isto o próprio <div>
+      // bloqueia os toques no controlo destacado mesmo que não haja nenhum
+      // rect por cima dele.
+      pointerEvents: isTour ? "none" : "auto",
       animation: leaving ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
     }}>
       {isTour ? (
