@@ -1016,6 +1016,18 @@ function useStore() {
   };
   const removeHabit = (id) => setState(s => ({ ...s, habits: s.habits.filter(h => h.id !== id) }));
   const updateHabit = (id, patch) => setState(s => ({ ...s, habits: s.habits.map(h => h.id === id ? { ...h, ...patch } : h) }));
+  // Reorder the habit list. `orderedIds` is the new order of a (possibly
+  // partial) set of habits — typically the ones visible in the current month.
+  // Habits absent from the list keep their existing slots, so reordering the
+  // visible rows never disturbs hidden ones.
+  const reorderHabits = (orderedIds) => setState(s => {
+    const by = Object.fromEntries(s.habits.map(h => [h.id, h]));
+    const movable = orderedIds.map(id => by[id]).filter(Boolean);
+    const movableSet = new Set(movable.map(h => h.id));
+    let i = 0;
+    const next = s.habits.map(h => movableSet.has(h.id) ? movable[i++] : h);
+    return { ...s, habits: next };
+  });
 
   // Countable habits: set the count for a day. Auto-syncs the binary `log`
   // (done when count >= target) so all existing stats/streaks keep working.
@@ -1142,7 +1154,7 @@ function useStore() {
     updateBlock, updateSessionNote, deleteBlock,
     // marés
     toggleHabitToday, toggleHabitDay, markRespiro, unmarkRespiro,
-    addHabit, removeHabit, updateHabit, setHabitCount, incHabitDay,
+    addHabit, removeHabit, updateHabit, reorderHabits, setHabitCount, incHabitDay,
     // prefs
     setPref, setReminderPref,
     // goals

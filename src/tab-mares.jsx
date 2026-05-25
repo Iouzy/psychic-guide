@@ -4,7 +4,7 @@
 //   hábitos com recorrência (permanente / período / mês único).
 
 function TabMares({ store, accentColor }) {
-  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit, incHabitDay, setHabitCount } = store;
+  const { state, addHabit, toggleHabitDay, markRespiro, unmarkRespiro, removeHabit, updateHabit, reorderHabits, incHabitDay, setHabitCount } = store;
   const { habits } = state;
 
   const now = useNow(60000, true);
@@ -30,6 +30,11 @@ function TabMares({ store, accentColor }) {
   const homePhrase = useMemo(() => pickHomePhrase(habits, now), [habits, now]);
 
   const isCurrentMonth = view.y === todayD.getFullYear() && view.m === todayD.getMonth();
+
+  // Drag-to-reorder the visible tides. Reordering reflows the global habit list
+  // (hidden habits keep their slots), so it works the same in any month view.
+  const visibleIds = useMemo(() => visibleHabits.map(h => h.id), [visibleHabits]);
+  const { dragId, start: startDrag } = useDragReorder(visibleIds, reorderHabits);
 
   return (
     <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "8px 0 30px", position: "relative", zIndex: 1 }}>
@@ -115,6 +120,9 @@ function TabMares({ store, accentColor }) {
               monthIdx={view.m}
               todayTs={now}
               accentColor={accentColor}
+              draggable={visibleHabits.length > 1}
+              dragging={dragId === h.id}
+              onDragStart={(e) => startDrag(e, h.id)}
               onToggleDay={(k) => toggleHabitDay(h.id, k)}
               onIncDay={(k) => incHabitDay(h.id, k)}
               onLongPressEmpty={(dayKey, anchorRect) => setRespiroAt({ habitId: h.id, dayKey, anchorRect })}
@@ -442,6 +450,7 @@ function RespiroPattern({ color, small }) {
 
 // ─── Habit row (month grid) ─────────────────────────────────
 function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
+  draggable, dragging, onDragStart,
   onToggleDay, onIncDay, onLongPressEmpty, onUnmarkRespiro, onOpenDetail, onRemove, onUpdate }) {
   const [hover, setHover] = useState(false);
   const [tooltip, setTooltip] = useState(null);
@@ -482,8 +491,30 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
   }, [habit, year, monthIdx, ndays, todayKey, createdKey, habitEnd, isCount]);
 
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setTooltip(null); }}>
+    <div
+      data-drag-id={habit.id}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setTooltip(null); }}
+      style={{
+        background: dragging ? "var(--paper-2)" : "transparent",
+        opacity: dragging ? 0.75 : 1,
+        borderRadius: dragging ? 12 : 0,
+        boxShadow: dragging ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
+        padding: dragging ? "8px 10px" : 0,
+        margin: dragging ? "-8px -10px" : 0,
+        transition: "background 0.12s, box-shadow 0.12s",
+      }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 10 }}>
+        {draggable && (
+          <button onPointerDown={onDragStart} className="tap" title={tr("arrastar para reordenar")}
+            aria-label={tr("arrastar para reordenar")}
+            style={{
+              width: 20, alignSelf: "stretch", border: "none", background: "transparent",
+              color: "var(--ink-4)", display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "grab", padding: 0, touchAction: "none", flexShrink: 0, marginLeft: -4,
+            }}>
+            <Icon.Grip size={13}/>
+          </button>
+        )}
         <button
           onClick={onOpenDetail}
           className="tap"
