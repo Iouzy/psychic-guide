@@ -1,6 +1,6 @@
 // Pauta service worker — offline app shell.
 // Bump CACHE_VERSION whenever the precached assets change so clients refresh.
-const CACHE_VERSION = "pauta-v1";
+const CACHE_VERSION = "pauta-v2";
 
 // Same-origin assets that make up the app shell. Relative paths keep this
 // working whether served from a domain root or a GitHub Pages subpath.
@@ -58,15 +58,23 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
-  // Navigations: serve the app shell so offline launches render.
-  if (req.mode === "navigate") {
+  const url = new URL(req.url);
+  const isLocal = url.origin === self.location.origin;
+
+  // Our own app (navigations + same-origin HTML/JSX/manifest): network-first so
+  // a new deploy shows up immediately. Cache is only a fallback for offline,
+  // which is why a fresh push previously needed a manual cache clear to appear.
+  if (req.mode === "navigate" || isLocal) {
     event.respondWith(
       (async () => {
+        const cache = await caches.open(CACHE_VERSION);
         try {
-          return await fetch(req);
+          const res = await fetch(req);
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
         } catch (e) {
-          const cache = await caches.open(CACHE_VERSION);
           return (
+            (await cache.match(req)) ||
             (await cache.match("./index.html")) ||
             (await cache.match("./")) ||
             Response.error()
@@ -77,7 +85,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else: cache-first, fall back to network and cache the result.
+  // Third-party CDN deps: pinned to versioned URLs, so cache-first is safe and
+  // keeps the app fast/offline-capable.
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE_VERSION);
