@@ -1,144 +1,106 @@
-# Pauta
+<div align="center">
+  <img src="icons/icon-192.png" width="96" alt="Pauta icon" />
 
-> Intentions, focus blocks and habits — your daily pauta.
+  # Pauta
 
-🌐 **English** · [Português](#pauta--português)
+  *Intentions, focus blocks and habits — your daily pauta.*
 
-**Pauta** is an offline-first daily-planning app: set your intentions for the
-day, run focus blocks with a built-in timer, and keep honest habit streaks. It
-runs as an installable Progressive Web App (PWA) and ships as a self-contained
-native **Android** build via [Capacitor](https://capacitorjs.com/).
+  🌐 **English** · [Português](#pauta--português)
 
-The interface is available in **English and Portuguese** (pt-PT / pt-BR): it
-follows your device language on first launch and can be switched any time in
-*Settings → Preferences → Language*. Everything is stored locally on your
-device — there is no account, no server, and no network dependency.
+  [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+  [![Android APK](https://img.shields.io/badge/Android-APK%20download-3DDC84?logo=android&logoColor=white)](../../releases/latest)
+  [![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](../../)
+</div>
 
 ---
 
-## Table of contents
+**Pauta** is a free, private daily-planning app that helps you stay focused and build lasting habits. Write down your intentions for the day, use the built-in focus timer, and track your habits — all without an account or an internet connection.
 
-- [Highlights](#highlights)
-- [The three tabs](#the-three-tabs)
-- [Data, privacy & backup](#data-privacy--backup)
-- [Settings & extras](#settings--extras)
-- [Architecture](#architecture)
-- [Project layout](#project-layout)
-- [Getting started](#getting-started)
-  - [Run the web app locally](#run-the-web-app-locally)
-  - [Build the web bundle](#build-the-web-bundle)
-  - [Build the Android app](#build-the-android-app)
-- [Continuous integration](#continuous-integration)
-- [Keyboard shortcuts](#keyboard-shortcuts)
-- [Browser & platform support](#browser--platform-support)
+Works on **Android** (install the app), **iPhone/iPad** (add to home screen), and any modern **web browser** on your computer.
+
+---
+
+## Contents
+
+- [Get the app](#get-the-app)
+- [What can I do with it?](#what-can-i-do-with-it)
+- [Your data & privacy](#your-data--privacy)
+- [Settings & features](#settings--features)
 - [License](#license)
+- [For developers ›](#️-for-developers)
 
 ---
 
-## Highlights
+## Get the app
 
-- **Fully offline & self-contained.** React, ReactDOM and Babel are vendored
-  locally — no CDN, no analytics, no backend. The service worker precaches the
-  app shell so it works with zero connectivity.
-- **Installable PWA.** Add it to your home screen on Android or iOS, or install
-  the generated `.apk` directly.
-- **Native Android build.** Capacitor wraps the web app into an installable
-  Android package; a GitHub Actions workflow builds the APK on every push.
-- **Local-only data.** All state lives in `localStorage`. Export and import a
-  full JSON backup whenever you like.
-- **Light & dark themes.** Auto-follows the OS, or pick a fixed theme. A warm
-  "paper & ink" design system with a configurable accent colour.
-- **Local reminders.** Optional notifications for pending habits and the nightly
-  reflection (delivered while the app is open — no push server).
-- **Bilingual (English / Portuguese).** Auto-detects your device language and
-  offers an in-app toggle. Portuguese is the source language, with English
-  layered on top; untranslated strings fall back to Portuguese gracefully.
+| Platform | How to install |
+|----------|----------------|
+| **Android** | Download the latest `.apk` from the [Releases page](../../releases/latest) and open it to install |
+| **iPhone / iPad** | Open the app in Safari → tap the **Share** icon → tap **Add to Home Screen** |
+| **Desktop / Browser** | Open the app in Chrome or Edge → look for the **install icon** (⊕) in the address bar |
+
+> No sign-up. No account. No internet required after the first load.
 
 ---
 
-## The three tabs
+## What can I do with it?
 
-Pauta is organised into three tabs, navigable by tap, swipe, or keyboard.
+Pauta has three sections you can switch between by tapping the tabs or swiping left and right.
 
-### 1. Today
-Your day at a glance. Capture the day's **intentions**, check them off, and close
-the day with a **nightly reflection**. Intentions can be promoted straight into a
-focus block on the Pauta tab.
+### 📋 Today
+Start each day by writing down your **intentions** — the things you actually want to get done. Tick them off as you go, and close the day with a short **reflection**. Simple, honest, and yours alone.
 
-### 2. Pauta (Focus blocks)
-A focus timer with a full block lifecycle. Start a block (optionally tied to an
-intention or project), pause and resume it, jot session notes, and conclude it.
-Completed and in-progress blocks appear on a filterable timeline, each block
-tracking its individual work sessions and elapsed time.
+### ⏱️ Focus (Pauta)
+Need to concentrate? Start a **focus block** — a timed session you can link to one of your intentions or a project. Pause and resume it whenever you like, jot down session notes, and look back at everything you've accomplished on a scrollable timeline.
 
-### 3. Tides
-A habit tracker built around a maritime metaphor. Habits are tracked on a
-month-by-month calendar with:
-
-- **Streak tiers** that grow with consistency — from *Wave* up to *Ocean*.
-- **Breaths** — honest, guilt-free breaks that don't shatter a streak.
-- **Flexible recurrence** — permanent habits, fixed-period habits, or single-month
-  habits.
-- **Heatmaps & trends** — a per-habit detail view plus a 12-month "wave" trend.
+### 🌊 Tides (Habits)
+Build habits that actually stick. Track your habits on a monthly calendar with a maritime theme. The longer your streak, the higher your tier — from *Wave* all the way up to *Ocean*. Miss a day on purpose? Use a **Breath** — an honest, guilt-free skip that keeps your streak alive.
 
 ---
 
-## Data, privacy & backup
+## Your data & privacy
 
-- **Storage:** everything persists in the browser's `localStorage` under the key
-  `pauta.v4`. Nothing leaves your device.
-- **No tracking:** there are no analytics, telemetry, or third-party requests.
-- **Backup:** *Settings → Backup → Export data* downloads a `.json` file with
-  all of your data. *Import data* restores from that file (replacing current
-  data after a confirmation prompt).
-- **Reset:** *Reload sample data* repopulates demo data; *Erase everything*
-  permanently clears everything.
+- **Everything stays on your device.** There are no accounts, no servers, and no internet required.
+- **Zero tracking.** No analytics, no ads, no third-party services of any kind.
+- **Back up your data anytime.** Go to *Settings → Backup → Export data* to save a file with everything. Restore it just as easily with *Import data*.
+- **Fresh start when you want.** *Reload sample data* fills the app with demo content; *Erase everything* wipes it clean.
 
 ---
 
-## Settings & extras
+## Settings & features
 
-Open **Settings** from the status-bar menu. It includes:
+Tap the **menu** in the top bar to open Settings. Here's what you'll find:
 
-- **Analysis** — *Weekly review* (a 7-day review of focus, habits and patterns,
-  including best-hour and correlation insights) and a guide to how the Tides tiers
-  work.
-- **Preferences** — language (Português / English), theme (Auto / Light / Dark)
-  and haptic feedback.
-- **Reminders** — enable local notifications and set times for pending-habit and
-  nightly-reflection reminders.
-- **Backup** — export / import JSON.
-- **Install** — install prompt (Android) or platform-specific instructions (iOS).
-- **Application** — reseed demo data or wipe everything.
-
-A built-in **Tweaks panel** exposes accent colour, timer visibility and layout
-density for quick experimentation, and a one-time **onboarding** overlay greets
-first-time users.
+| Setting | What it does |
+|---------|-------------|
+| 🌍 **Language** | Switch between English and Portuguese any time |
+| 🌗 **Theme** | Auto (follows your device), Light, or Dark |
+| 🎨 **Accent colour** | Pick a colour that feels like you |
+| 🔔 **Reminders** | Optional on-device nudges for pending habits and your evening reflection |
+| 💾 **Backup** | Export or import your data as a file |
+| 📲 **Install** | Instructions to add the app to your home screen |
+| 📊 **Weekly Review** | A 7-day summary of your focus sessions, habits, and patterns |
 
 ---
+
+## License
+
+[Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/) — free to use and share for non-commercial purposes, with attribution. Commercial use is not permitted.
+
+---
+
+<details>
+<summary>🛠️ For developers</summary>
 
 ## Architecture
 
-Pauta deliberately avoids a JavaScript build step for application code. JSX is
-transpiled **in the browser** by Babel Standalone, and React is loaded from
-vendored files. This keeps the project dependency-light and trivially portable —
-the same files run as a plain website, a PWA, and inside the Android WebView.
+Pauta deliberately avoids a JavaScript build step for application code. JSX is transpiled **in the browser** by Babel Standalone, and React is loaded from vendored files. This keeps the project dependency-light and trivially portable — the same files run as a plain website, a PWA, and inside the Android WebView.
 
-- **UI:** React (function components + hooks), styled with inline styles and CSS
-  custom properties (the design tokens defined in `index.html`).
-- **State:** a hand-rolled store (`src/store.jsx`, schema `pauta.v4`) backed by
-  `localStorage`.
-- **i18n:** `src/i18n.jsx` exposes `tr()` / `trf()` helpers loaded before every
-  other script. Portuguese is the source language (PT strings double as lookup
-  keys); English is layered on via a dictionary, and missing keys fall back to
-  the Portuguese text unchanged.
-- **Offline:** `service-worker.js` precaches the app shell (`CACHE_VERSION` is
-  bumped whenever precached assets change).
-- **Packaging:** `scripts/build-web.mjs` copies `index.html`, `manifest.json`,
-  `icons/`, `src/` and `vendor/` into `www/`, which Capacitor bundles into the
-  native app (`webDir: "www"`, `appId: "com.pauta.app"`).
-
----
+- **UI:** React (function components + hooks), styled with inline styles and CSS custom properties (the design tokens defined in `index.html`).
+- **State:** a hand-rolled store (`src/store.jsx`, schema `pauta.v4`) backed by `localStorage`.
+- **i18n:** `src/i18n.jsx` exposes `tr()` / `trf()` helpers loaded before every other script. Portuguese is the source language (PT strings double as lookup keys); English is layered on via a dictionary, and missing keys fall back to the Portuguese text unchanged.
+- **Offline:** `service-worker.js` precaches the app shell (`CACHE_VERSION` is bumped whenever precached assets change).
+- **Packaging:** `scripts/build-web.mjs` copies `index.html`, `manifest.json`, `icons/`, `src/` and `vendor/` into `www/`, which Capacitor bundles into the native app (`webDir: "www"`, `appId: "com.pauta.app"`).
 
 ## Project layout
 
@@ -161,7 +123,7 @@ the same files run as a plain website, a PWA, and inside the Android WebView.
 │   ├── store.jsx           localStorage-backed state store (v4)
 │   ├── i18n.jsx            tr()/trf() helpers + English dictionary (PT source)
 │   ├── ui-primitives.jsx   Shared primitives (Sheet, TabBar, icons, inputs…)
-│   ├── sub-components.jsx   Block cards, timeline, filter chips, sheets
+│   ├── sub-components.jsx  Block cards, timeline, filter chips, sheets
 │   ├── sheets.jsx          Bottom-modal sheets (start / pause / conclude…)
 │   ├── tab-hoje.jsx        "Hoje" tab — intentions + reflection
 │   ├── tab-pauta.jsx       "Pauta" tab — active block + timeline
@@ -174,12 +136,9 @@ the same files run as a plain website, a PWA, and inside the Android WebView.
     └── android.yml         CI: build APK and publish a rolling "latest" release
 ```
 
----
-
 ## Getting started
 
-**Prerequisites:** [Node.js](https://nodejs.org/) 20+. Building the Android app
-additionally requires a JDK 17 and the Android SDK (handled automatically in CI).
+**Prerequisites:** [Node.js](https://nodejs.org/) 20+. Building the Android app additionally requires a JDK 17 and the Android SDK (handled automatically in CI).
 
 ```bash
 npm install
@@ -187,8 +146,7 @@ npm install
 
 ### Run the web app locally
 
-Because everything is static and self-contained, any static file server works.
-For example:
+Because everything is static and self-contained, any static file server works:
 
 ```bash
 npx serve .
@@ -196,8 +154,7 @@ npx serve .
 python3 -m http.server 8000
 ```
 
-Then open the served URL (e.g. `http://localhost:8000`). The app transpiles its
-JSX in the browser, so no build step is required for development.
+Open the served URL (e.g. `http://localhost:8000`). The app transpiles its JSX in the browser, so no build step is required for development.
 
 ### Build the web bundle
 
@@ -218,183 +175,135 @@ npm run sync          # runs build:web, then `npx cap sync android`
 npx cap add android   # first time only, to create the android/ project
 ```
 
-From there, open `android/` in Android Studio or build from the command line
-(`cd android && ./gradlew assembleDebug`). The `android/`, `www/` and `*.apk`
-artifacts are git-ignored.
-
----
+From there, open `android/` in Android Studio or build from the command line (`cd android && ./gradlew assembleDebug`). The `android/`, `www/` and `*.apk` artifacts are git-ignored.
 
 ## Continuous integration
 
-`.github/workflows/android.yml` builds an installable `.apk` on every push (and
-on manual dispatch) and publishes it to a rolling **`latest`** GitHub Release, so
-you never need a local Android toolchain. The committed `debug.keystore` keeps the
-signing key stable across builds, so reinstalling an update preserves your data.
-
----
+`.github/workflows/android.yml` builds an installable `.apk` on every push (and on manual dispatch) and publishes it to a rolling **`latest`** GitHub Release, so you never need a local Android toolchain. The committed `debug.keystore` keeps the signing key stable across builds, so reinstalling an update preserves your data.
 
 ## Keyboard shortcuts
 
-When the app is focused (and you're not typing in a field):
+When the app is focused and you're not typing in a field:
 
-| Key | Action            |
-|-----|-------------------|
-| `1` | Today tab         |
-| `2` | Pauta tab         |
-| `3` | Tides tab         |
-| `g` | Open Settings     |
-| `i` | Open Weekly review (insights) |
+| Key | Action |
+|-----|--------|
+| `1` | Today tab |
+| `2` | Pauta tab |
+| `3` | Tides tab |
+| `g` | Open Settings |
+| `i` | Open Weekly review |
 | `?` | Open the Tides tier guide |
 
-On mobile, swipe left/right to move between tabs.
-
----
+On mobile, swipe left/right to switch between tabs.
 
 ## Browser & platform support
 
-Targets modern evergreen browsers (Chromium, Firefox, Safari) and Android
-WebView. PWA install is available on Chromium-based browsers and via *Add to Home
-Screen* on iOS Safari. Local notifications and haptics degrade gracefully where
-unsupported.
+Targets modern evergreen browsers (Chromium, Firefox, Safari) and Android WebView. PWA install is available on Chromium-based browsers and via *Add to Home Screen* on iOS Safari. Local notifications and haptics degrade gracefully where unsupported.
 
----
-
-## License
-
-This project is licensed under
-[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
-
-You are free to use, share, and adapt the work **for non-commercial purposes**,
-with attribution. **Commercial use is not permitted.**
+</details>
 
 ---
 ---
 
-# Pauta — Português
+<div align="center">
+  <img src="icons/icon-192.png" width="96" alt="Ícone da Pauta" />
 
-> Intenções, blocos de foco e hábitos — a sua pauta diária.
+  # Pauta — Português
 
-[English](#pauta) · 🌐 **Português**
+  *Intenções, blocos de foco e hábitos — a sua pauta diária.*
 
-A **Pauta** é uma aplicação de planeamento diário que funciona offline: defina as
-suas intenções para o dia, faça blocos de foco com um cronómetro integrado e
-mantenha sequências de hábitos honestas. Funciona como uma Progressive Web App
-(PWA) instalável e é distribuída como uma compilação nativa **Android**
-autónoma, através do [Capacitor](https://capacitorjs.com/).
+  [English](#pauta) · 🌐 **Português**
+</div>
 
-A interface está em português. Tudo é guardado localmente no seu dispositivo —
-não há conta, nem servidor, nem qualquer dependência de rede.
+---
+
+A **Pauta** é uma aplicação gratuita e privada de planeamento diário que o ajuda a manter o foco e a criar hábitos consistentes. Defina as suas intenções para o dia, use o cronómetro de foco integrado e acompanhe os seus hábitos — tudo sem conta nem ligação à internet.
+
+Funciona no **Android** (instale a app), no **iPhone/iPad** (adicione ao ecrã principal) e em qualquer **browser** moderno no computador.
+
+---
 
 ## Índice
 
-- [Destaques](#destaques)
-- [Os três separadores](#os-três-separadores)
-- [Dados, privacidade e cópia de segurança](#dados-privacidade-e-cópia-de-segurança)
-- [Definições e extras](#definições-e-extras)
-- [Arquitetura](#arquitetura)
-- [Estrutura do projeto](#estrutura-do-projeto)
-- [Como começar](#como-começar)
-  - [Executar a app web localmente](#executar-a-app-web-localmente)
-  - [Compilar o pacote web](#compilar-o-pacote-web)
-  - [Compilar a app Android](#compilar-a-app-android)
-- [Integração contínua](#integração-contínua)
-- [Atalhos de teclado](#atalhos-de-teclado)
-- [Compatibilidade de browsers e plataformas](#compatibilidade-de-browsers-e-plataformas)
+- [Como obter a app](#como-obter-a-app)
+- [O que posso fazer?](#o-que-posso-fazer)
+- [Os seus dados e privacidade](#os-seus-dados-e-privacidade)
+- [Definições e funcionalidades](#definições-e-funcionalidades)
 - [Licença](#licença)
+- [Para programadores ›](#️-para-programadores)
 
-## Destaques
+---
 
-- **Totalmente offline e autónoma.** O React, o ReactDOM e o Babel estão
-  incluídos localmente — sem CDN, sem analítica, sem servidor. O service worker
-  guarda em cache a estrutura da app, por isso funciona sem qualquer ligação.
-- **PWA instalável.** Adicione-a ao ecrã principal no Android ou iOS, ou instale
-  diretamente o `.apk` gerado.
-- **Compilação nativa Android.** O Capacitor empacota a app web num pacote
-  Android instalável; um fluxo de trabalho do GitHub Actions compila o APK a cada
-  envio (push).
-- **Dados apenas locais.** Todo o estado vive no `localStorage`. Exporte e importe
-  uma cópia de segurança completa em JSON quando quiser.
-- **Temas claro e escuro.** Segue automaticamente o sistema operativo, ou escolha
-  um tema fixo. Um design "papel e tinta" quente, com uma cor de destaque
-  configurável.
-- **Lembretes locais.** Notificações opcionais para hábitos pendentes e para a
-  reflexão noturna (entregues enquanto a app está aberta — sem servidor de push).
+## Como obter a app
 
-## Os três separadores
+| Plataforma | Como instalar |
+|------------|---------------|
+| **Android** | Transfira o `.apk` mais recente na [página de Releases](../../releases/latest) e abra-o para instalar |
+| **iPhone / iPad** | Abra a app no Safari → toque no ícone de **Partilhar** → toque em **Adicionar ao ecrã principal** |
+| **Computador / Browser** | Abra a app no Chrome ou Edge → procure o ícone de instalação (⊕) na barra de endereço |
 
-A Pauta está organizada em três separadores, navegáveis por toque, deslize ou
-teclado.
+> Sem registo. Sem conta. Sem internet após o primeiro carregamento.
 
-### 1. Hoje
-O seu dia num relance. Registe as **intenções** do dia, marque-as como concluídas
-e encerre o dia com uma **reflexão noturna**. As intenções podem ser promovidas
-diretamente para um bloco de foco no separador Pauta.
+---
 
-### 2. Pauta (Blocos de foco)
-Um cronómetro de foco com um ciclo de vida completo do bloco. Inicie um bloco
-(opcionalmente associado a uma intenção ou projeto), pause-o e retome-o, registe
-notas da sessão e conclua-o. Os blocos concluídos e em curso aparecem numa linha
-temporal com filtros, e cada bloco regista as suas sessões de trabalho
-individuais e o tempo decorrido.
+## O que posso fazer?
 
-### 3. Marés (Hábitos)
-Um registo de hábitos construído em torno de uma metáfora marítima. Os hábitos
-são acompanhados num calendário mês a mês, com:
+A Pauta tem três secções entre as quais pode navegar tocando nos separadores ou deslizando para a esquerda e direita.
 
-- **Tiers de sequência** que crescem com a consistência — de *Onda* até *Oceano*.
-- **Respiros** — pausas honestas e sem culpa, que não quebram uma sequência.
-- **Recorrência flexível** — hábitos permanentes, hábitos de período fixo ou
-  hábitos de um único mês.
-- **Mapas de calor e tendências** — uma vista de detalhe por hábito, mais uma
-  tendência "onda" de 12 meses.
+### 📋 Hoje
+Comece cada dia a escrever as suas **intenções** — as coisas que realmente quer fazer. Marque-as à medida que avança e termine o dia com uma breve **reflexão**. Simples, honesto e só seu.
 
-## Dados, privacidade e cópia de segurança
+### ⏱️ Foco (Pauta)
+Precisa de se concentrar? Inicie um **bloco de foco** — uma sessão cronometrada que pode ligar a uma das suas intenções ou a um projeto. Pause e retome quando quiser, adicione notas da sessão e reveja tudo o que realizou numa linha temporal.
 
-- **Armazenamento:** tudo persiste no `localStorage` do browser, sob a chave
-  `pauta.v4`. Nada sai do seu dispositivo.
-- **Sem rastreio:** não existe analítica, telemetria nem pedidos a terceiros.
-- **Cópia de segurança:** *Definições → Backup → Exportar dados* transfere um
-  ficheiro `.json` com todos os seus dados. *Importar dados* restaura a partir
-  desse ficheiro (substituindo os dados atuais, após confirmação).
-- **Repor:** *Recarregar exemplo* volta a preencher com dados de demonstração;
-  *Apagar tudo* remove permanentemente tudo.
+### 🌊 Marés (Hábitos)
+Crie hábitos que persistem. Acompanhe os seus hábitos num calendário mensal com um tema marítimo. Quanto mais mantiver uma sequência, mais alto sobe o seu nível — de *Onda* até *Oceano*. Faltou um dia de propósito? Use um **Respiro** — uma pausa honesta e sem culpa que mantém a sua sequência viva.
 
-## Definições e extras
+---
 
-Abra as **Definições** no menu da barra de estado. Incluem:
+## Os seus dados e privacidade
 
-- **Análise** — *Revisão semanal* (uma análise de 7 dias do foco, hábitos e
-  padrões, incluindo a melhor hora e correlações) e um guia sobre como funcionam
-  os tiers das Marés.
-- **Preferências** — tema (Auto / Claro / Escuro) e vibração (háptico).
-- **Lembretes** — ative notificações locais e defina as horas para os lembretes
-  de hábitos pendentes e da reflexão noturna.
-- **Backup** — exportar / importar JSON.
-- **Instalar** — pedido de instalação (Android) ou instruções específicas da
-  plataforma (iOS).
-- **Aplicação** — recarregar dados de demonstração ou apagar tudo.
+- **Tudo fica no seu dispositivo.** Não existem contas, servidores nem internet necessária.
+- **Zero rastreio.** Sem analítica, publicidade nem serviços de terceiros de qualquer tipo.
+- **Faça cópias de segurança quando quiser.** Vá a *Definições → Backup → Exportar dados* para guardar um ficheiro com tudo. Restaure-o igualmente com *Importar dados*.
+- **Recomeço quando precisar.** *Recarregar exemplo* preenche a app com dados de demonstração; *Apagar tudo* limpa tudo permanentemente.
 
-Um **painel de Tweaks** integrado expõe a cor de destaque, a visibilidade do
-cronómetro e a densidade do esquema para experimentação rápida, e uma camada de
-**boas-vindas** única recebe os utilizadores que abrem a app pela primeira vez.
+---
+
+## Definições e funcionalidades
+
+Toque no **menu** da barra superior para abrir as Definições. Encontrará:
+
+| Definição | O que faz |
+|-----------|-----------|
+| 🌍 **Idioma** | Mude entre português e inglês a qualquer momento |
+| 🌗 **Tema** | Automático (segue o dispositivo), Claro ou Escuro |
+| 🎨 **Cor de destaque** | Escolha uma cor que se identifique consigo |
+| 🔔 **Lembretes** | Notificações locais opcionais para hábitos pendentes e a reflexão noturna |
+| 💾 **Backup** | Exporte ou importe os seus dados como ficheiro |
+| 📲 **Instalar** | Instruções para adicionar a app ao ecrã principal |
+| 📊 **Revisão semanal** | Um resumo de 7 dias das suas sessões de foco, hábitos e padrões |
+
+---
+
+## Licença
+
+[Creative Commons Atribuição-NãoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.pt) — livre para usar e partilhar para fins não comerciais, com atribuição. O uso comercial não é permitido.
+
+---
+
+<details>
+<summary>🛠️ Para programadores</summary>
 
 ## Arquitetura
 
-A Pauta evita deliberadamente um passo de compilação de JavaScript para o código
-da aplicação. O JSX é transpilado **no browser** pelo Babel Standalone, e o React
-é carregado a partir de ficheiros incluídos localmente. Isto mantém o projeto leve
-em dependências e trivialmente portável — os mesmos ficheiros correm como um site
-simples, como uma PWA e dentro do WebView do Android.
+A Pauta evita deliberadamente um passo de compilação de JavaScript para o código da aplicação. O JSX é transpilado **no browser** pelo Babel Standalone, e o React é carregado a partir de ficheiros incluídos localmente. Isto mantém o projeto leve em dependências e trivialmente portável — os mesmos ficheiros correm como um site simples, como uma PWA e dentro do WebView do Android.
 
-- **Interface:** React (componentes de função + hooks), com estilos inline e
-  propriedades CSS personalizadas (os tokens de design definidos em `index.html`).
-- **Estado:** um store feito à mão (`src/store.jsx`, esquema `pauta.v4`) suportado
-  pelo `localStorage`.
-- **Offline:** o `service-worker.js` guarda em cache a estrutura da app
-  (`CACHE_VERSION` é incrementado sempre que os recursos em cache mudam).
-- **Empacotamento:** o `scripts/build-web.mjs` copia `index.html`,
-  `manifest.json`, `icons/`, `src/` e `vendor/` para `www/`, que o Capacitor
-  empacota na app nativa (`webDir: "www"`, `appId: "com.pauta.app"`).
+- **Interface:** React (componentes de função + hooks), com estilos inline e propriedades CSS personalizadas (os tokens de design definidos em `index.html`).
+- **Estado:** um store feito à mão (`src/store.jsx`, esquema `pauta.v4`) suportado pelo `localStorage`.
+- **i18n:** `src/i18n.jsx` expõe os auxiliares `tr()` / `trf()` carregados antes de todos os outros scripts. O português é a língua de origem (as strings PT funcionam também como chaves de pesquisa); o inglês é adicionado via dicionário, e as chaves em falta voltam ao texto em português.
+- **Offline:** o `service-worker.js` guarda em cache a estrutura da app (`CACHE_VERSION` é incrementado sempre que os recursos em cache mudam).
+- **Empacotamento:** o `scripts/build-web.mjs` copia `index.html`, `manifest.json`, `icons/`, `src/` e `vendor/` para `www/`, que o Capacitor empacota na app nativa (`webDir: "www"`, `appId: "com.pauta.app"`).
 
 ## Estrutura do projeto
 
@@ -415,8 +324,9 @@ simples, como uma PWA e dentro do WebView do Android.
 ├── src/
 │   ├── app.jsx             Raiz da app: separadores, painel de definições, atalhos, navegação por deslize
 │   ├── store.jsx           Store de estado suportado por localStorage (v4)
+│   ├── i18n.jsx            Auxiliares tr()/trf() + dicionário inglês (fonte PT)
 │   ├── ui-primitives.jsx   Primitivas partilhadas (Sheet, TabBar, ícones, inputs…)
-│   ├── sub-components.jsx   Cartões de bloco, linha temporal, chips de filtro, sheets
+│   ├── sub-components.jsx  Cartões de bloco, linha temporal, chips de filtro, sheets
 │   ├── sheets.jsx          Modais inferiores (iniciar / pausar / concluir…)
 │   ├── tab-hoje.jsx        Separador "Hoje" — intenções + reflexão
 │   ├── tab-pauta.jsx       Separador "Pauta" — bloco ativo + linha temporal
@@ -431,8 +341,7 @@ simples, como uma PWA e dentro do WebView do Android.
 
 ## Como começar
 
-**Pré-requisitos:** [Node.js](https://nodejs.org/) 20+. Compilar a app Android
-requer adicionalmente um JDK 17 e o Android SDK (tratados automaticamente na CI).
+**Pré-requisitos:** [Node.js](https://nodejs.org/) 20+. Compilar a app Android requer adicionalmente um JDK 17 e o Android SDK (tratados automaticamente na CI).
 
 ```bash
 npm install
@@ -440,8 +349,7 @@ npm install
 
 ### Executar a app web localmente
 
-Como tudo é estático e autónomo, qualquer servidor de ficheiros estáticos serve.
-Por exemplo:
+Como tudo é estático e autónomo, qualquer servidor de ficheiros estáticos serve:
 
 ```bash
 npx serve .
@@ -449,9 +357,7 @@ npx serve .
 python3 -m http.server 8000
 ```
 
-Depois abra o URL servido (por exemplo, `http://localhost:8000`). A app transpila
-o seu JSX no browser, por isso não é necessário qualquer passo de compilação para
-desenvolvimento.
+Abra o URL servido (por exemplo, `http://localhost:8000`). A app transpila o seu JSX no browser, por isso não é necessário qualquer passo de compilação para desenvolvimento.
 
 ### Compilar o pacote web
 
@@ -461,8 +367,7 @@ Monte o pacote a publicar em `./www`:
 npm run build:web
 ```
 
-É também isto que se publica em qualquer alojamento estático (GitHub Pages,
-Netlify, etc.).
+É também isto que se publica em qualquer alojamento estático (GitHub Pages, Netlify, etc.).
 
 ### Compilar a app Android
 
@@ -473,45 +378,29 @@ npm run sync          # corre build:web e depois `npx cap sync android`
 npx cap add android   # só na primeira vez, para criar o projeto android/
 ```
 
-A partir daí, abra `android/` no Android Studio ou compile pela linha de comandos
-(`cd android && ./gradlew assembleDebug`). Os artefactos `android/`, `www/` e
-`*.apk` estão excluídos do git.
+A partir daí, abra `android/` no Android Studio ou compile pela linha de comandos (`cd android && ./gradlew assembleDebug`). Os artefactos `android/`, `www/` e `*.apk` estão excluídos do git.
 
 ## Integração contínua
 
-O `.github/workflows/android.yml` compila um `.apk` instalável a cada push (e por
-acionamento manual) e publica-o numa release contínua do GitHub chamada
-**`latest`**, para que nunca precise de uma cadeia de ferramentas Android local. O
-`debug.keystore` versionado mantém a chave de assinatura estável entre
-compilações, por isso reinstalar uma atualização preserva os seus dados.
+O `.github/workflows/android.yml` compila um `.apk` instalável a cada push (e por acionamento manual) e publica-o numa release contínua do GitHub chamada **`latest`**, para que nunca precise de uma cadeia de ferramentas Android local. O `debug.keystore` versionado mantém a chave de assinatura estável entre compilações, por isso reinstalar uma atualização preserva os seus dados.
 
 ## Atalhos de teclado
 
-Com a app em foco (e sem estar a escrever num campo):
+Com a app em foco e sem estar a escrever num campo:
 
-| Tecla | Ação              |
-|-------|-------------------|
-| `1`   | Separador Hoje    |
-| `2`   | Separador Pauta   |
-| `3`   | Separador Marés   |
-| `g`   | Abrir Definições  |
-| `i`   | Abrir Revisão semanal (insights) |
-| `?`   | Abrir o guia de tiers das Marés |
+| Tecla | Ação |
+|-------|------|
+| `1` | Separador Hoje |
+| `2` | Separador Pauta |
+| `3` | Separador Marés |
+| `g` | Abrir Definições |
+| `i` | Abrir Revisão semanal |
+| `?` | Abrir o guia de tiers das Marés |
 
 No telemóvel, deslize para a esquerda/direita para mudar de separador.
 
 ## Compatibilidade de browsers e plataformas
 
-Destina-se a browsers modernos e atualizados (Chromium, Firefox, Safari) e ao
-WebView do Android. A instalação como PWA está disponível em browsers baseados em
-Chromium e através de *Adicionar ao ecrã principal* no Safari do iOS. As
-notificações locais e o háptico degradam-se de forma elegante onde não são
-suportados.
+Destina-se a browsers modernos e atualizados (Chromium, Firefox, Safari) e ao WebView do Android. A instalação como PWA está disponível em browsers baseados em Chromium e através de *Adicionar ao ecrã principal* no Safari do iOS. As notificações locais e o háptico degradam-se de forma elegante onde não são suportados.
 
-## Licença
-
-Este projeto está licenciado sob a
-[Creative Commons Atribuição-NãoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.pt).
-
-É livre de usar, partilhar e adaptar o trabalho **para fins não comerciais**, com
-atribuição. **O uso comercial não é permitido.**
+</details>
