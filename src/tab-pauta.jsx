@@ -103,13 +103,13 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         <div style={{ paddingTop: 14, paddingBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-              Pauta · {fmtDateLong(Date.now())}
+              {trf("Pauta · {d}", { d: fmtDateLong(Date.now()) })}
             </div>
             <h1 style={{ fontFamily: "var(--serif)", fontSize: 30, lineHeight: 1.0, margin: 0, fontWeight: 400, letterSpacing: "-0.01em" }}>
-              {distinctBlockCount} {distinctBlockCount === 1 ? "bloco" : "blocos"}. <em style={{ color: accentColor }}>{fmtDuration(totalFocus)}</em> em foco.
+              {distinctBlockCount} {distinctBlockCount === 1 ? tr("bloco") : tr("blocos")}. <em style={{ color: accentColor }}>{fmtDuration(totalFocus)}</em> {tr("em foco.")}
             </h1>
           </div>
-          <button onClick={() => setSheetHistory(true)} className="tap" title="ver pautas anteriores"
+          <button onClick={() => setSheetHistory(true)} className="tap" title={tr("ver pautas anteriores")}
             style={{
               border: "1px solid var(--rule)", background: "transparent",
               borderRadius: 8, padding: "6px 10px",
@@ -117,7 +117,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
               textTransform: "uppercase", color: "var(--ink-3)",
               cursor: "pointer", flexShrink: 0, marginTop: 2,
             }}>
-            histórico ↗
+            {tr("histórico")} ↗
           </button>
         </div>
 
@@ -132,7 +132,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             onSwitch={() => setSheetSwitch(true)}
             onConclude={() => setSheetConclude({ blockId: activeBlock.id })}
             onCancel={() => {
-              if (confirm("Descartar este bloco? Não fica guardado.")) {
+              if (confirm(tr("Descartar este bloco? Não fica guardado."))) {
                 deleteBlock(activeBlock.id);
               }
             }}
@@ -152,10 +152,10 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             }}>
             <div style={{ textAlign: "left" }}>
               <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
-                começar
+                {tr("começar")}
               </div>
               <div style={{ fontFamily: "var(--serif)", fontSize: 22, marginTop: 4 }}>
-                Um novo bloco
+                {tr("Um novo bloco")}
               </div>
             </div>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: accentColor, color: "var(--on-dark)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -168,7 +168,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         {pausedBlocks.length > 0 && (
           <div style={{ marginBottom: 22 }}>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
-              Em pausa
+              {tr("Em pausa")}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {pausedBlocks.map(b => (
@@ -197,11 +197,11 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         {/* Timeline */}
         <div style={{ marginTop: 18 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 14 }}>
-            {filter ? "Filtrado" : "Hoje"}
+            {filter ? tr("Filtrado") : tr("Hoje")}
           </div>
           {events.length === 0 ? (
             <div style={{ padding: "20px 0", fontFamily: "var(--serif)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 15 }}>
-              {filter ? "Nada por aqui ainda." : "Ainda nenhum bloco hoje. Comece quando quiser."}
+              {filter ? tr("Nada por aqui ainda.") : tr("Ainda nenhum bloco hoje. Comece quando quiser.")}
             </div>
           ) : (
             <Timeline events={events} accentColor={accentColor}
@@ -308,7 +308,7 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
   const openedCount = opened ? dailyBlockCount(blocks, opened) : 0;
 
   return (
-    <Sheet open={open} onClose={() => { setPickedKey(null); onClose(); }} title="Pautas anteriores">
+    <Sheet open={open} onClose={() => { setPickedKey(null); onClose(); }} title={tr("Pautas anteriores")}>
       <div style={{ padding: "8px 24px 24px" }}>
         {opened ? (
           <div>
@@ -319,7 +319,7 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
                 color: "var(--ink-3)", textTransform: "uppercase", cursor: "pointer",
                 marginBottom: 12,
               }}>
-              ← histórico
+              ← {tr("histórico")}
             </button>
             <div style={{
               fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",
@@ -332,7 +332,7 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
               margin: 0, fontWeight: 400, letterSpacing: "-0.01em",
               color: "var(--ink)", marginBottom: 16,
             }}>
-              {openedCount} {openedCount === 1 ? "bloco" : "blocos"}. <em style={{ color: accentColor }}>{fmtDuration(openedFocus)}</em>.
+              {openedCount} {openedCount === 1 ? tr("bloco") : tr("blocos")}. <em style={{ color: accentColor }}>{fmtDuration(openedFocus)}</em>.
             </h2>
             {openedEvents.length === 0 ? (
               <div style={{
@@ -340,7 +340,7 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
                 fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
                 color: "var(--ink-3)",
               }}>
-                Sem blocos nesse dia.
+                {tr("Sem blocos nesse dia.")}
               </div>
             ) : (
               <Timeline events={openedEvents} accentColor={accentColor}
@@ -355,13 +355,13 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
               fontFamily: "var(--serif)", fontSize: 20, lineHeight: 1.25,
               color: "var(--ink)", marginBottom: 4, letterSpacing: "-0.01em",
             }}>
-              O ritmo dos seus dias.
+              {tr("O ritmo dos seus dias.")}
             </div>
             <div style={{
               fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
               color: "var(--ink-3)", marginBottom: 22,
             }}>
-              Cada barra é um dia. Toque para ver os blocos desse dia.
+              {tr("Cada barra é um dia. Toque para ver os blocos desse dia.")}
             </div>
 
             <FocusBars days={chartDays} maxMs={maxMs} accentColor={accentColor}
@@ -373,23 +373,23 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
               border: "1px solid var(--rule)", borderRadius: 8, overflow: "hidden",
               marginBottom: 24,
             }}>
-              <PStat label="Total 14d" value={fmtDuration(totalMs)}/>
-              <PStat label="Média/dia activo" value={activeDays > 0 ? fmtDuration(avgMs) : "—"}/>
-              <PStat label="Dias activos" value={activeDays + "/14"}/>
+              <PStat label={tr("Total 14d")} value={fmtDuration(totalMs)}/>
+              <PStat label={tr("Média/dia activo")} value={activeDays > 0 ? fmtDuration(avgMs) : "—"}/>
+              <PStat label={tr("Dias activos")} value={activeDays + "/14"}/>
             </div>
 
             <div style={{
               fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.15em",
               textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10,
             }}>
-              todos os dias com blocos
+              {tr("todos os dias com blocos")}
             </div>
             {allDays.length === 0 ? (
               <div style={{
                 fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
                 color: "var(--ink-3)", padding: "12px 0",
               }}>
-                Ainda nenhuma pauta passada.
+                {tr("Ainda nenhuma pauta passada.")}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -417,14 +417,14 @@ function PautaHistorySheet({ open, onClose, blocks, accentColor }) {
                               marginLeft: 8, fontFamily: "var(--mono)", fontSize: 9,
                               color: accentColor, letterSpacing: "0.1em",
                               textTransform: "uppercase",
-                            }}>· hoje</span>
+                            }}>· {tr("hoje")}</span>
                           )}
                         </div>
                         <div style={{
                           fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
                           letterSpacing: "0.06em", marginTop: 2,
                         }}>
-                          {count} {count === 1 ? "bloco" : "blocos"}
+                          {count} {count === 1 ? tr("bloco") : tr("blocos")}
                         </div>
                       </div>
                       <div style={{

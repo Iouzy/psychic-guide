@@ -47,7 +47,7 @@ function TabMares({ store, accentColor }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22, marginTop: 18 }}>
           <div>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 4 }}>
-              {isCurrentMonth ? "Maré actual" : "Maré passada"}
+              {isCurrentMonth ? tr("Maré actual") : tr("Maré passada")}
             </div>
             <h1 style={{ fontFamily: "var(--serif)", fontSize: 38, lineHeight: 1.0, margin: 0, fontWeight: 400, letterSpacing: "-0.015em" }}>
               {fmtMonthLong(view.y, view.m)}
@@ -56,7 +56,7 @@ function TabMares({ store, accentColor }) {
           <button
             onClick={() => setTrendOpen(true)}
             className="tap"
-            title="ver marés passadas"
+            title={tr("ver marés passadas")}
             style={{
               textAlign: "right",
               border: "none", background: "transparent",
@@ -67,7 +67,7 @@ function TabMares({ store, accentColor }) {
               {overall !== null && <span style={{ fontSize: 14, color: "var(--ink-3)" }}>%</span>}
             </div>
             <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-3)", marginTop: 2 }}>
-              marés passadas ↗
+              {tr("marés passadas")} ↗
             </div>
           </button>
         </div>
@@ -78,8 +78,8 @@ function TabMares({ store, accentColor }) {
             padding: "24px 0", fontFamily: "var(--serif)", fontStyle: "italic",
             fontSize: 17, color: "var(--ink-3)", lineHeight: 1.4,
           }}>
-            {pickPhrase("intro")}<br/><br/>
-            <span style={{ fontSize: 14 }}>Adicione comportamentos que quer praticar regularmente. Cada mês tem o seu grid.</span>
+            {tr(pickPhrase("intro"))}<br/><br/>
+            <span style={{ fontSize: 14 }}>{tr("Adicione comportamentos que quer praticar regularmente. Cada mês tem o seu grid.")}</span>
           </div>
         )}
 
@@ -96,11 +96,11 @@ function TabMares({ store, accentColor }) {
             display: "flex", flexDirection: "column", gap: 2,
           }}>
             <div>
-              <span style={{ color: "var(--ink-2)" }}>toque</span> marca feito ·{" "}
-              <span style={{ color: "var(--ink-2)" }}>pressão longa</span> num dia vazio marca respiro
+              <span style={{ color: "var(--ink-2)" }}>{tr("toque")}</span> {tr("marca feito")} ·{" "}
+              <span style={{ color: "var(--ink-2)" }}>{tr("pressão longa")}</span> {tr("num dia vazio marca respiro")}
             </div>
             <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, marginTop: 2 }}>
-              dias passados são editáveis — a honestidade é o melhor amigo da maré.
+              {tr("dias passados são editáveis — a honestidade é o melhor amigo da maré.")}
             </div>
           </div>
         )}
@@ -120,7 +120,7 @@ function TabMares({ store, accentColor }) {
               onLongPressEmpty={(dayKey, anchorRect) => setRespiroAt({ habitId: h.id, dayKey, anchorRect })}
               onUnmarkRespiro={(dayKey) => unmarkRespiro(h.id, dayKey)}
               onOpenDetail={() => setDetailHabitId(h.id)}
-              onRemove={() => { if (confirm("Remover esta maré? Todo o histórico será perdido.")) removeHabit(h.id); }}
+              onRemove={() => { if (confirm(tr("Remover esta maré? Todo o histórico será perdido."))) removeHabit(h.id); }}
               onUpdate={(patch) => updateHabit(h.id, patch)}
             />
           ))}
@@ -134,7 +134,7 @@ function TabMares({ store, accentColor }) {
             fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
             color: "var(--ink-3)", textAlign: "center", lineHeight: 1.4,
           }}>
-            {habits.length - visibleHabits.length} {habits.length - visibleHabits.length === 1 ? "maré ainda não existia" : "marés ainda não existiam"} em {fmtMonthLong(view.y, view.m)}.
+            {habits.length - visibleHabits.length} {habits.length - visibleHabits.length === 1 ? tr("maré ainda não existia") : tr("marés ainda não existiam")} {trf("em {month}.", { month: fmtMonthLong(view.y, view.m) })}
           </div>
         )}
 
@@ -157,7 +157,7 @@ function TabMares({ store, accentColor }) {
                 cursor: "pointer", fontSize: 14,
               }}>
               <Icon.Plus size={14}/>
-              <span>adicionar maré</span>
+              <span>{tr("adicionar maré")}</span>
             </button>
           )
         )}
@@ -169,7 +169,7 @@ function TabMares({ store, accentColor }) {
             fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
             color: "var(--ink-3)", textAlign: "center", lineHeight: 1.4,
           }}>
-            "{homePhrase}"
+            "{tr(homePhrase)}"
           </div>
         )}
       </div>
@@ -196,7 +196,7 @@ function TabMares({ store, accentColor }) {
         onUnmarkRespiro={(k) => detailHabitId && unmarkRespiro(detailHabitId, k)}
         onUpdate={(patch) => detailHabitId && updateHabit(detailHabitId, patch)}
         onRemove={() => {
-          if (detailHabitId && confirm("Remover esta maré? Todo o histórico será perdido.")) {
+          if (detailHabitId && confirm(tr("Remover esta maré? Todo o histórico será perdido."))) {
             removeHabit(detailHabitId);
             setDetailHabitId(null);
           }
@@ -280,7 +280,7 @@ function MonthStrip({ habits, view, setView, accentColor, todayTs }) {
           <button
             onClick={() => setView({ y: todayD.getFullYear(), m: todayD.getMonth() })}
             className="tap"
-            title="voltar para o mês actual"
+            title={tr("voltar para o mês actual")}
             style={{
               border: "none", background: "transparent",
               padding: "6px 10px", borderRadius: 8,
@@ -331,7 +331,7 @@ function GridLegend({ accentColor }) {
       <button
         onClick={() => setOpen(o => !o)}
         className="tap"
-        title="legenda"
+        title={tr("legenda")}
         style={{
           border: "1px solid var(--rule)",
           background: open ? "var(--paper-2)" : "transparent",
@@ -348,7 +348,7 @@ function GridLegend({ accentColor }) {
           fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
           color: "var(--ink-3)", textTransform: "uppercase",
         }}>
-          legenda
+          {tr("legenda")}
         </span>
       </button>
       {open && (
@@ -368,22 +368,22 @@ function GridLegend({ accentColor }) {
           color: "var(--ink-2)",
           letterSpacing: "0.02em",
         }}>
-          <LegendRow swatch={<Sw kind="done"/>} label="feito"/>
+          <LegendRow swatch={<Sw kind="done"/>} label={tr("feito")}/>
           <LegendRow swatch={
             <div style={{
               width: 9, height: 9, borderRadius: 2,
               background: accentColor,
               boxShadow: `0 0 0 2px ${accentColor}33`,
             }}/>
-          } label="feito hoje"/>
-          <LegendRow swatch={<Sw kind="empty"/>} label="não feito"/>
+          } label={tr("feito hoje")}/>
+          <LegendRow swatch={<Sw kind="empty"/>} label={tr("não feito")}/>
           <LegendRow swatch={
             <div style={{
               width: 9, height: 9, borderRadius: 2,
               border: `1.5px solid ${accentColor}`,
               boxSizing: "border-box",
             }}/>
-          } label="hoje (por fazer)"/>
+          } label={tr("hoje (por fazer)")}/>
           <LegendRow swatch={
             <div style={{
               width: 9, height: 9, borderRadius: 2,
@@ -395,15 +395,15 @@ function GridLegend({ accentColor }) {
             }}>
               <RespiroPattern color={accentColor} small/>
             </div>
-          } label="respiro"/>
-          <LegendRow swatch={<Sw kind="pre"/>} label="antes da maré"/>
-          <LegendRow swatch={<Sw kind="future"/>} label="ainda não chegou" last/>
+          } label={tr("respiro")}/>
+          <LegendRow swatch={<Sw kind="pre"/>} label={tr("antes da maré")}/>
+          <LegendRow swatch={<Sw kind="future"/>} label={tr("ainda não chegou")} last/>
           <div style={{
             marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--rule)",
             fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 11,
             color: "var(--ink-3)", lineHeight: 1.4,
           }}>
-            Pressão longa num dia não feito para marcar respiro.
+            {tr("Pressão longa num dia não feito para marcar respiro.")}
           </div>
         </div>
       )}
@@ -486,7 +486,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
         <button
           onClick={onOpenDetail}
           className="tap"
-          title="ver histórico completo"
+          title={tr("ver histórico completo")}
           style={{
             flex: 1, minWidth: 0, textAlign: "left",
             border: "none", background: "transparent", padding: 0, cursor: "pointer",
@@ -502,7 +502,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
                 color: accentColor, padding: "2px 6px", borderRadius: 4,
                 border: `1px solid ${accentColor}55`,
               }}>
-                {todayCount}/{habit.target}{habit.unit ? " " + habit.unit : "×"}
+                {todayCount}/{habit.target}{habit.unit ? " " + habit.unit : tr("×")}
               </span>
             )}
           </div>
@@ -528,7 +528,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
                 </div>
                 {!isMature && (
                   <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginTop: 2 }}>
-                    dia {obs}/{HABIT_MATURITY_DAYS}
+                    {trf("dia {obs}/{total}", { obs, total: HABIT_MATURITY_DAYS })}
                   </div>
                 )}
                 {isMature && streak.days >= 1 && (
@@ -540,7 +540,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             )}
           </div>
           {hover && (
-            <button onClick={onRemove} className="tap" title="remover"
+            <button onClick={onRemove} className="tap" title={tr("remover")}
               style={{ width: 24, height: 24, borderRadius: 5, border: "none", background: "transparent", color: "var(--ink-3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <Icon.Trash size={12}/>
             </button>
@@ -595,13 +595,13 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             zIndex: 5,
           }}>
             {fmtDateShort(tsFromDayKey(tooltip.key))}
-            {tooltip.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · feito")}
+            {tooltip.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · " + tr("feito"))}
             {tooltip.state === "partial" && ` · ${tooltip.count}/${habit.target}`}
-            {tooltip.state === "empty" && " · não feito"}
-            {tooltip.state === "respiro" && " · respiro"}
-            {tooltip.state === "pre" && " · antes da maré"}
-            {tooltip.state === "after" && " · maré já terminou"}
-            {tooltip.state === "future" && " · ainda não"}
+            {tooltip.state === "empty" && " · " + tr("não feito")}
+            {tooltip.state === "respiro" && " · " + tr("respiro")}
+            {tooltip.state === "pre" && " · " + tr("antes da maré")}
+            {tooltip.state === "after" && " · " + tr("maré já terminou")}
+            {tooltip.state === "future" && " · " + tr("ainda não")}
           </div>
         )}
       </div>
@@ -613,7 +613,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
           fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
           letterSpacing: "0.08em",
         }}>
-          melhor: {bestStreak} dias
+          {trf("melhor: {n} dias", { n: bestStreak })}
         </div>
       )}
     </div>
@@ -770,20 +770,20 @@ function RespiroPopover({ data, accentColor, onClose, onConfirm }) {
           fontFamily: "var(--serif)", fontSize: 19, lineHeight: 1.25,
           color: "var(--ink)", marginBottom: 6, letterSpacing: "-0.01em",
         }}>
-          Marcar este dia como <em style={{ color: accentColor }}>respiro</em>?
+          {tr("Marcar este dia como")} <em style={{ color: accentColor }}>{tr("respiro")}</em>?
         </div>
         <div style={{
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
           color: "var(--ink-3)", marginBottom: 14, lineHeight: 1.4,
         }}>
-          A maré também recua. O dia não conta como falha, e a sua maré continua.
+          {tr("A maré também recua. O dia não conta como falha, e a sua maré continua.")}
         </div>
         <input
           autoFocus
           value={reason}
           onChange={e => setReason(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") onConfirm(reason); }}
-          placeholder="motivo (opcional) — ex.: doente, viagem, sem vontade"
+          placeholder={tr("motivo (opcional) — ex.: doente, viagem, sem vontade")}
           style={{
             width: "100%", border: "1px solid var(--rule)",
             background: "var(--paper-2)",
@@ -794,9 +794,9 @@ function RespiroPopover({ data, accentColor, onClose, onConfirm }) {
             marginBottom: 14,
           }}/>
         <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
           <Button onClick={() => onConfirm(reason)} accentColor={accentColor} style={{ flex: 1 }}>
-            Marcar respiro
+            {tr("Marcar respiro")}
           </Button>
         </div>
       </div>
@@ -835,11 +835,11 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
     }}>
       <input autoFocus value={name} onChange={e => setName(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter" && !expanded) submit(); }}
-        placeholder="Nome da maré (ex.: meditar)"
+        placeholder={tr("Nome da maré (ex.: meditar)")}
         style={{ width: "100%", border: "none", background: "transparent", padding: 0, fontSize: 16, color: "var(--ink)", marginBottom: 10 }}/>
       <input value={time} onChange={e => setTime(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter" && !expanded) submit(); }}
-        placeholder="Quando? (opcional, ex.: manhã)"
+        placeholder={tr("Quando? (opcional, ex.: manhã)")}
         style={{ width: "100%", border: "none", background: "transparent", padding: 0, fontSize: 13, color: "var(--ink-2)", fontFamily: "var(--serif)", fontStyle: "italic", marginBottom: 10 }}/>
 
       {!expanded && (
@@ -850,14 +850,14 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
             color: "var(--ink-3)", textTransform: "uppercase", cursor: "pointer",
             padding: "4px 0",
           }}>
-          + mais opções (descrição, recorrência)
+          {tr("+ mais opções (descrição, recorrência)")}
         </button>
       )}
 
       {expanded && (
         <>
           <textarea value={description} onChange={e => setDescription(e.target.value)}
-            placeholder="Porquê esta maré? (opcional)"
+            placeholder={tr("Porquê esta maré? (opcional)")}
             style={{
               width: "100%", border: "1px solid var(--rule)",
               background: "var(--paper)",
@@ -874,21 +874,21 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             <span style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--ink-3)", textTransform: "uppercase" }}>
-              hora certa
+              {tr("hora certa")}
             </span>
             <input type="time" value={clock} onChange={e => setClock(e.target.value)}
               style={{
                 border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)",
                 padding: "4px 8px", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)",
               }}/>
-            <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-4)" }}>opcional</span>
+            <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-4)" }}>{tr("opcional")}</span>
           </div>
 
           <div style={{
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
             color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
           }}>
-            contável
+            {tr("contável")}
           </div>
           <button onClick={() => setCountable(c => !c)} className="tap"
             style={{
@@ -902,7 +902,7 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
               background: countable ? accentColor : "transparent",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>{countable && <Icon.Check size={9} color="var(--on-dark)"/>}</span>
-            uma meta com quantidade (ex.: 2L de água, 3 treinos)
+            {tr("uma meta com quantidade (ex.: 2L de água, 3 treinos)")}
           </button>
           {countable && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -911,7 +911,7 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
                 style={{ width: 56, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)" }}/>
               <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>×</span>
               <input value={unit} onChange={e => setUnit(e.target.value)}
-                placeholder="unidade (copos, treinos…)"
+                placeholder={tr("unidade (copos, treinos…)")}
                 style={{ flex: 1, minWidth: 0, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper)", fontSize: 13, color: "var(--ink-2)" }}/>
             </div>
           )}
@@ -920,13 +920,13 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
             color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
           }}>
-            recorrência
+            {tr("recorrência")}
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
             {[
-              { key: "forever", label: "permanente", hint: "todos os dias, sem fim" },
-              { key: "period",  label: "por um período", hint: "durante X dias" },
-              { key: "month",   label: "só este mês", hint: "termina no fim do mês" },
+              { key: "forever", label: tr("permanente"), hint: tr("todos os dias, sem fim") },
+              { key: "period",  label: tr("por um período"), hint: tr("durante X dias") },
+              { key: "month",   label: tr("só este mês"), hint: tr("termina no fim do mês") },
             ].map(opt => (
               <button key={opt.key}
                 onClick={() => setRecurrence(opt.key)}
@@ -949,7 +949,7 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
           {recurrence === "period" && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
-                durante
+                {tr("durante")}
               </span>
               <input type="number" min="1" max="365" value={periodDays}
                 onChange={e => setPeriodDays(Math.max(1, parseInt(e.target.value) || 1))}
@@ -960,7 +960,7 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
                   fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)",
                 }}/>
               <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
-                dias
+                {tr("dias")}
               </span>
             </div>
           )}
@@ -968,9 +968,9 @@ function NewHabitForm({ accentColor, onSubmit, onCancel }) {
       )}
 
       <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-        <Button variant="ghost" onClick={onCancel} style={{ flex: 1 }}>Cancelar</Button>
+        <Button variant="ghost" onClick={onCancel} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
         <Button onClick={submit} accentColor={accentColor} disabled={!name.trim()} style={{ flex: 1 }}>
-          Adicionar
+          {tr("Adicionar")}
         </Button>
       </div>
     </div>

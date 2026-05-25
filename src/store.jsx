@@ -83,6 +83,7 @@ const uid = (prefix) => prefix + Date.now() + Math.floor(Math.random()*1000);
 // Persisted with the rest of the state and carried through export/import.
 function defaultPrefs() {
   return {
+    lang: (typeof window !== "undefined" && window.PAUTA_LANG) || "pt", // "pt" | "en"
     theme: "auto",          // "auto" | "light" | "dark"
     haptics: true,
     onboardingSeen: false,
@@ -107,7 +108,7 @@ function quarterOf(ts) {
 }
 function quarterLabel(q) {
   const [y, qq] = q.split("-Q");
-  const names = { 1: "Jan–Mar", 2: "Abr–Jun", 3: "Jul–Set", 4: "Out–Dez" };
+  const names = { 1: tr("Jan–Mar"), 2: tr("Abr–Jun"), 3: tr("Jul–Set"), 4: tr("Out–Dez") };
   return "Q" + qq + " " + y + " · " + names[qq];
 }
 
@@ -138,9 +139,9 @@ function seed() {
     today: {
       dayKey: dayKeyOf(Date.now()),
       intentions: [
-        { id: ids.briefing, text: "Terminar a primeira versão do briefing", done: false, createdAt: Date.now() },
-        { id: ids.ler, text: "Ler o capítulo 4 de 'Deep Work'", done: false, createdAt: Date.now() },
-        { id: ids.emails, text: "Responder e-mails pendentes", done: true, createdAt: Date.now() },
+        { id: ids.briefing, text: tr("Terminar a primeira versão do briefing"), done: false, createdAt: Date.now() },
+        { id: ids.ler, text: tr("Ler o capítulo 4 de 'Deep Work'"), done: false, createdAt: Date.now() },
+        { id: ids.emails, text: tr("Responder e-mails pendentes"), done: true, createdAt: Date.now() },
       ],
       reflection: "",
     },
@@ -150,11 +151,11 @@ function seed() {
       const yKey = dayKeyOf(yesterday.getTime());
       out[yKey] = {
         intentions: [
-          { id: "iy_plan", text: "Planear a semana", done: true, createdAt: yesterday.getTime() },
-          { id: "iy_walk", text: "Caminhada longa", done: true, createdAt: yesterday.getTime() },
-          { id: "iy_dishes", text: "Ler 30 páginas", done: false, createdAt: yesterday.getTime() },
+          { id: "iy_plan", text: tr("Planear a semana"), done: true, createdAt: yesterday.getTime() },
+          { id: "iy_walk", text: tr("Caminhada longa"), done: true, createdAt: yesterday.getTime() },
+          { id: "iy_dishes", text: tr("Ler 30 páginas"), done: false, createdAt: yesterday.getTime() },
         ],
-        reflection: "Dia mais leve do que parecia. A caminhada desbloqueou-me a cabeça.",
+        reflection: tr("Dia mais leve do que parecia. A caminhada desbloqueou-me a cabeça."),
       };
       // a few more sparse days
       for (let i = 2; i <= 6; i++) {
@@ -163,10 +164,10 @@ function seed() {
         if (i % 2 === 0) {
           out[k] = {
             intentions: [
-              { id: "ix"+i+"_a", text: i === 4 ? "Acabar o esboço da apresentação" : "Rever notas do livro", done: true, createdAt: d.getTime() },
-              { id: "ix"+i+"_b", text: "Escrever durante 45 minutos", done: i === 2, createdAt: d.getTime() },
+              { id: "ix"+i+"_a", text: i === 4 ? tr("Acabar o esboço da apresentação") : tr("Rever notas do livro"), done: true, createdAt: d.getTime() },
+              { id: "ix"+i+"_b", text: tr("Escrever durante 45 minutos"), done: i === 2, createdAt: d.getTime() },
             ],
-            reflection: i === 4 ? "Apresentação ficou clara. Falta cortar." : "",
+            reflection: i === 4 ? tr("Apresentação ficou clara. Falta cortar.") : "",
           };
         }
       }
@@ -178,16 +179,16 @@ function seed() {
     // status: "active" | "paused" | "done"
     blocks: [
       {
-        id: "b1", title: "Revisar o caderno de campo", linkedToId: null,
+        id: "b1", title: tr("Revisar o caderno de campo"), linkedToId: null,
         sessions: [{ startedAt: t(8,15), endedAt: t(8,47), note: "" }],
         status: "done",
-        reflection: "Achei três links entre os ensaios que não tinha visto.",
+        reflection: tr("Achei três links entre os ensaios que não tinha visto."),
         createdAt: t(8,15),
       },
       {
-        id: "b2", title: "Terminar a primeira versão do briefing", linkedToId: ids.briefing,
+        id: "b2", title: tr("Terminar a primeira versão do briefing"), linkedToId: ids.briefing,
         sessions: [
-          { startedAt: t(9,5), endedAt: t(9,45), note: "Estruturei o esqueleto. Encalhado no tom." },
+          { startedAt: t(9,5), endedAt: t(9,45), note: tr("Estruturei o esqueleto. Encalhado no tom.") },
           { startedAt: t(11,10), endedAt: t(11,55), note: "" },
         ],
         status: "paused",
@@ -195,25 +196,25 @@ function seed() {
         createdAt: t(9,5),
       },
       {
-        id: "b3", title: "Responder e-mails pendentes", linkedToId: ids.emails,
+        id: "b3", title: tr("Responder e-mails pendentes"), linkedToId: ids.emails,
         sessions: [{ startedAt: t(10,0), endedAt: t(10,30), note: "" }],
         status: "done",
-        reflection: "Feito até 14:00. Inbox em 4.",
+        reflection: tr("Feito até 14:00. Inbox em 4."),
         createdAt: t(10,0),
       },
       // yesterday
       {
-        id: "by1", title: "Planear a semana", linkedToId: null,
+        id: "by1", title: tr("Planear a semana"), linkedToId: null,
         sessions: [{ startedAt: y(9,0), endedAt: y(9,40), note: "" }],
         status: "done",
-        reflection: "Defini três objetivos. O da escrita é o mais difícil de partir em passos concretos.",
+        reflection: tr("Defini três objetivos. O da escrita é o mais difícil de partir em passos concretos."),
         createdAt: y(9,0),
       },
       {
-        id: "by2", title: "Caminhada longa", linkedToId: null,
+        id: "by2", title: tr("Caminhada longa"), linkedToId: null,
         sessions: [{ startedAt: y(12,0), endedAt: y(12,55), note: "" }],
         status: "done",
-        reflection: "Ouvi um podcast sobre arquitetura. Anotei uma ideia.",
+        reflection: tr("Ouvi um podcast sobre arquitetura. Anotei uma ideia."),
         createdAt: y(12,0),
       },
       // sparse past days (for focus chart)
@@ -224,7 +225,7 @@ function seed() {
             const d = new Date(); d.setDate(d.getDate() - i); d.setHours(10, 0, 0, 0);
             const dur = (25 + (i * 7) % 50) * 60 * 1000;
             past.push({
-              id: "bp" + i, title: i % 3 === 0 ? "Escrita focada" : (i % 2 === 0 ? "Leitura" : "Trabalho profundo"),
+              id: "bp" + i, title: i % 3 === 0 ? tr("Escrita focada") : (i % 2 === 0 ? tr("Leitura") : tr("Trabalho profundo")),
               linkedToId: null,
               sessions: [{ startedAt: d.getTime(), endedAt: d.getTime() + dur, note: "" }],
               status: "done",
@@ -235,7 +236,7 @@ function seed() {
               const d2 = new Date(d); d2.setHours(15, 0, 0, 0);
               const dur2 = 40 * 60 * 1000;
               past.push({
-                id: "bp" + i + "b", title: "Sessão da tarde", linkedToId: null,
+                id: "bp" + i + "b", title: tr("Sessão da tarde"), linkedToId: null,
                 sessions: [{ startedAt: d2.getTime(), endedAt: d2.getTime() + dur2, note: "" }],
                 status: "done",
                 reflection: "",
@@ -249,31 +250,31 @@ function seed() {
     ],
     habits: [
       // mature habits (60+ days old)
-      { id: "h1", name: "Caminhada", time: "manhã", description: "",
+      { id: "h1", name: tr("Caminhada"), time: tr("manhã"), description: "",
         recurrence: "forever", endsAt: null,
         log: habitLog(87, false, 60), respiros: {},
         createdAt: Date.now() - 60*86400000 },
-      { id: "h2", name: "Leitura", time: "antes de dormir", description: "",
+      { id: "h2", name: tr("Leitura"), time: tr("antes de dormir"), description: "",
         recurrence: "forever", endsAt: null,
         log: habitLog(90, true, 60), respiros: {},
         createdAt: Date.now() - 60*86400000 },
-      { id: "h3", name: "Sem telemóvel após 22h", time: "noite", description: "",
+      { id: "h3", name: tr("Sem telemóvel após 22h"), time: tr("noite"), description: "",
         recurrence: "forever", endsAt: null,
         log: habitLog(57, false, 45), respiros: {},
         createdAt: Date.now() - 45*86400000 },
-      { id: "h4", name: "Beber 2L de água", time: "ao longo do dia", description: "",
+      { id: "h4", name: tr("Beber 2L de água"), time: tr("ao longo do dia"), description: "",
         recurrence: "forever", endsAt: null,
         log: habitLog(87, true, 90), respiros: {},
         createdAt: Date.now() - 90*86400000 },
       // young habit — shows justice rule (dia X/7, doesn't enter overall)
-      { id: "h5", name: "Diário", time: "antes de dormir", description: "",
+      { id: "h5", name: tr("Diário"), time: tr("antes de dormir"), description: "",
         recurrence: "forever", endsAt: null,
         log: habitLog(75, false, 4), respiros: {},
         createdAt: Date.now() - 4*86400000 },
     ],
     goals: [
-      { id: "g1", text: "Terminar o primeiro rascunho do livro", quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 20*86400000 },
-      { id: "g2", text: "Correr uma meia-maratona", quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 10*86400000 },
+      { id: "g1", text: tr("Terminar o primeiro rascunho do livro"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 20*86400000 },
+      { id: "g2", text: tr("Correr uma meia-maratona"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 10*86400000 },
     ],
     prefs: defaultPrefs(),
   };
@@ -397,11 +398,11 @@ function parseBackup(text) {
   const parsed = JSON.parse(text);
   const incoming = (parsed && parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
   if (!incoming || typeof incoming !== "object") {
-    throw new Error("Ficheiro vazio ou inválido.");
+    throw new Error(tr("Ficheiro vazio ou inválido."));
   }
   const looksLikePauta = ("blocks" in incoming) || ("habits" in incoming) || ("today" in incoming);
   if (!looksLikePauta) {
-    throw new Error("Isto não parece um backup do Pauta.");
+    throw new Error(tr("Isto não parece um backup do Pauta."));
   }
   return normalizeImported(incoming);
 }
@@ -635,7 +636,8 @@ function habitAllTimeStats(h, todayTs = Date.now()) {
   return { observed, done, respiros, pct: denom > 0 ? Math.round((done/denom)*100) : null };
 }
 
-// Streak tier (Onda → Oceano).
+// Streak tier (Onda → Oceano). Names/subtitles are stored in Portuguese (source)
+// and translated at access time via trTier() so they follow live language switches.
 const TIDE_TIERS = [
   { min: 360, name: "Oceano", subtitle: "já não é uma maré" },
   { min: 240, name: "Maré anual", subtitle: "quase um ano de constância" },
@@ -645,12 +647,14 @@ const TIDE_TIERS = [
   { min: 7,   name: "Maré baixa", subtitle: "a água começou a subir" },
   { min: 1,   name: "Onda",       subtitle: "primeira agitação" },
 ];
+// Translate a tier/level entry's display fields at render time.
+function trTier(t) { return t ? { ...t, name: tr(t.name), subtitle: tr(t.subtitle) } : t; }
 function tideTier(days) {
   if (days <= 0) return null;
   for (const t of TIDE_TIERS) if (days >= t.min) {
     const idx = TIDE_TIERS.indexOf(t);
     const next = idx > 0 ? TIDE_TIERS[idx - 1] : null;
-    return { ...t, next };
+    return { ...trTier(t), next: trTier(next) };
   }
   return null;
 }
@@ -670,9 +674,9 @@ function navigatorLevel(totalDoneDays) {
   for (const lvl of NAVIGATOR_LEVELS) if (totalDoneDays >= lvl.min) {
     const idx = NAVIGATOR_LEVELS.indexOf(lvl);
     const next = idx > 0 ? NAVIGATOR_LEVELS[idx - 1] : null;
-    return { ...lvl, next };
+    return { ...trTier(lvl), next: trTier(next) };
   }
-  return NAVIGATOR_LEVELS[NAVIGATOR_LEVELS.length - 1];
+  return trTier(NAVIGATOR_LEVELS[NAVIGATOR_LEVELS.length - 1]);
 }
 function totalDoneDays(habits) {
   let sum = 0;
@@ -1061,7 +1065,7 @@ function useStore() {
   const removeGoal = (id) => setState(s => ({ ...s, goals: (s.goals || []).filter(g => g.id !== id) }));
 
   const resetAll = () => {
-    if (confirm("Apagar tudo e recomeçar? Isto não pode ser desfeito.")) {
+    if (confirm(tr("Apagar tudo e recomeçar? Isto não pode ser desfeito."))) {
       setState(s => ({
         ...emptyState(),
         prefs: s.prefs,  // keep theme/haptics/reminders prefs across a reset
@@ -1070,7 +1074,7 @@ function useStore() {
   };
 
   const reseed = () => {
-    if (confirm("Recarregar dados de exemplo? Isto apaga o que tem agora.")) {
+    if (confirm(tr("Recarregar dados de exemplo? Isto apaga o que tem agora."))) {
       setState(seed());
     }
   };
@@ -1092,7 +1096,7 @@ function useStore() {
       setState(next);
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: e.message || "Não foi possível ler o ficheiro." };
+      return { ok: false, error: e.message || tr("Não foi possível ler o ficheiro.") };
     }
   };
 

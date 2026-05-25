@@ -92,7 +92,7 @@ function StatusBar({ time, onMenu }) {
     <div className="statusbar">
       <span>{fmtClock(time || now)}</span>
       {onMenu && (
-        <button onClick={onMenu} className="tap" aria-label="Definições" title="Definições"
+        <button onClick={onMenu} className="tap" aria-label={tr("Definições")} title={tr("Definições")}
           style={{
             background: "transparent", border: "none", color: "var(--ink-2)",
             cursor: "pointer", padding: 4, margin: -4, display: "flex", alignItems: "center",
@@ -107,9 +107,9 @@ function StatusBar({ time, onMenu }) {
 // ─── Tab Bar ────────────────────────────────────────────────
 function TabBar({ tab, onTab, accentColor }) {
   const tabs = [
-    { id: "hoje", label: "Hoje", Ic: Icon.Hoje },
-    { id: "pauta", label: "Pauta", Ic: Icon.Pauta },
-    { id: "mares", label: "Marés", Ic: Icon.Mares },
+    { id: "hoje", label: tr("Hoje"), Ic: Icon.Hoje },
+    { id: "pauta", label: tr("Pauta"), Ic: Icon.Pauta },
+    { id: "mares", label: tr("Marés"), Ic: Icon.Mares },
   ];
   return (
     <div style={{
@@ -187,7 +187,7 @@ function Sheet({ open, onClose, children, title }) {
           <button
             onClick={onClose}
             className="tap"
-            title="fechar"
+            title={tr("fechar")}
             style={{
               flexShrink: 0,
               width: 30, height: 30, borderRadius: "50%",

@@ -3,6 +3,8 @@
 // ─── Phrase library ────────────────────────────────────────
 // Each entry is { kind, lines } where kind is the state it applies to.
 // Use pickPhrase(kind, seed) to deterministically pick one (so it doesn't change every render).
+// Stored in Portuguese (the source language); callers translate the picked line with
+// tr() at render time so it follows live language switches.
 const MARE_PHRASES = {
   // Hero phrase for empty state / first open
   intro: [
@@ -121,7 +123,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
           <>
             <span style={{ color: "var(--ink-3)" }}>·</span>
             <span style={{ color: "var(--ink-3)", fontStyle: "italic" }}>
-              {streak.respiros} {streak.respiros === 1 ? "respiro" : "respiros"}
+              {streak.respiros} {streak.respiros === 1 ? tr("respiro") : tr("respiros")}
             </span>
           </>
         )}
@@ -144,7 +146,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
       }}>
         {streak.days} d
         {streak.respiros > 0 && (
-          <span style={{ color: "var(--ink-3)" }}> · {streak.respiros}<span style={{ fontSize: 8 }}> resp.</span></span>
+          <span style={{ color: "var(--ink-3)" }}> · {streak.respiros}<span style={{ fontSize: 8 }}> {tr("resp.")}</span></span>
         )}
       </div>
     </div>
@@ -162,7 +164,7 @@ function RecurrenceChip({ habit, accentColor, todayTs = Date.now() }) {
         padding: "2px 6px", borderRadius: 4,
         border: "1px solid var(--rule)",
       }}>
-        só este mês
+        {tr("só este mês")}
       </span>
     );
   }
@@ -181,7 +183,7 @@ function RecurrenceChip({ habit, accentColor, todayTs = Date.now() }) {
         padding: "2px 6px", borderRadius: 4,
         border: `1px solid ${finished ? "var(--rule)" : accentColor + "55"}`,
       }}>
-        {finished ? "concluída" : `dia ${elapsed}/${total}`}
+        {finished ? tr("concluída") : trf("dia {elapsed}/{total}", { elapsed, total })}
       </span>
     );
   }

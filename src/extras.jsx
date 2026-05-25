@@ -13,24 +13,24 @@ function OnboardingOverlay({ onDone, accentColor }) {
   const [step, setStep] = useState(0);
   const slides = [
     {
-      tag: "bem-vindo",
-      title: <>Esta é a sua <em style={{ color: accentColor }}>pauta</em>.</>,
-      body: "Um lugar calmo para o que importa: intenções, foco e hábitos. Sem pontos, sem pressão — só ritmo.",
+      tag: tr("bem-vindo"),
+      title: <>{tr("Esta é a sua")} <em style={{ color: accentColor }}>{tr("pauta")}</em>.</>,
+      body: tr("Um lugar calmo para o que importa: intenções, foco e hábitos. Sem pontos, sem pressão — só ritmo."),
     },
     {
-      tag: "hoje",
-      title: <>Comece pelo <em style={{ color: accentColor }}>Hoje</em>.</>,
-      body: "Liste 1 a 4 coisas que movem o seu dia. À noite, escreva uma reflexão curta. Amanhã, recomeça.",
+      tag: tr("hoje"),
+      title: <>{tr("Comece pelo")} <em style={{ color: accentColor }}>{tr("Hoje")}</em>.</>,
+      body: tr("Liste 1 a 4 coisas que movem o seu dia. À noite, escreva uma reflexão curta. Amanhã, recomeça."),
     },
     {
-      tag: "pauta",
-      title: <>Foque em <em style={{ color: accentColor }}>blocos</em>.</>,
-      body: "Inicie um bloco, pause, troque ou conclua. A linha temporal mostra o ritmo real do seu dia.",
+      tag: tr("pauta"),
+      title: <>{tr("Foque em")} <em style={{ color: accentColor }}>{tr("blocos")}</em>.</>,
+      body: tr("Inicie um bloco, pause, troque ou conclua. A linha temporal mostra o ritmo real do seu dia."),
     },
     {
-      tag: "marés",
-      title: <>Cultive <em style={{ color: accentColor }}>marés</em>.</>,
-      body: "Hábitos que sobem e descem como a maré. Um respiro honesto não quebra a corrente — recuar é respirar.",
+      tag: tr("marés"),
+      title: <>{tr("Cultive")} <em style={{ color: accentColor }}>{tr("marés")}</em>.</>,
+      body: tr("Hábitos que sobem e descem como a maré. Um respiro honesto não quebra a corrente — recuar é respirar."),
     },
   ];
   const s = slides[step];
@@ -71,10 +71,10 @@ function OnboardingOverlay({ onDone, accentColor }) {
             background: "transparent", border: "none", padding: "12px 0",
             fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
             textTransform: "uppercase", color: "var(--ink-3)", cursor: "pointer",
-          }}>saltar</button>
+          }}>{tr("saltar")}</button>
           <Button onClick={() => { haptic(8); last ? onDone() : setStep(step + 1); }}
             accentColor={accentColor} style={{ flex: 1 }}>
-            {last ? "Começar" : "Continuar"}
+            {last ? tr("Começar") : tr("Continuar")}
           </Button>
         </div>
       </div>
@@ -86,13 +86,13 @@ function OnboardingOverlay({ onDone, accentColor }) {
 function TierGuideSheet({ open, onClose, accentColor }) {
   if (!open) return null;
   return (
-    <Sheet open={open} onClose={onClose} title="Como funcionam as marés">
+    <Sheet open={open} onClose={onClose} title={tr("Como funcionam as marés")}>
       <div style={{ padding: "8px 24px 28px" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 20, lineHeight: 1.3, color: "var(--ink)", marginBottom: 6 }}>
-          Cada hábito tem uma maré.
+          {tr("Cada hábito tem uma maré.")}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", marginBottom: 20, lineHeight: 1.45 }}>
-          Quanto mais dias seguidos, mais sobe. Um respiro honesto não a quebra — só um dia falhado é que faz a maré recuar.
+          {tr("Quanto mais dias seguidos, mais sobe. Um respiro honesto não a quebra — só um dia falhado é que faz a maré recuar.")}
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {TIDE_TIERS.slice().reverse().map((t, i, arr) => (
@@ -102,11 +102,11 @@ function TierGuideSheet({ open, onClose, accentColor }) {
               borderBottom: i < arr.length - 1 ? "1px solid var(--rule)" : "none",
             }}>
               <div style={{ width: 52, flexShrink: 0, fontFamily: "var(--mono)", fontSize: 11, color: accentColor }}>
-                {t.min}+ d
+                {trf("{min}+ d", { min: t.min })}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--serif)", fontSize: 17, color: "var(--ink)" }}>{t.name}</div>
-                <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginTop: 1 }}>{t.subtitle}</div>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 17, color: "var(--ink)" }}>{tr(t.name)}</div>
+                <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginTop: 1 }}>{tr(t.subtitle)}</div>
               </div>
             </div>
           ))}
@@ -117,7 +117,7 @@ function TierGuideSheet({ open, onClose, accentColor }) {
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
           color: "var(--ink-2)", lineHeight: 1.5,
         }}>
-          À medida que acumula dias feitos em todos os hábitos, sobe também de posto — de Aprendiz a Almirante. Encontra-o em "Marés Passadas".
+          {tr("À medida que acumula dias feitos em todos os hábitos, sobe também de posto — de Aprendiz a Almirante. Encontra-o em \"Marés Passadas\".")}
         </div>
       </div>
     </Sheet>
@@ -130,7 +130,7 @@ function BestHourChart({ blocks, accentColor }) {
   if (total <= 0) {
     return (
       <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", padding: "8px 0" }}>
-        Ainda sem blocos suficientes para encontrar a sua melhor hora.
+        {tr("Ainda sem blocos suficientes para encontrar a sua melhor hora.")}
       </div>
     );
   }
@@ -146,7 +146,7 @@ function BestHourChart({ blocks, accentColor }) {
           {pad(peak)}:00–{pad((peak + 1) % 24)}:00
         </div>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)" }}>
-          a sua hora mais focada
+          {tr("a sua hora mais focada")}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 70 }}>
@@ -183,7 +183,7 @@ function CorrelationList({ habits, blocks, accentColor }) {
   if (rows.length === 0) {
     return (
       <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", padding: "8px 0", lineHeight: 1.5 }}>
-        Sem padrões suficientes ainda. Continue a registar hábitos e blocos — em poucas semanas aparecem aqui ligações.
+        {tr("Sem padrões suficientes ainda. Continue a registar hábitos e blocos — em poucas semanas aparecem aqui ligações.")}
       </div>
     );
   }
@@ -194,7 +194,7 @@ function CorrelationList({ habits, blocks, accentColor }) {
         return (
           <div key={r.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0, fontFamily: "var(--serif)", fontSize: 15, color: "var(--ink)", lineHeight: 1.35 }}>
-              Nos dias com <span style={{ fontStyle: "italic" }}>{r.name}</span>, foca{" "}
+              {tr("Nos dias com")} <span style={{ fontStyle: "italic" }}>{r.name}</span>{tr(", foca")}{" "}
               <span style={{ color: up ? accentColor : "var(--ink-2)", fontWeight: 500 }}>
                 {up ? "+" : ""}{r.deltaPct}%
               </span>.
@@ -255,7 +255,7 @@ function FocusCalendar({ blocks, accentColor }) {
         <button onClick={() => shift(1)} className="tap" style={navBtn}>›</button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-        {["d","s","t","q","q","s","s"].map((l, i) => (
+        {tr("d,s,t,q,q,s,s").split(",").map((l, i) => (
           <div key={i} style={{ textAlign: "center", fontFamily: "var(--mono)", fontSize: 8, color: "var(--ink-4)", textTransform: "uppercase" }}>{l}</div>
         ))}
         {cells.map((c, i) => {
@@ -276,7 +276,7 @@ function FocusCalendar({ blocks, accentColor }) {
         })}
       </div>
       <div style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", textAlign: "center", letterSpacing: "0.04em" }}>
-        {fmtDuration(totalMs)} em foco · {activeDays} {activeDays === 1 ? "dia activo" : "dias activos"}
+        {trf("{focus} em foco · {days} {label}", { focus: fmtDuration(totalMs), days: activeDays, label: activeDays === 1 ? tr("dia activo") : tr("dias activos") })}
       </div>
     </div>
   );
@@ -304,28 +304,28 @@ function WeekReview({ store, accentColor }) {
       }}>
         <div style={{ background: "var(--paper)", padding: "14px 14px" }}>
           <div style={{ ...big(), color: accentColor }}>{fmtDuration(r.focusMs)}</div>
-          <div style={cap}>foco · {r.blockCount} {r.blockCount === 1 ? "bloco" : "blocos"}</div>
+          <div style={cap}>{trf("foco · {n} {label}", { n: r.blockCount, label: r.blockCount === 1 ? tr("bloco") : tr("blocos") })}</div>
         </div>
         <div style={{ background: "var(--paper)", padding: "14px 14px" }}>
           <div style={big()}>{r.activeDays}<span style={{ fontSize: 13, color: "var(--ink-3)" }}>/7</span></div>
-          <div style={cap}>dias activos</div>
+          <div style={cap}>{tr("dias activos")}</div>
         </div>
         <div style={{ background: "var(--paper)", padding: "14px 14px" }}>
           <div style={big()}>{r.intDone}<span style={{ fontSize: 13, color: "var(--ink-3)" }}>/{r.intTotal || 0}</span></div>
-          <div style={cap}>intenções feitas</div>
+          <div style={cap}>{tr("intenções feitas")}</div>
         </div>
         <div style={{ background: "var(--paper)", padding: "14px 14px" }}>
           <div style={{ ...big(), color: r.habitPct === null ? "var(--ink-3)" : accentColor }}>
             {r.habitPct === null ? "—" : r.habitPct + "%"}
           </div>
-          <div style={cap}>hábitos · {r.habitDone} feitos</div>
+          <div style={cap}>{trf("hábitos · {n} feitos", { n: r.habitDone })}</div>
         </div>
       </div>
       {r.topKey && r.topMs > 0 && (
         <div style={{ marginTop: 14, fontFamily: "var(--serif)", fontSize: 15, color: "var(--ink-2)", lineHeight: 1.45 }}>
-          O seu pico foi <span style={{ fontStyle: "italic" }}>{fmtDateLong(tsFromDayKey(r.topKey)).split(",")[0]}</span>,
-          com <span style={{ color: accentColor }}>{fmtDuration(r.topMs)}</span> em foco.
-          {r.reflections > 0 && <> Escreveu {r.reflections} {r.reflections === 1 ? "reflexão" : "reflexões"}.</>}
+          {tr("O seu pico foi")} <span style={{ fontStyle: "italic" }}>{fmtDateLong(tsFromDayKey(r.topKey)).split(",")[0]}</span>,
+          {tr("com")} <span style={{ color: accentColor }}>{fmtDuration(r.topMs)}</span> {tr("em foco.")}
+          {r.reflections > 0 && <> {trf("Escreveu {n} {label}.", { n: r.reflections, label: r.reflections === 1 ? tr("reflexão") : tr("reflexões") })}</>}
         </div>
       )}
     </div>
@@ -343,22 +343,22 @@ function InsightsSheet({ open, onClose, store, accentColor }) {
     </div>
   );
   return (
-    <Sheet open={open} onClose={onClose} title="Revisão">
+    <Sheet open={open} onClose={onClose} title={tr("Revisão")}>
       <div style={{ padding: "8px 24px 28px" }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 24, lineHeight: 1.2, color: "var(--ink)", letterSpacing: "-0.01em" }}>
-          A sua semana, de relance.
+          {tr("A sua semana, de relance.")}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", marginTop: 4, marginBottom: 18 }}>
-          Sem julgamento. Só o que aconteceu, para reparar no padrão.
+          {tr("Sem julgamento. Só o que aconteceu, para reparar no padrão.")}
         </div>
         <WeekReview store={store} accentColor={accentColor}/>
-        <Section label="Melhor hora do dia">
+        <Section label={tr("Melhor hora do dia")}>
           <BestHourChart blocks={state.blocks} accentColor={accentColor}/>
         </Section>
-        <Section label="Hábitos × foco">
+        <Section label={tr("Hábitos × foco")}>
           <CorrelationList habits={state.habits} blocks={state.blocks} accentColor={accentColor}/>
         </Section>
-        <Section label="Calendário de foco">
+        <Section label={tr("Calendário de foco")}>
           <FocusCalendar blocks={state.blocks} accentColor={accentColor}/>
         </Section>
       </div>
@@ -392,7 +392,7 @@ function GoalsSection({ store, accentColor }) {
     <div style={{ marginTop: 32, padding: "20px 22px", background: "var(--paper-2)", borderRadius: 14, border: "1px solid var(--rule)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)" }}>
-          Metas do trimestre
+          {tr("Metas do trimestre")}
         </div>
         {list.length > 0 && (
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>{done}/{list.length}</div>
@@ -412,7 +412,7 @@ function GoalsSection({ store, accentColor }) {
 
       {list.length === 0 && !adding && (
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", lineHeight: 1.4, marginBottom: 8 }}>
-          O que quer ter feito até ao fim de {quarterLabel(q).split(" · ")[1]}? Uma ou duas coisas grandes.
+          {trf("O que quer ter feito até ao fim de {q}? Uma ou duas coisas grandes.", { q: quarterLabel(q).split(" · ")[1] })}
         </div>
       )}
 
@@ -427,7 +427,7 @@ function GoalsSection({ store, accentColor }) {
               color: g.done ? "var(--ink-3)" : "var(--ink)",
               textDecoration: g.done ? "line-through" : "none", textDecorationColor: "var(--ink-3)",
             }}>{g.text}</div>
-            <button onClick={() => removeGoal(g.id)} className="tap" title="remover"
+            <button onClick={() => removeGoal(g.id)} className="tap" title={tr("remover")}
               style={{ border: "none", background: "transparent", color: "var(--ink-4)", cursor: "pointer", padding: 2 }}>
               <Icon.Trash size={13}/>
             </button>
@@ -438,7 +438,7 @@ function GoalsSection({ store, accentColor }) {
       {adding ? (
         <input autoFocus value={text} onChange={e => setText(e.target.value)} onBlur={commit}
           onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setText(""); setAdding(false); } }}
-          placeholder="Nova meta…"
+          placeholder={tr("Nova meta…")}
           style={{ width: "100%", border: "none", borderBottom: "1px solid var(--rule)", background: "transparent", padding: "10px 0", fontSize: 16, color: "var(--ink)", fontFamily: "var(--serif)" }}/>
       ) : (
         <button onClick={() => setAdding(true)} className="tap" style={{
@@ -448,7 +448,7 @@ function GoalsSection({ store, accentColor }) {
           <div style={{ width: 20, height: 20, borderRadius: "50%", border: "1.5px dashed var(--ink-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon.Plus size={11}/>
           </div>
-          adicionar meta
+          {tr("adicionar meta")}
         </button>
       )}
     </div>
@@ -479,10 +479,10 @@ function useReminders(store) {
         );
         if (pending.length > 0 && !localStorage.getItem(firedKey("habits", dayKey))) {
           try {
-            new Notification("Pauta · marés de hoje", {
+            new Notification(tr("Pauta · marés de hoje"), {
               body: pending.length === 1
-                ? `Falta "${pending[0].name}".`
-                : `Faltam ${pending.length} hábitos hoje.`,
+                ? trf('Falta "{name}".', { name: pending[0].name })
+                : trf("Faltam {n} hábitos hoje.", { n: pending.length }),
               tag: "pauta-habits",
             });
             localStorage.setItem(firedKey("habits", dayKey), "1");
@@ -494,8 +494,8 @@ function useReminders(store) {
         const noReflection = !(state.today && state.today.dayKey === dayKey && state.today.reflection && state.today.reflection.trim());
         if (noReflection && !localStorage.getItem(firedKey("reflection", dayKey))) {
           try {
-            new Notification("Pauta · reflexão da noite", {
-              body: "O que valeu hoje? Escreva uma linha.",
+            new Notification(tr("Pauta · reflexão da noite"), {
+              body: tr("O que valeu hoje? Escreva uma linha."),
               tag: "pauta-reflection",
             });
             localStorage.setItem(firedKey("reflection", dayKey), "1");

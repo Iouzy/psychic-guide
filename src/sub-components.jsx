@@ -25,15 +25,15 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
             animation: "pulse 1.6s ease-in-out infinite",
           }}/>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
-            {hasResumed ? "retomado · em curso" : "em curso"}
+            {hasResumed ? tr("retomado · em curso") : tr("em curso")}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
-            início {fmtClock(currentSeg.startedAt)}
+            {trf("início {t}", { t: fmtClock(currentSeg.startedAt) })}
           </div>
           {onCancel && (
-            <button onClick={onCancel} className="tap" title="descartar este bloco"
+            <button onClick={onCancel} className="tap" title={tr("descartar este bloco")}
               style={{
                 width: 22, height: 22, borderRadius: "50%",
                 background: "rgba(245,241,234,0.08)", border: "none",
@@ -48,7 +48,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
 
       {intention && (
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--on-dark-2)", marginBottom: 4 }}>
-          intenção do dia →
+          {tr("intenção do dia →")}
         </div>
       )}
       <div style={{ fontFamily: "var(--serif)", fontSize: 24, lineHeight: 1.15, marginBottom: 18, letterSpacing: "-0.005em" }}>
@@ -66,15 +66,15 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
             </div>
             {hasResumed && (
               <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
-                {fmtDuration(totalElapsed)} no total
+                {trf("{d} no total", { d: fmtDuration(totalElapsed) })}
               </div>
             )}
           </div>
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginLeft: "auto" }}>
           <div style={{ display: "flex", gap: 6 }}>
-            <DarkBtn onClick={onPause} label="Pausar" icon={<Icon.Pause size={10}/>}/>
-            <DarkBtn onClick={onSwitch} label="Trocar" icon={<Icon.Chevron size={10}/>}/>
+            <DarkBtn onClick={onPause} label={tr("Pausar")} icon={<Icon.Pause size={10}/>}/>
+            <DarkBtn onClick={onSwitch} label={tr("Trocar")} icon={<Icon.Chevron size={10}/>}/>
           </div>
           <button onClick={onConclude} className="tap"
             style={{
@@ -82,7 +82,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
               border: "none", borderRadius: 999, padding: "10px 16px",
               fontSize: 11, fontFamily: "var(--mono)", letterSpacing: "0.1em",
               textTransform: "uppercase", fontWeight: 500, cursor: "pointer",
-            }}>Concluir</button>
+            }}>{tr("Concluir")}</button>
         </div>
       </div>
     </div>
@@ -128,12 +128,12 @@ function PausedBlockCard({ block, onResume, onConclude, onEdit, accentColor }) {
           {block.title}
         </div>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 3, letterSpacing: "0.04em" }}>
-          pausado às {fmtClock(lastSeg.endedAt)} · {fmtDuration(totalMs)} acumulado
+          {trf("pausado às {t} · {d} acumulado", { t: fmtClock(lastSeg.endedAt), d: fmtDuration(totalMs) })}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <button onClick={onResume} className="tap"
-          title="Retomar"
+          title={tr("Retomar")}
           style={{
             background: accentColor, color: "var(--on-dark)",
             border: "none", borderRadius: 999, padding: "9px 14px",
@@ -141,10 +141,10 @@ function PausedBlockCard({ block, onResume, onConclude, onEdit, accentColor }) {
             textTransform: "uppercase", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 5, fontWeight: 500,
           }}>
-          <Icon.Play size={10}/> Retomar
+          <Icon.Play size={10}/> {tr("Retomar")}
         </button>
         {onEdit && (
-          <button onClick={onEdit} className="tap" title="editar"
+          <button onClick={onEdit} className="tap" title={tr("editar")}
             style={{
               width: 30, height: 30, borderRadius: 8,
               background: "transparent", border: "none", color: "var(--ink-3)",
@@ -227,7 +227,7 @@ function FilterChips({ intentions, blocks, projects = [], filter, setFilter, acc
               cursor: "pointer", letterSpacing: "0.06em",
               display: "flex", alignItems: "center", gap: 4,
             }}>
-            <Icon.X size={10}/> limpar
+            <Icon.X size={10}/> {tr("limpar")}
           </button>
         )}
       </div>
@@ -334,7 +334,7 @@ function TimelineRow({ event, accentColor, isLast, connectDown, connectUp, onFil
       <div style={{ paddingBottom: 4, paddingTop: 0 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-            <div onClick={onFilter} title="filtrar por esta atividade"
+            <div onClick={onFilter} title={tr("filtrar por esta atividade")}
               style={{
                 fontSize: 15, fontWeight: 500, color: "var(--ink)", lineHeight: 1.25,
                 cursor: "pointer",
@@ -351,7 +351,7 @@ function TimelineRow({ event, accentColor, isLast, connectDown, connectUp, onFil
             )}
           </div>
           {onEdit && (
-            <button onClick={onEdit} className="tap" title="editar bloco"
+            <button onClick={onEdit} className="tap" title={tr("editar bloco")}
               style={{
                 flexShrink: 0, width: 26, height: 26, borderRadius: 6,
                 background: "transparent", border: "none",
@@ -374,7 +374,7 @@ function TimelineRow({ event, accentColor, isLast, connectDown, connectUp, onFil
               width: 5, height: 5, borderRadius: "50%", background: accentColor,
               animation: "pulse 1.6s ease-in-out infinite",
             }}/>
-            em curso
+            {tr("em curso")}
           </div>
         )}
         {isPaused && segment.note && (
@@ -452,10 +452,10 @@ function Marker({ kind, color, bg, border }) {
 
 function KindTag({ kind, accentColor }) {
   const map = {
-    start: { label: "iniciado", color: "var(--ink-3)" },
-    resume: { label: "retomado", color: accentColor },
-    pause: { label: "pausa", color: "var(--ink-3)" },
-    conclude: { label: "concluído", color: accentColor },
+    start: { label: tr("iniciado"), color: "var(--ink-3)" },
+    resume: { label: tr("retomado"), color: accentColor },
+    pause: { label: tr("pausa"), color: "var(--ink-3)" },
+    conclude: { label: tr("concluído"), color: accentColor },
   };
   const { label, color } = map[kind];
   return (
