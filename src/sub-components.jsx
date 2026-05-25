@@ -167,7 +167,7 @@ function KebabIcon({ size = 14 }) {
 }
 
 // ─── FILTER CHIPS ───────────────────────────────────────────
-function FilterChips({ intentions, blocks, filter, setFilter, accentColor }) {
+function FilterChips({ intentions, blocks, projects = [], filter, setFilter, accentColor }) {
   // Build unique titles from today's blocks NOT linked to intentions
   const unlinkedTitles = useMemo(() => {
     const map = new Map();
@@ -179,11 +179,22 @@ function FilterChips({ intentions, blocks, filter, setFilter, accentColor }) {
     return [...map.entries()].map(([title, id]) => ({ title, id }));
   }, [blocks]);
 
-  if (intentions.length === 0 && unlinkedTitles.length === 0 && !filter) return null;
+  if (intentions.length === 0 && unlinkedTitles.length === 0 && projects.length === 0 && !filter) return null;
 
   return (
     <div style={{ marginTop: 8, marginBottom: 6 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {projects.map(p => {
+          const active = filter?.kind === "project" && filter.id === p;
+          return (
+            <Chip key={"proj_" + p}
+              label={"# " + p}
+              active={active}
+              accentColor={accentColor}
+              onClick={() => setFilter(active ? null : { kind: "project", id: p, label: p })}
+            />
+          );
+        })}
         {intentions.map(i => {
           const active = filter?.kind === "intention" && filter.id === i.id;
           return (
@@ -331,6 +342,13 @@ function TimelineRow({ event, accentColor, isLast, connectDown, connectUp, onFil
               {block.title}
             </div>
             <KindTag kind={kind} accentColor={accentColor}/>
+            {block.project && (
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.04em",
+                color: "var(--ink-3)", padding: "1px 6px", borderRadius: 4,
+                border: "1px solid var(--rule)",
+              }}>#{block.project}</span>
+            )}
           </div>
           {onEdit && (
             <button onClick={onEdit} className="tap" title="editar bloco"

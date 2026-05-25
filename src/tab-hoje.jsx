@@ -172,8 +172,18 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
 
 // ─── History sheet (past days) ─────────────────────────────
 function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onOpenDay, accentColor }) {
+  const [query, setQuery] = useState("");
+  useEffect(() => { if (!open) setQuery(""); }, [open]);
   if (!open) return null;
   const opened = openedDayKey && days[openedDayKey];
+
+  const q = query.trim().toLowerCase();
+  const filteredKeys = q ? keys.filter(k => {
+    const d = days[k];
+    const inIntentions = (d.intentions || []).some(i => (i.text || "").toLowerCase().includes(q));
+    const inReflection = (d.reflection || "").toLowerCase().includes(q);
+    return inIntentions || inReflection;
+  }) : keys;
 
   return (
     <Sheet open={open} onClose={onClose} title="Dias anteriores">
@@ -196,10 +206,19 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
             </div>
             <div style={{
               fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
-              color: "var(--ink-3)", marginBottom: 18,
+              color: "var(--ink-3)", marginBottom: 14,
             }}>
               As intenções e a reflexão de cada dia ficam guardadas. Toque para reler.
             </div>
+            {keys.length > 0 && (
+              <input value={query} onChange={e => setQuery(e.target.value)}
+                placeholder="procurar nas reflexões e intenções…"
+                style={{
+                  width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
+                  borderRadius: 10, padding: "10px 14px", fontSize: 14, color: "var(--ink)",
+                  marginBottom: 16, fontFamily: "var(--sans)",
+                }}/>
+            )}
             {keys.length === 0 ? (
               <div style={{
                 padding: "32px 0", textAlign: "center",
@@ -209,9 +228,17 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
                 Ainda não há dias arquivados.<br/>
                 Volte aqui amanhã.
               </div>
+            ) : filteredKeys.length === 0 ? (
+              <div style={{
+                padding: "28px 0", textAlign: "center",
+                fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
+                color: "var(--ink-3)",
+              }}>
+                Nada encontrado para "{query.trim()}".
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {keys.map(k => {
+                {filteredKeys.map(k => {
                   const d = days[k];
                   const total = d.intentions.length;
                   const done = d.intentions.filter(i => i.done).length;

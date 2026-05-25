@@ -31,9 +31,16 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     return allEvents.filter(e => {
       if (filter.kind === "block") return e.blockId === filter.id;
       if (filter.kind === "intention") return e.block.linkedToId === filter.id;
+      if (filter.kind === "project") return e.block.project === filter.id;
       return true;
     });
   }, [allEvents, filter]);
+
+  const projects = useMemo(() => {
+    const set = new Set();
+    for (const b of blocks) if (b.project) set.add(b.project);
+    return Array.from(set);
+  }, [blocks]);
 
   const totalFocus = useMemo(() => {
     const set = new Set(events.map(e => e.blockId));
@@ -53,13 +60,13 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     [blocks, dayK]);
 
   // ─ Handlers ─
-  const handleStart = (title, linkedToId) => {
+  const handleStart = (title, linkedToId, project) => {
     if (activeBlock) {
       // auto-pause current then start new
       pauseActive("");
-      setTimeout(() => startBlock(title, linkedToId), 50);
+      setTimeout(() => startBlock(title, linkedToId, { project }), 50);
     } else {
-      startBlock(title, linkedToId);
+      startBlock(title, linkedToId, { project });
     }
     setSheetStart(null);
   };
@@ -180,6 +187,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
           <FilterChips
             intentions={today.intentions}
             blocks={blocks.filter(b => dayKeyOf(b.createdAt) === dayK)}
+            projects={projects}
             filter={filter}
             setFilter={setFilter}
             accentColor={accentColor}
@@ -209,6 +217,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         open={!!sheetStart} onClose={() => setSheetStart(null)}
         intentions={today.intentions}
         prefilledIntention={sheetStart?.intention}
+        projects={projects}
         onStart={handleStart}
         accentColor={accentColor}
         hasActive={!!activeBlock}

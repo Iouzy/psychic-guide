@@ -845,14 +845,15 @@ function useStore() {
   const setReflection = (text) => setState(s => ({ ...s, today: { ...s.today, reflection: text } }));
 
   // ─ Pauta ─
-  const startBlock = (title, linkedToId = null) => {
+  const startBlock = (title, linkedToId = null, opts = {}) => {
     const t = (title || "").trim(); if (!t) return null;
     const id = uid("b_");
+    const project = (opts.project || "").trim() || null;
     setState(s => ({
       ...s,
       activeId: id,
       blocks: [...s.blocks, {
-        id, title: t, linkedToId,
+        id, title: t, linkedToId, project,
         sessions: [{ startedAt: Date.now(), endedAt: null, note: "" }],
         status: "active",
         reflection: "",

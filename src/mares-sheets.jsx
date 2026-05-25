@@ -465,10 +465,24 @@ function MiniBar({ pct, accentColor }) {
   );
 }
 
+function stepBtn(accentColor, primary) {
+  return {
+    width: 40, height: 40, borderRadius: "50%",
+    border: primary ? "none" : "1px solid var(--rule)",
+    background: primary ? accentColor : "transparent",
+    color: primary ? "var(--on-dark)" : "var(--ink-2)",
+    fontSize: 22, lineHeight: 1, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  };
+}
+
 // ─── Habit Detail Sheet ────────────────────────────────────
 function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
-  onToggleDay, onMarkRespiro, onUnmarkRespiro, onUpdate, onRemove }) {
+  onToggleDay, onIncDay, onSetCount, onMarkRespiro, onUnmarkRespiro, onUpdate, onRemove }) {
   if (!open || !habit) return null;
+  const isCount = !!habit.target;
+  const todayKey = dayKeyOf(todayTs);
+  const todayCount = (habit.counts && habit.counts[todayKey]) || 0;
 
   const stats = habitAllTimeStats(habit, todayTs);
   const current = habitCurrentStreak(habit, todayTs);
@@ -609,12 +623,38 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
               </div>
             )}
 
+            {/* Today's count stepper (countable habits) */}
+            {isCount && habitIsActiveOn(habit, todayKey) && (
+              <div style={{
+                marginBottom: 18, padding: "14px 16px",
+                background: "var(--paper-2)", border: "1px solid var(--rule)", borderRadius: 12,
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              }}>
+                <div>
+                  <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 4 }}>
+                    hoje
+                  </div>
+                  <div style={{ fontFamily: "var(--serif)", fontSize: 22, color: todayCount >= habit.target ? accentColor : "var(--ink)" }}>
+                    {todayCount} <span style={{ fontSize: 14, color: "var(--ink-3)" }}>/ {habit.target}{habit.unit ? " " + habit.unit : ""}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button onClick={() => { haptic(8); onSetCount(todayKey, Math.max(0, todayCount - 1)); }} className="tap"
+                    style={stepBtn(accentColor)} disabled={todayCount <= 0}>−</button>
+                  <button onClick={() => { haptic(8); onSetCount(todayKey, todayCount + 1); }} className="tap"
+                    style={stepBtn(accentColor, true)}>+</button>
+                </div>
+              </div>
+            )}
+
             {/* Heatmap */}
             <HeatmapAllTime
               habit={habit}
               accentColor={accentColor}
               todayTs={todayTs}
+              isCount={isCount}
               onToggleDay={onToggleDay}
+              onIncDay={onIncDay}
               onLongPress={(dayKey) => setRespiroAt(dayKey)}
               onShowRespiro={(dayKey) => setRespiroNote(dayKey)}
               onUnmarkRespiro={onUnmarkRespiro}
@@ -774,8 +814,12 @@ function RespiroPickerInline({ dayKey, accentColor, onClose, onConfirm }) {
 function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
   const [name, setName] = useState(habit.name || "");
   const [time, setTime] = useState(habit.time || "");
+  const [clock, setClock] = useState(habit.clock || "");
   const [description, setDescription] = useState(habit.description || "");
   const [recurrence, setRecurrence] = useState(habit.recurrence || "forever");
+  const [countable, setCountable] = useState(!!habit.target);
+  const [target, setTarget] = useState(habit.target || 3);
+  const [unit, setUnit] = useState(habit.unit || "");
   const [periodDays, setPeriodDays] = useState(() => {
     if (habit.endsAt) return Math.max(1, Math.round((habit.endsAt - habit.createdAt) / 86400000) + 1);
     return 30;
@@ -790,7 +834,8 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
     } else if (recurrence === "month") {
       endsAt = null;
     }
-    onSave({ name, time, description, recurrence, endsAt });
+    onSave({ name, time, clock, description, recurrence, endsAt,
+      target: countable ? Math.max(2, target) : null, unit: countable ? unit : "" });
   };
 
   return (
@@ -824,6 +869,52 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
           fontFamily: "var(--serif)", fontStyle: "italic",
           marginBottom: 16,
         }}/>
+
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
+        color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
+      }}>
+        hora certa
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <input type="time" value={clock} onChange={e => setClock(e.target.value)}
+          style={{ border: "1px solid var(--rule)", background: "var(--paper-2)", borderRadius: 8, padding: "8px 10px", fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink)" }}/>
+        {clock && (
+          <button onClick={() => setClock("")} className="tap" style={{ border: "none", background: "transparent", color: "var(--ink-3)", cursor: "pointer", fontFamily: "var(--mono)", fontSize: 11 }}>limpar</button>
+        )}
+      </div>
+
+      <div style={{
+        fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
+        color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
+      }}>
+        contável
+      </div>
+      <button onClick={() => setCountable(c => !c)} className="tap"
+        style={{
+          display: "flex", alignItems: "center", gap: 8, marginBottom: countable ? 10 : 16,
+          border: "none", background: "transparent", cursor: "pointer", padding: 0,
+          fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-2)",
+        }}>
+        <span style={{
+          width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+          border: `1.5px solid ${countable ? accentColor : "var(--ink-3)"}`,
+          background: countable ? accentColor : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>{countable && <Icon.Check size={9} color="var(--on-dark)"/>}</span>
+        meta com quantidade (ex.: 2L de água, 3 treinos)
+      </button>
+      {countable && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <input type="number" min="2" max="99" value={target}
+            onChange={e => setTarget(Math.max(2, parseInt(e.target.value) || 2))}
+            style={{ width: 56, padding: "6px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper-2)", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)" }}/>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>×</span>
+          <input value={unit} onChange={e => setUnit(e.target.value)}
+            placeholder="unidade"
+            style={{ flex: 1, minWidth: 0, padding: "6px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper-2)", fontSize: 13, color: "var(--ink-2)" }}/>
+        </div>
+      )}
 
       <div style={{
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
@@ -913,7 +1004,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
 }
 
 // ─── Heatmap (all-time, GitHub-style, weeks as columns) ───
-function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress, onShowRespiro, onUnmarkRespiro }) {
+function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onIncDay, onLongPress, onShowRespiro, onUnmarkRespiro }) {
   const [hover, setHover] = useState(null);
 
   const todayKey = dayKeyOf(todayTs);
@@ -944,8 +1035,10 @@ function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress,
         else if (habitEnd && key > habitEnd) state = "after";
         else if (habit.log && habit.log[key]) state = "done";
         else if (habit.respiros && habit.respiros[key]) state = "respiro";
+        else if (isCount && habit.counts && habit.counts[key] > 0) state = "partial";
         else state = "empty";
-        col.push({ key, state, isToday: key === todayKey, date: cellD });
+        const count = (isCount && habit.counts && habit.counts[key]) || 0;
+        col.push({ key, state, isToday: key === todayKey, date: cellD, count });
 
         if (day === 0) {
           const m = cellD.getMonth();
@@ -958,7 +1051,7 @@ function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress,
       cols.push(col);
     }
     return { columns: cols, monthLabels: labels };
-  }, [habit, todayTs, createdKey, todayKey, habitEnd]);
+  }, [habit, todayTs, createdKey, todayKey, habitEnd, isCount]);
 
   const CELL = 11, GAP = 3;
 
@@ -999,10 +1092,16 @@ function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress,
                     cell={cell}
                     accentColor={accentColor}
                     cellSize={CELL}
+                    target={isCount ? habit.target : null}
                     onTap={() => {
-                      if (cell.state === "empty") onToggleDay(cell.key);
-                      else if (cell.state === "done") onToggleDay(cell.key);
-                      else if (cell.state === "respiro") onUnmarkRespiro(cell.key);
+                      if (isCount) {
+                        if (cell.state === "respiro") onUnmarkRespiro(cell.key);
+                        else onIncDay(cell.key);
+                      } else {
+                        if (cell.state === "empty") onToggleDay(cell.key);
+                        else if (cell.state === "done") onToggleDay(cell.key);
+                        else if (cell.state === "respiro") onUnmarkRespiro(cell.key);
+                      }
                     }}
                     onLongPress={() => { if (cell.state === "empty") onLongPress(cell.key); }}
                     onHover={setHover}
@@ -1021,7 +1120,8 @@ function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress,
           color: "var(--ink-2)", textAlign: "center",
         }}>
           {fmtDateShort(hover.date.getTime())}
-          {hover.state === "done" && " · feito"}
+          {hover.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · feito")}
+          {hover.state === "partial" && ` · ${hover.count}/${habit.target}`}
           {hover.state === "empty" && " · não feito"}
           {hover.state === "respiro" && " · respiro"
             + (habit.respiros[hover.key]?.reason ? ` — ${habit.respiros[hover.key].reason}` : "")}
@@ -1034,7 +1134,7 @@ function HeatmapAllTime({ habit, accentColor, todayTs, onToggleDay, onLongPress,
   );
 }
 
-function HeatmapCell({ cell, accentColor, cellSize, onTap, onLongPress, onHover }) {
+function HeatmapCell({ cell, accentColor, cellSize, target, onTap, onLongPress, onHover }) {
   const pressTimer = useRef(null);
   const pressed = useRef(false);
   const startPress = () => {
@@ -1043,7 +1143,9 @@ function HeatmapCell({ cell, accentColor, cellSize, onTap, onLongPress, onHover 
     pressTimer.current = setTimeout(() => { pressed.current = true; onLongPress(); }, 450);
   };
   const endPress = () => { if (pressTimer.current) clearTimeout(pressTimer.current); pressTimer.current = null; };
-  const clickable = cell.state === "empty" || cell.state === "done" || cell.state === "respiro";
+  const isPartial = cell.state === "partial";
+  const partialFrac = isPartial && target ? Math.min(1, cell.count / target) : 0;
+  const clickable = cell.state === "empty" || cell.state === "done" || cell.state === "respiro" || isPartial;
 
   return (
     <div
@@ -1067,6 +1169,7 @@ function HeatmapCell({ cell, accentColor, cellSize, onTap, onLongPress, onHover 
           cell.state === "after" ? "1px solid var(--rule)" :
           cell.state === "future" ? "1px dashed var(--rule)" :
           cell.state === "respiro" ? "1px solid var(--ink-3)" :
+          isPartial ? "1px solid var(--ink-3)" :
           "none",
         boxSizing: "border-box",
         opacity:
@@ -1090,6 +1193,13 @@ function HeatmapCell({ cell, accentColor, cellSize, onTap, onLongPress, onHover 
       )}
       {cell.state === "respiro" && (
         <RespiroPattern color={accentColor}/>
+      )}
+      {isPartial && (
+        <div style={{
+          position: "absolute", left: 0, right: 0, bottom: 0,
+          height: `${Math.max(15, partialFrac * 100)}%`,
+          background: accentColor, opacity: 0.55,
+        }}/>
       )}
     </div>
   );
