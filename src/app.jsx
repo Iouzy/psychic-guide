@@ -62,13 +62,13 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
   const onToggleReminders = async (next) => {
     if (next) {
       if (typeof Notification === "undefined") {
-        setMsg({ kind: "err", text: "Este dispositivo não suporta notificações." });
+        setMsg({ kind: "err", text: tr("Este dispositivo não suporta notificações.") });
         return;
       }
       let perm = Notification.permission;
       if (perm === "default") { try { perm = await Notification.requestPermission(); } catch (e) {} }
       if (perm !== "granted") {
-        setMsg({ kind: "err", text: "Permissão de notificações negada." });
+        setMsg({ kind: "err", text: tr("Permissão de notificações negada.") });
         store.setReminderPref("enabled", false);
         return;
       }
@@ -83,7 +83,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
 
   useEffect(() => {
     const onAvail = () => setCanInstall(true);
-    const onDone = () => { setCanInstall(false); setMsg({ kind: "ok", text: "App instalada." }); };
+    const onDone = () => { setCanInstall(false); setMsg({ kind: "ok", text: tr("App instalada.") }); };
     window.addEventListener("pauta-installable", onAvail);
     window.addEventListener("pauta-installed", onDone);
     return () => {
@@ -94,7 +94,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
 
   const onExport = () => {
     store.exportData();
-    setMsg({ kind: "ok", text: "Backup transferido." });
+    setMsg({ kind: "ok", text: tr("Backup transferido.") });
   };
 
   const onPickFile = () => { setMsg(null); fileRef.current && fileRef.current.click(); };
@@ -105,12 +105,12 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      if (!confirm("Importar este backup substitui todos os dados atuais. Continuar?")) return;
+      if (!confirm(tr("Importar este backup substitui todos os dados atuais. Continuar?"))) return;
       const res = store.importData(String(reader.result || ""));
-      if (res.ok) setMsg({ kind: "ok", text: "Backup importado com sucesso." });
+      if (res.ok) setMsg({ kind: "ok", text: tr("Backup importado com sucesso.") });
       else setMsg({ kind: "err", text: res.error });
     };
-    reader.onerror = () => setMsg({ kind: "err", text: "Não foi possível ler o ficheiro." });
+    reader.onerror = () => setMsg({ kind: "err", text: tr("Não foi possível ler o ficheiro.") });
     reader.readAsText(file);
   };
 
@@ -124,76 +124,85 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Definições">
+    <Sheet open={open} onClose={onClose} title={tr("Definições")}>
       <div style={{ padding: "4px 22px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
 
-        <DataGroup label="Análise">
+        <DataGroup label={tr("Análise")}>
           <DataAction accentColor={accentColor}
-            title="Revisão semanal"
-            subtitle="Foco, hábitos e padrões dos últimos 7 dias."
+            title={tr("Revisão semanal")}
+            subtitle={tr("Foco, hábitos e padrões dos últimos 7 dias.")}
             onClick={() => { onClose(); onOpenInsights && onOpenInsights(); }}/>
           <DataAction accentColor={accentColor}
-            title="Como funcionam as marés"
-            subtitle="O que significam os tiers, de Onda a Oceano."
+            title={tr("Como funcionam as marés")}
+            subtitle={tr("O que significam os tiers, de Onda a Oceano.")}
             onClick={() => { onClose(); onOpenTierGuide && onOpenTierGuide(); }}/>
         </DataGroup>
 
-        <DataGroup label="Preferências">
+        <DataGroup label={tr("Preferências")}>
           <div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>Tema</div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>{tr("Idioma")}</div>
+            <Segmented value={prefs.lang} accentColor={accentColor}
+              onChange={v => store.setPref("lang", v)}
+              options={[
+                { value: "pt", label: "Português" },
+                { value: "en", label: "English" },
+              ]}/>
+          </div>
+          <div>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>{tr("Tema")}</div>
             <Segmented value={prefs.theme} accentColor={accentColor}
               onChange={v => store.setPref("theme", v)}
               options={[
-                { value: "auto", label: "Auto" },
-                { value: "light", label: "Claro" },
-                { value: "dark", label: "Escuro" },
+                { value: "auto", label: tr("Auto") },
+                { value: "light", label: tr("Claro") },
+                { value: "dark", label: tr("Escuro") },
               ]}/>
           </div>
-          <PrefToggle label="Vibração" sub="Pequeno toque ao concluir." accentColor={accentColor}
+          <PrefToggle label={tr("Vibração")} sub={tr("Pequeno toque ao concluir.")} accentColor={accentColor}
             value={prefs.haptics} onChange={v => store.setPref("haptics", v)}/>
         </DataGroup>
 
-        <DataGroup label="Lembretes">
-          <PrefToggle label="Notificações" sub="Avisos locais enquanto a app está aberta." accentColor={accentColor}
+        <DataGroup label={tr("Lembretes")}>
+          <PrefToggle label={tr("Notificações")} sub={tr("Avisos locais enquanto a app está aberta.")} accentColor={accentColor}
             value={prefs.reminders.enabled} onChange={onToggleReminders}/>
           {prefs.reminders.enabled && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 2px" }}>
               <label style={timeRow}>
-                <span>Hábitos pendentes</span>
+                <span>{tr("Hábitos pendentes")}</span>
                 <input type="time" value={prefs.reminders.habitsTime}
                   onChange={e => store.setReminderPref("habitsTime", e.target.value)} style={timeInput}/>
               </label>
               <label style={timeRow}>
-                <span>Reflexão noturna</span>
+                <span>{tr("Reflexão noturna")}</span>
                 <input type="time" value={prefs.reminders.reflectionTime}
                   onChange={e => store.setReminderPref("reflectionTime", e.target.value)} style={timeInput}/>
               </label>
               <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
-                Sem servidor: os avisos só chegam com a app aberta no telemóvel ou no browser.
+                {tr("Sem servidor: os avisos só chegam com a app aberta no telemóvel ou no browser.")}
               </div>
             </div>
           )}
         </DataGroup>
 
-        <DataGroup label="Backup">
+        <DataGroup label={tr("Backup")}>
           <DataAction icon={<Icon.Download size={16}/>} accentColor={accentColor}
-            title="Exportar dados"
-            subtitle="Transfere um ficheiro .json com tudo."
+            title={tr("Exportar dados")}
+            subtitle={tr("Transfere um ficheiro .json com tudo.")}
             onClick={onExport}/>
           <DataAction icon={<Icon.Upload size={16}/>} accentColor={accentColor}
-            title="Importar dados"
-            subtitle="Restaura a partir de um ficheiro .json."
+            title={tr("Importar dados")}
+            subtitle={tr("Restaura a partir de um ficheiro .json.")}
             onClick={onPickFile}/>
           <input ref={fileRef} type="file" accept="application/json,.json"
             onChange={onFileChosen} style={{ display: "none" }}/>
         </DataGroup>
 
         {!isStandalone && (
-          <DataGroup label="Instalar">
+          <DataGroup label={tr("Instalar")}>
             {canInstall && (
               <DataAction icon={<Icon.Plus size={16}/>} accentColor={accentColor}
-                title="Instalar app"
-                subtitle="Adiciona o Pauta ao ecrã inicial."
+                title={tr("Instalar app")}
+                subtitle={tr("Adiciona o Pauta ao ecrã inicial.")}
                 onClick={onInstall}/>
             )}
             {!canInstall && (
@@ -203,23 +212,23 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
                 padding: "12px 14px", border: "1px solid var(--rule)",
               }}>
                 {isIOS ? (
-                  <>Para instalar no iPhone/iPad: toque em <b>Partilhar</b> e depois em <b>Adicionar ao ecrã principal</b>.</>
+                  <>{tr("Para instalar no iPhone/iPad: toque em ")}<b>{tr("Partilhar")}</b>{tr(" e depois em ")}<b>{tr("Adicionar ao ecrã principal")}</b>{tr(".")}</>
                 ) : (
-                  <>Para instalar: no menu do navegador, escolha <b>Adicionar ao ecrã principal</b> ou <b>Instalar app</b>.</>
+                  <>{tr("Para instalar: no menu do navegador, escolha ")}<b>{tr("Adicionar ao ecrã principal")}</b>{tr(" ou ")}<b>{tr("Instalar app")}</b>{tr(".")}</>
                 )}
               </div>
             )}
           </DataGroup>
         )}
 
-        <DataGroup label="Aplicação">
+        <DataGroup label={tr("Aplicação")}>
           <DataAction accentColor={accentColor}
-            title="Recarregar exemplo"
-            subtitle="Substitui tudo por dados de demonstração."
+            title={tr("Recarregar exemplo")}
+            subtitle={tr("Substitui tudo por dados de demonstração.")}
             onClick={() => { store.reseed(); }}/>
           <DataAction accentColor={accentColor} danger={true}
-            title="Apagar tudo"
-            subtitle="Remove permanentemente todos os dados."
+            title={tr("Apagar tudo")}
+            subtitle={tr("Remove permanentemente todos os dados.")}
             onClick={() => { store.resetAll(); }}/>
         </DataGroup>
 
@@ -296,6 +305,13 @@ function App() {
   const [tierGuideOpen, setTierGuideOpen] = useState(false);
 
   const prefs = store.state.prefs;
+
+  // Mirror language to the global read by tr()/trf() synchronously, so the whole
+  // tree re-renders in the chosen language. Persist for the next cold start.
+  window.PAUTA_LANG = prefs.lang === "en" ? "en" : "pt";
+  useEffect(() => {
+    try { localStorage.setItem("pauta.lang", prefs.lang); } catch (e) {}
+  }, [prefs.lang]);
 
   const jumpToPauta = ({ intention }) => {
     setPendingIntention(intention);
@@ -391,19 +407,19 @@ function App() {
           onDone={() => store.setPref("onboardingSeen", true)}/>
       )}
 
-      <TweaksPanel title="Tweaks">
-        <TweakSection label="Cor de destaque"/>
+      <TweaksPanel title={tr("Tweaks")}>
+        <TweakSection label={tr("Cor de destaque")}/>
         <TweakColor
-          label="Acento" value={t.accent}
+          label={tr("Acento")} value={t.accent}
           options={["#B8533A", "#5A6B3E", "#3D5A80", "#8E5A8E", "#1A1815"]}
           onChange={v => setTweak("accent", v)}
         />
-        <TweakSection label="Pauta"/>
-        <TweakToggle label="Cronómetro visível" value={t.showElapsed}
+        <TweakSection label={tr("Pauta")}/>
+        <TweakToggle label={tr("Cronómetro visível")} value={t.showElapsed}
           onChange={v => setTweak("showElapsed", v)}/>
-        <TweakSection label="Dados"/>
-        <TweakButton label="Recarregar exemplo" onClick={store.reseed}/>
-        <TweakButton label="Apagar tudo" onClick={store.resetAll} secondary={true}/>
+        <TweakSection label={tr("Dados")}/>
+        <TweakButton label={tr("Recarregar exemplo")} onClick={store.reseed}/>
+        <TweakButton label={tr("Apagar tudo")} onClick={store.resetAll} secondary={true}/>
       </TweaksPanel>
     </div>
   );

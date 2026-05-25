@@ -1,6 +1,6 @@
 // Pauta service worker — offline app shell.
 // Bump CACHE_VERSION whenever the precached assets change so clients refresh.
-const CACHE_VERSION = "pauta-v3";
+const CACHE_VERSION = "pauta-v4";
 
 // Same-origin assets that make up the app shell. Relative paths keep this
 // working whether served from a domain root or a GitHub Pages subpath.
@@ -12,6 +12,7 @@ const LOCAL_ASSETS = [
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
   "./icons/apple-touch-icon.png",
+  "./src/i18n.jsx",
   "./src/tweaks-panel.jsx",
   "./src/store.jsx",
   "./src/ui-primitives.jsx",

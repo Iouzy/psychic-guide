@@ -6,61 +6,61 @@
 const MARE_PHRASES = {
   // Hero phrase for empty state / first open
   intro: [
-    "As marés têm história. Sobem e descem ao longo do ano.",
-    "Toda onda começa pequena.",
-    "Pés na água. O resto vem com o tempo.",
+    tr("As marés têm história. Sobem e descem ao longo do ano."),
+    tr("Toda onda começa pequena."),
+    tr("Pés na água. O resto vem com o tempo."),
   ],
   // Streak growing recently
   ascending: [
-    "Uma grande maré só sobe.",
-    "A água ganha velocidade quando encontra ritmo.",
-    "Toda onda começa pequena.",
+    tr("Uma grande maré só sobe."),
+    tr("A água ganha velocidade quando encontra ritmo."),
+    tr("Toda onda começa pequena."),
   ],
   // Long stable streak
   constant: [
-    "Constância vence intensidade.",
-    "A maré não corre. Persiste.",
-    "O que se faz todos os dias deixa de ser esforço.",
+    tr("Constância vence intensidade."),
+    tr("A maré não corre. Persiste."),
+    tr("O que se faz todos os dias deixa de ser esforço."),
   ],
   // Just used a respiro
   respiro: [
-    "A maré também recua. É assim que ela respira.",
-    "Um respiro honesto vale uma semana de mentira.",
-    "Está bem. A maré continua.",
-    "Recuar não é falhar. É respirar.",
+    tr("A maré também recua. É assim que ela respira."),
+    tr("Um respiro honesto vale uma semana de mentira."),
+    tr("Está bem. A maré continua."),
+    tr("Recuar não é falhar. É respirar."),
   ],
   // Streak broken (no done or respiro yesterday after a run)
   broken: [
-    "O oceano também esquece. Recomeça.",
-    "Cada onda que quebra prepara a próxima.",
-    "Falhar é humano. Voltar é maré.",
+    tr("O oceano também esquece. Recomeça."),
+    tr("Cada onda que quebra prepara a próxima."),
+    tr("Falhar é humano. Voltar é maré."),
   ],
   // Just-started habits dominate the view
   beginning: [
-    "Pés na água. O resto vem com o tempo.",
-    "As marés mais profundas começam discretas.",
-    "Toda onda começa pequena.",
+    tr("Pés na água. O resto vem com o tempo."),
+    tr("As marés mais profundas começam discretas."),
+    tr("Toda onda começa pequena."),
   ],
   // Habits in good shape but nothing dramatic
   steady: [
-    "Constância vence intensidade.",
-    "A maré não corre. Persiste.",
+    tr("Constância vence intensidade."),
+    tr("A maré não corre. Persiste."),
   ],
   // Tier-up celebratory messages
   tierUp: {
-    "Onda": "A primeira agitação. Continue.",
-    "Maré baixa": "A água começou a subir.",
-    "Maré média": "A sua maré assentou. Bom ritmo.",
-    "Maré alta": "A sua maré é alta agora.",
-    "Maré viva": "Maré viva — a mais forte do mês natural.",
-    "Maré anual": "Quase um ano. Isto já não é tentativa.",
-    "Oceano": "Já não é uma maré. É um oceano. O hábito é parte de si.",
+    "Onda": tr("A primeira agitação. Continue."),
+    "Maré baixa": tr("A água começou a subir."),
+    "Maré média": tr("A sua maré assentou. Bom ritmo."),
+    "Maré alta": tr("A sua maré é alta agora."),
+    "Maré viva": tr("Maré viva — a mais forte do mês natural."),
+    "Maré anual": tr("Quase um ano. Isto já não é tentativa."),
+    "Oceano": tr("Já não é uma maré. É um oceano. O hábito é parte de si."),
   },
   // Habit detail header phrases
   detailHeader: [
-    "Cada quadrado é um dia em que escolheu — ou foi escolhido pelo dia.",
-    "Aqui mora a história desta maré. As suas alturas, as suas calmarias, os seus respiros.",
-    "Olhe para o padrão. Está lá uma pessoa que se conhece a si própria.",
+    tr("Cada quadrado é um dia em que escolheu — ou foi escolhido pelo dia."),
+    tr("Aqui mora a história desta maré. As suas alturas, as suas calmarias, os seus respiros."),
+    tr("Olhe para o padrão. Está lá uma pessoa que se conhece a si própria."),
   ],
 };
 
@@ -121,7 +121,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
           <>
             <span style={{ color: "var(--ink-3)" }}>·</span>
             <span style={{ color: "var(--ink-3)", fontStyle: "italic" }}>
-              {streak.respiros} {streak.respiros === 1 ? "respiro" : "respiros"}
+              {streak.respiros} {streak.respiros === 1 ? tr("respiro") : tr("respiros")}
             </span>
           </>
         )}
@@ -144,7 +144,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
       }}>
         {streak.days} d
         {streak.respiros > 0 && (
-          <span style={{ color: "var(--ink-3)" }}> · {streak.respiros}<span style={{ fontSize: 8 }}> resp.</span></span>
+          <span style={{ color: "var(--ink-3)" }}> · {streak.respiros}<span style={{ fontSize: 8 }}> {tr("resp.")}</span></span>
         )}
       </div>
     </div>
@@ -162,7 +162,7 @@ function RecurrenceChip({ habit, accentColor, todayTs = Date.now() }) {
         padding: "2px 6px", borderRadius: 4,
         border: "1px solid var(--rule)",
       }}>
-        só este mês
+        {tr("só este mês")}
       </span>
     );
   }
@@ -181,7 +181,7 @@ function RecurrenceChip({ habit, accentColor, todayTs = Date.now() }) {
         padding: "2px 6px", borderRadius: 4,
         border: `1px solid ${finished ? "var(--rule)" : accentColor + "55"}`,
       }}>
-        {finished ? "concluída" : `dia ${elapsed}/${total}`}
+        {finished ? tr("concluída") : trf("dia {elapsed}/{total}", { elapsed, total })}
       </span>
     );
   }

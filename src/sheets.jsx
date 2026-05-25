@@ -30,7 +30,7 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Novo bloco">
+    <Sheet open={open} onClose={onClose} title={tr("Novo bloco")}>
       <div style={{ padding: "0 24px" }}>
         {hasActive && (
           <div style={{
@@ -39,16 +39,16 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
             fontFamily: "var(--serif)", fontStyle: "italic",
             fontSize: 13, color: "var(--ink-2)", lineHeight: 1.4,
           }}>
-            "{activeTitle}" será automaticamente pausado.
+            {trf("\"{t}\" será automaticamente pausado.", { t: activeTitle })}
           </div>
         )}
 
         <div style={{ fontFamily: "var(--serif)", fontSize: 22, color: "var(--ink)", marginBottom: 4 }}>
-          Em que vais focar?
+          {tr("Em que vais focar?")}
         </div>
         <input autoFocus value={title} onChange={e => { setTitle(e.target.value); setSelectedIntention(null); }}
           onKeyDown={e => { if (e.key === "Enter") submit(); }}
-          placeholder="ex.: escrever capítulo 3"
+          placeholder={tr("ex.: escrever capítulo 3")}
           style={{
             width: "100%", border: "none", borderBottom: "1.5px solid var(--ink)",
             background: "transparent", padding: "8px 0",
@@ -58,7 +58,7 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
         {intentions.length > 0 && (
           <div style={{ marginTop: 24 }}>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
-              ou continue com…
+              {tr("ou continue com…")}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {intentions.filter(i => !i.done).map(i => (
@@ -87,11 +87,11 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
 
         <div style={{ marginTop: 24 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
-            projecto (opcional)
+            {tr("projecto (opcional)")}
           </div>
           <input value={project} onChange={e => setProject(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") submit(); }}
-            placeholder="ex.: Livro, Cliente X, Casa"
+            placeholder={tr("ex.: Livro, Cliente X, Casa")}
             style={{
               width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
               borderRadius: 10, padding: "10px 12px", fontSize: 14, color: "var(--ink)",
@@ -112,9 +112,9 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
         </div>
 
         <div style={{ marginTop: 22, display: "flex", gap: 10 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
           <Button onClick={submit} disabled={!title.trim()} accentColor={accentColor} style={{ flex: 2 }}>
-            Iniciar agora
+            {tr("Iniciar agora")}
           </Button>
         </div>
       </div>
@@ -128,21 +128,21 @@ function PauseSheet({ open, onClose, block, onConfirm }) {
   useEffect(() => { if (open) setNote(""); }, [open]);
   if (!block) return null;
   return (
-    <Sheet open={open} onClose={onClose} title="Pausar bloco">
+    <Sheet open={open} onClose={onClose} title={tr("Pausar bloco")}>
       <div style={{ padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", marginBottom: 4 }}>
-          a pausa
+          {tr("a pausa")}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontSize: 22, color: "var(--ink)", lineHeight: 1.2, marginBottom: 18 }}>
           {block.title}
         </div>
 
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-          O que ficou em mente? (opcional)
+          {tr("O que ficou em mente? (opcional)")}
         </div>
         <AutoTextarea
           value={note} onChange={setNote}
-          placeholder="ex.: travei no segundo parágrafo"
+          placeholder={tr("ex.: travei no segundo parágrafo")}
           minRows={2}
           style={{
             fontSize: 15, lineHeight: 1.4,
@@ -153,8 +153,8 @@ function PauseSheet({ open, onClose, block, onConfirm }) {
           }}/>
 
         <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
-          <Button variant="inkPrimary" onClick={() => onConfirm(note)} style={{ flex: 2 }}>Pausar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
+          <Button variant="inkPrimary" onClick={() => onConfirm(note)} style={{ flex: 2 }}>{tr("Pausar")}</Button>
         </div>
       </div>
     </Sheet>
@@ -175,22 +175,22 @@ function ConcludeSheet({ open, onClose, block, intention, onConfirm, accentColor
   const totalMs = block.sessions.reduce((a, s) => a + ((s.endedAt || Date.now()) - s.startedAt), 0);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Concluir bloco">
+    <Sheet open={open} onClose={onClose} title={tr("Concluir bloco")}>
       <div style={{ padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: accentColor, marginBottom: 6 }}>
-          ✓ {fmtDuration(totalMs)} em foco
+          {trf("✓ {d} em foco", { d: fmtDuration(totalMs) })}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontSize: 24, color: "var(--ink)", lineHeight: 1.2, marginBottom: 18, letterSpacing: "-0.005em" }}>
           {block.title}
         </div>
 
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-          O que aconteceu?
+          {tr("O que aconteceu?")}
         </div>
         <AutoTextarea
           value={reflection} onChange={setReflection}
           autoFocus
-          placeholder="ex.: terminei o esqueleto. ficou faltando a conclusão."
+          placeholder={tr("ex.: terminei o esqueleto. ficou faltando a conclusão.")}
           minRows={3}
           style={{
             fontSize: 15, lineHeight: 1.45,
@@ -217,14 +217,14 @@ function ConcludeSheet({ open, onClose, block, intention, onConfirm, accentColor
             }}>
               {markDone && <Icon.Check size={10} color="var(--paper)"/>}
             </div>
-            <span>marcar <span style={{ fontFamily: "var(--serif)", fontStyle: "italic" }}>"{intention.text}"</span> como concluído no Hoje</span>
+            <span>{tr("marcar")} <span style={{ fontFamily: "var(--serif)", fontStyle: "italic" }}>"{intention.text}"</span> {tr("como concluído no Hoje")}</span>
           </button>
         )}
 
         <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
           <Button onClick={() => onConfirm(reflection, markDone)} accentColor={accentColor} style={{ flex: 2 }}>
-            Concluir
+            {tr("Concluir")}
           </Button>
         </div>
       </div>
@@ -241,10 +241,10 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
   const available = intentions.filter(i => !i.done && i.id !== currentBlock?.linkedToId);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Trocar foco">
+    <Sheet open={open} onClose={onClose} title={tr("Trocar foco")}>
       <div style={{ padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginBottom: 4 }}>
-          em curso →
+          {tr("em curso →")}
         </div>
         <div style={{
           fontFamily: "var(--serif)", fontSize: 20, color: "var(--ink)",
@@ -254,7 +254,7 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
         </div>
 
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
-          Pausar e ir para…
+          {tr("Pausar e ir para…")}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -281,7 +281,7 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
               <input autoFocus value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && newTitle.trim()) onPick(null, newTitle.trim()); if (e.key === "Escape") setAdding(false); }}
-                placeholder="ex.: revisar PRs"
+                placeholder={tr("ex.: revisar PRs")}
                 style={{
                   flex: 1, border: "none", background: "transparent",
                   padding: 0, fontSize: 15, color: "var(--ink)",
@@ -293,7 +293,7 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
                   borderRadius: 999, padding: "6px 12px", fontSize: 11,
                   fontFamily: "var(--mono)", letterSpacing: "0.08em",
                   textTransform: "uppercase", cursor: "pointer", opacity: newTitle.trim() ? 1 : 0.4,
-                }}>OK</button>
+                }}>{tr("OK")}</button>
             </div>
           ) : (
             <button onClick={() => setAdding(true)} className="tap"
@@ -305,7 +305,7 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
                 color: "var(--ink-3)", fontSize: 14,
               }}>
               <Icon.Plus size={12}/>
-              <span>algo novo (não está no Hoje)</span>
+              <span>{tr("algo novo (não está no Hoje)")}</span>
             </button>
           )}
         </div>
@@ -319,12 +319,12 @@ function SwitchSheet({ open, onClose, intentions, currentBlock, onPick, onConclu
               color: "var(--ink-2)", fontSize: 14, cursor: "pointer",
             }}>
             <Icon.Check size={12}/>
-            <span>ou concluir <em style={{ fontFamily: "var(--serif)" }}>"{currentBlock?.title}"</em> primeiro</span>
+            <span>{tr("ou concluir")} <em style={{ fontFamily: "var(--serif)" }}>"{currentBlock?.title}"</em> {tr("primeiro")}</span>
           </button>
         </div>
 
         <div style={{ marginTop: 14 }}>
-          <Button variant="ghost" onClick={onClose} style={{ width: "100%" }}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ width: "100%" }}>{tr("Cancelar")}</Button>
         </div>
       </div>
     </Sheet>
@@ -372,16 +372,16 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
   };
 
   const remove = () => {
-    if (confirm("Apagar este bloco? Não dá pra desfazer.")) {
+    if (confirm(tr("Apagar este bloco? Não dá pra desfazer."))) {
       onDelete(block.id);
       onClose();
     }
   };
 
-  const statusLabel = block.status === "done" ? "concluído" : (block.status === "paused" ? "pausado" : "em curso");
+  const statusLabel = block.status === "done" ? tr("concluído") : (block.status === "paused" ? tr("pausado") : tr("em curso"));
 
   return (
-    <Sheet open={open} onClose={onClose} title="Editar bloco">
+    <Sheet open={open} onClose={onClose} title={tr("Editar bloco")}>
       <div style={{ padding: "0 24px" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 4 }}>
           {statusLabel} · {fmtDuration(totalMs)}
@@ -390,7 +390,7 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
         {/* Title */}
         <div style={{ marginBottom: 18 }}>
           <input value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="título do bloco"
+            placeholder={tr("título do bloco")}
             style={{
               width: "100%", border: "none", borderBottom: "1.5px solid var(--ink)",
               background: "transparent", padding: "8px 0",
@@ -402,10 +402,10 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
         {/* Project */}
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-            Projecto
+            {tr("Projecto")}
           </div>
           <input value={project} onChange={e => setProject(e.target.value)}
-            placeholder="(sem projecto)"
+            placeholder={tr("(sem projecto)")}
             style={{
               width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
               borderRadius: 10, padding: "10px 12px", fontSize: 14, color: "var(--ink)",
@@ -415,10 +415,10 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
         {/* Reflection (only for done blocks, but allow setting for paused too) */}
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-            Reflexão
+            {tr("Reflexão")}
           </div>
           <AutoTextarea value={reflection} onChange={setReflection}
-            placeholder={block.status === "done" ? "o que aconteceu?" : "ainda não concluído"}
+            placeholder={block.status === "done" ? tr("o que aconteceu?") : tr("ainda não concluído")}
             minRows={2}
             style={{
               fontSize: 15, lineHeight: 1.45,
@@ -433,7 +433,7 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
         {block.sessions.length > 0 && (
           <div style={{ marginBottom: 18 }}>
             <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-              Sessões ({block.sessions.length})
+              {trf("Sessões ({n})", { n: block.sessions.length })}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {block.sessions.map((seg, i) => {
@@ -445,7 +445,7 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
                   }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                       <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)" }}>
-                        {fmtClock(seg.startedAt)}{seg.endedAt ? " → " + fmtClock(seg.endedAt) : " · em curso"}
+                        {seg.endedAt ? trf("{a} → {b}", { a: fmtClock(seg.startedAt), b: fmtClock(seg.endedAt) }) : trf("{a} · em curso", { a: fmtClock(seg.startedAt) })}
                       </div>
                       <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>
                         {fmtDuration(dur)}
@@ -454,7 +454,7 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
                     {(seg.endedAt && i < block.sessions.length - 1) || (seg.endedAt && block.status !== "done") ? (
                       <AutoTextarea value={notes[i] || ""}
                         onChange={v => setNotes(n => { const next = [...n]; next[i] = v; return next; })}
-                        placeholder="nota da pausa (opcional)"
+                        placeholder={tr("nota da pausa (opcional)")}
                         minRows={1}
                         style={{
                           fontSize: 13.5, lineHeight: 1.4,
@@ -471,8 +471,8 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
-          <Button onClick={save} accentColor={accentColor} style={{ flex: 2 }}>Guardar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
+          <Button onClick={save} accentColor={accentColor} style={{ flex: 2 }}>{tr("Guardar")}</Button>
         </div>
 
         <button onClick={remove} className="tap"
@@ -483,7 +483,7 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
             fontSize: 13, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}>
-          <Icon.Trash size={13}/> Apagar bloco
+          <Icon.Trash size={13}/> {tr("Apagar bloco")}
         </button>
       </div>
     </Sheet>

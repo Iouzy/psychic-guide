@@ -37,19 +37,19 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
   const level = navigatorLevel(totalDone);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Marés Passadas">
+    <Sheet open={open} onClose={onClose} title={tr("Marés Passadas")}>
       <div style={{ padding: "8px 24px 24px" }}>
         <div style={{
           fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.25,
           color: "var(--ink)", marginBottom: 4, letterSpacing: "-0.01em",
         }}>
-          As suas marés ao longo do ano.
+          {tr("As suas marés ao longo do ano.")}
         </div>
         <div style={{
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
           color: "var(--ink-3)", marginBottom: 24,
         }}>
-          Sobem e descem. Cada onda é um mês. Toque para ver as marés desse mês.
+          {tr("Sobem e descem. Cada onda é um mês. Toque para ver as marés desse mês.")}
         </div>
 
         {validPoints.length < 2 ? (
@@ -58,8 +58,8 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
             fontFamily: "var(--serif)", fontStyle: "italic",
             fontSize: 15, color: "var(--ink-3)",
           }}>
-            Ainda não há marés suficientes para mostrar uma onda.<br/>
-            Volte aqui dentro de alguns meses.
+            {tr("Ainda não há marés suficientes para mostrar uma onda.")}<br/>
+            {tr("Volte aqui dentro de alguns meses.")}
           </div>
         ) : (
           <>
@@ -91,10 +91,10 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
               border: "1px solid var(--rule)", borderRadius: 8,
               overflow: "hidden",
             }}>
-              <Stat label="Maré média" value={avg !== null ? avg + "%" : "—"} accentColor={accentColor}/>
-              <Stat label="Maré alta" value={best ? best.pct + "%" : "—"}
+              <Stat label={tr("Maré média")} value={avg !== null ? avg + "%" : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Maré alta")} value={best ? best.pct + "%" : "—"}
                 hint={best ? fmtMonthShort(best.y, best.m) : ""} accentColor={accentColor}/>
-              <Stat label="Maré baixa" value={worst ? worst.pct + "%" : "—"}
+              <Stat label={tr("Maré baixa")} value={worst ? worst.pct + "%" : "—"}
                 hint={worst ? fmtMonthShort(worst.y, worst.m) : ""} accentColor={accentColor}/>
             </div>
           </>
@@ -110,7 +110,7 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",
             textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6,
           }}>
-            o seu posto
+            {tr("o seu posto")}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <div>
@@ -132,7 +132,7 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
                 {totalDone}
               </div>
               <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em", color: "var(--ink-3)", textTransform: "uppercase" }}>
-                dias feitos
+                {tr("dias feitos")}
               </div>
             </div>
           </div>
@@ -142,7 +142,7 @@ function TrendSheet({ open, onClose, habits, accentColor, todayTs, onPickMonth }
               fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
               letterSpacing: "0.04em",
             }}>
-              faltam {level.next.min - totalDone} dias para <span style={{ color: "var(--ink-2)" }}>{level.next.name}</span>
+              {trf("faltam {n} dias para", { n: level.next.min - totalDone })} <span style={{ color: "var(--ink-2)" }}>{level.next.name}</span>
             </div>
           )}
         </div>
@@ -339,7 +339,7 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.15em",
             textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 4,
           }}>
-            maré de
+            {tr("maré de")}
           </div>
           <div style={{
             fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.05,
@@ -361,7 +361,7 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
             fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
             letterSpacing: "0.1em", marginTop: 2,
           }}>
-            no total
+            {tr("no total")}
           </div>
         </div>
       </div>
@@ -372,7 +372,7 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
           color: "var(--ink-3)", textAlign: "center", lineHeight: 1.4,
         }}>
-          Nenhuma maré existia neste mês.
+          {tr("Nenhuma maré existia neste mês.")}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
@@ -393,10 +393,10 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
                   fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                   letterSpacing: "0.04em", marginTop: 2,
                 }}>
-                  {done}/{obs - resp} {(obs - resp) === 1 ? "dia" : "dias"}
+                  {done}/{obs - resp} {(obs - resp) === 1 ? tr("dia") : tr("dias")}
                   {resp > 0 && (
                     <span style={{ fontStyle: "italic", marginLeft: 6 }}>
-                      · {resp} {resp === 1 ? "respiro" : "respiros"}
+                      · {resp} {resp === 1 ? tr("respiro") : tr("respiros")}
                     </span>
                   )}
                 </div>
@@ -428,7 +428,7 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
             color: "var(--ink-3)", textTransform: "uppercase",
             cursor: "pointer",
           }}>
-          fechar
+          {tr("fechar")}
         </button>
         <button onClick={onOpen} className="tap"
           style={{
@@ -439,7 +439,7 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
             color: "var(--paper)", textTransform: "uppercase",
             cursor: "pointer",
           }}>
-          abrir grelha do mês →
+          {tr("abrir grelha do mês →")}
         </button>
       </div>
     </div>
@@ -496,7 +496,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
   const headerPhrase = useMemo(() => pickPhrase("detailHeader", habit.id.length), [habit.id]);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Histórico da maré">
+    <Sheet open={open} onClose={onClose} title={tr("Histórico da maré")}>
       <div style={{ padding: "8px 24px 24px" }}>
         {/* Editable header */}
         {editing ? (
@@ -531,7 +531,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                       fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em",
                       color: "var(--ink-3)",
                     }}>
-                      desde {fmtDateShort(habit.createdAt)} · {stats.observed} {stats.observed === 1 ? "dia" : "dias"}
+                      {trf("desde {date} · {n} {unit}", { date: fmtDateShort(habit.createdAt), n: stats.observed, unit: stats.observed === 1 ? tr("dia") : tr("dias") })}
                     </div>
                     <RecurrenceChip habit={habit} accentColor={accentColor} todayTs={todayTs}/>
                   </div>
@@ -539,7 +539,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                 <button
                   onClick={() => setEditing(true)}
                   className="tap"
-                  title="editar"
+                  title={tr("editar")}
                   style={{
                     border: "1px solid var(--rule)",
                     background: "transparent",
@@ -549,7 +549,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                     color: "var(--ink-3)", textTransform: "uppercase",
                     cursor: "pointer", flexShrink: 0,
                   }}>
-                  editar
+                  {tr("editar")}
                 </button>
               </div>
               {habit.description && (
@@ -585,7 +585,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                     fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em",
                     color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 4,
                   }}>
-                    maré actual
+                    {tr("maré actual")}
                   </div>
                   <div style={{
                     fontFamily: "var(--serif)", fontSize: 22, color: accentColor, lineHeight: 1,
@@ -601,14 +601,14 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontFamily: "var(--mono)", fontSize: 20, color: "var(--ink)" }}>
-                    {current.days}<span style={{ fontSize: 11, color: "var(--ink-3)" }}> d</span>
+                    {current.days}<span style={{ fontSize: 11, color: "var(--ink-3)" }}> {tr("d")}</span>
                   </div>
                   {current.respiros > 0 && (
                     <div style={{
                       fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                       marginTop: 2, fontStyle: "italic",
                     }}>
-                      {current.respiros} {current.respiros === 1 ? "respiro" : "respiros"}
+                      {current.respiros} {current.respiros === 1 ? tr("respiro") : tr("respiros")}
                     </div>
                   )}
                   {tier.next && (
@@ -616,7 +616,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                       fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                       marginTop: 4,
                     }}>
-                      → {tier.next.name} em {tier.next.min - current.days}d
+                      {trf("→ {name} em {n}d", { name: tier.next.name, n: tier.next.min - current.days })}
                     </div>
                   )}
                 </div>
@@ -632,7 +632,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
               }}>
                 <div>
                   <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 4 }}>
-                    hoje
+                    {tr("hoje")}
                   </div>
                   <div style={{ fontFamily: "var(--serif)", fontSize: 22, color: todayCount >= habit.target ? accentColor : "var(--ink)" }}>
                     {todayCount} <span style={{ fontSize: 14, color: "var(--ink-3)" }}>/ {habit.target}{habit.unit ? " " + habit.unit : ""}</span>
@@ -667,10 +667,10 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
               border: "1px solid var(--rule)", borderRadius: 8,
               overflow: "hidden",
             }}>
-              <Stat label="Total" value={stats.pct === null ? "—" : stats.pct + "%"} accentColor={accentColor}/>
-              <Stat label="Actual" value={current.days > 0 ? current.days + "d" : "—"} accentColor={accentColor}/>
-              <Stat label="Melhor" value={best > 0 ? best + "d" : "—"} accentColor={accentColor}/>
-              <Stat label="Respiros" value={stats.respiros > 0 ? stats.respiros : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Total")} value={stats.pct === null ? "—" : stats.pct + "%"} accentColor={accentColor}/>
+              <Stat label={tr("Actual")} value={current.days > 0 ? current.days + "d" : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Melhor")} value={best > 0 ? best + "d" : "—"} accentColor={accentColor}/>
+              <Stat label={tr("Respiros")} value={stats.respiros > 0 ? stats.respiros : "—"} accentColor={accentColor}/>
             </div>
 
             {/* Recent respiros list */}
@@ -680,7 +680,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                   fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.15em",
                   color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 10,
                 }}>
-                  respiros
+                  {tr("respiros")}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {Object.entries(habit.respiros)
@@ -706,12 +706,12 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                           fontFamily: "var(--serif)", fontSize: 13, color: "var(--ink-2)",
                           fontStyle: r.reason ? "normal" : "italic",
                         }}>
-                          {r.reason || "sem motivo"}
+                          {r.reason || tr("sem motivo")}
                         </div>
                         <button
                           onClick={() => onUnmarkRespiro(dk)}
                           className="tap"
-                          title="remover respiro"
+                          title={tr("remover respiro")}
                           style={{
                             border: "none", background: "transparent",
                             color: "var(--ink-3)", cursor: "pointer", padding: 4,
@@ -730,8 +730,8 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
               fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12,
               color: "var(--ink-3)", textAlign: "center", lineHeight: 1.5,
             }}>
-              Toque num dia para marcar como feito.<br/>
-              Pressão longa num dia falhado para marcar respiro.
+              {tr("Toque num dia para marcar como feito.")}<br/>
+              {tr("Pressão longa num dia falhado para marcar respiro.")}
             </div>
           </>
         )}
@@ -780,19 +780,19 @@ function RespiroPickerInline({ dayKey, accentColor, onClose, onConfirm }) {
           fontFamily: "var(--serif)", fontSize: 19, lineHeight: 1.25,
           color: "var(--ink)", marginBottom: 6,
         }}>
-          Marcar como <em style={{ color: accentColor }}>respiro</em>?
+          {tr("Marcar como")} <em style={{ color: accentColor }}>{tr("respiro")}</em>?
         </div>
         <div style={{
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
           color: "var(--ink-3)", marginBottom: 14,
         }}>
-          A maré também recua. O dia não conta como falha, e a sua maré continua.
+          {tr("A maré também recua. O dia não conta como falha, e a sua maré continua.")}
         </div>
         <input
           autoFocus value={reason}
           onChange={e => setReason(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") onConfirm(reason); }}
-          placeholder="motivo (opcional)"
+          placeholder={tr("motivo (opcional)")}
           style={{
             width: "100%", border: "1px solid var(--rule)",
             background: "var(--paper-2)", borderRadius: 8,
@@ -800,9 +800,9 @@ function RespiroPickerInline({ dayKey, accentColor, onClose, onConfirm }) {
             marginBottom: 14,
           }}/>
         <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
           <Button onClick={() => onConfirm(reason)} accentColor={accentColor} style={{ flex: 1 }}>
-            Marcar respiro
+            {tr("Marcar respiro")}
           </Button>
         </div>
       </div>
@@ -844,7 +844,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        nome
+        {tr("nome")}
       </div>
       <input value={name} onChange={e => setName(e.target.value)}
         style={{
@@ -858,10 +858,10 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        quando
+        {tr("quando")}
       </div>
       <input value={time} onChange={e => setTime(e.target.value)}
-        placeholder="ex.: manhã, antes de dormir"
+        placeholder={tr("ex.: manhã, antes de dormir")}
         style={{
           width: "100%", border: "1px solid var(--rule)",
           background: "var(--paper-2)", borderRadius: 8,
@@ -874,13 +874,13 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        hora certa
+        {tr("hora certa")}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <input type="time" value={clock} onChange={e => setClock(e.target.value)}
           style={{ border: "1px solid var(--rule)", background: "var(--paper-2)", borderRadius: 8, padding: "8px 10px", fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink)" }}/>
         {clock && (
-          <button onClick={() => setClock("")} className="tap" style={{ border: "none", background: "transparent", color: "var(--ink-3)", cursor: "pointer", fontFamily: "var(--mono)", fontSize: 11 }}>limpar</button>
+          <button onClick={() => setClock("")} className="tap" style={{ border: "none", background: "transparent", color: "var(--ink-3)", cursor: "pointer", fontFamily: "var(--mono)", fontSize: 11 }}>{tr("limpar")}</button>
         )}
       </div>
 
@@ -888,7 +888,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        contável
+        {tr("contável")}
       </div>
       <button onClick={() => setCountable(c => !c)} className="tap"
         style={{
@@ -902,7 +902,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
           background: countable ? accentColor : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>{countable && <Icon.Check size={9} color="var(--on-dark)"/>}</span>
-        meta com quantidade (ex.: 2L de água, 3 treinos)
+        {tr("meta com quantidade (ex.: 2L de água, 3 treinos)")}
       </button>
       {countable && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
@@ -911,7 +911,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
             style={{ width: 56, padding: "6px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper-2)", fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)" }}/>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>×</span>
           <input value={unit} onChange={e => setUnit(e.target.value)}
-            placeholder="unidade"
+            placeholder={tr("unidade")}
             style={{ flex: 1, minWidth: 0, padding: "6px 8px", border: "1px solid var(--rule)", borderRadius: 6, background: "var(--paper-2)", fontSize: 13, color: "var(--ink-2)" }}/>
         </div>
       )}
@@ -920,10 +920,10 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        descrição · porquê esta maré?
+        {tr("descrição · porquê esta maré?")}
       </div>
       <textarea value={description} onChange={e => setDescription(e.target.value)}
-        placeholder="A intenção, o motivo, o sentimento que quer cultivar."
+        placeholder={tr("A intenção, o motivo, o sentimento que quer cultivar.")}
         style={{
           width: "100%", border: "1px solid var(--rule)",
           background: "var(--paper-2)", borderRadius: 8,
@@ -937,13 +937,13 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em",
         color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 8,
       }}>
-        recorrência
+        {tr("recorrência")}
       </div>
       <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
         {[
-          { key: "forever", label: "permanente" },
-          { key: "period",  label: "por um período" },
-          { key: "month",   label: "só este mês" },
+          { key: "forever", label: tr("permanente") },
+          { key: "period",  label: tr("por um período") },
+          { key: "month",   label: tr("só este mês") },
         ].map(opt => (
           <button key={opt.key}
             onClick={() => setRecurrence(opt.key)}
@@ -965,7 +965,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
       {recurrence === "period" && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
-            durante
+            {tr("durante")}
           </span>
           <input type="number" min="1" max="365" value={periodDays}
             onChange={e => setPeriodDays(Math.max(1, parseInt(e.target.value) || 1))}
@@ -976,14 +976,14 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
               fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)",
             }}/>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
-            dias a contar da criação
+            {tr("dias a contar da criação")}
           </span>
         </div>
       )}
 
       <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
-        <Button variant="ghost" onClick={onCancel} style={{ flex: 1 }}>Cancelar</Button>
-        <Button onClick={save} accentColor={accentColor} disabled={!name.trim()} style={{ flex: 1 }}>Guardar</Button>
+        <Button variant="ghost" onClick={onCancel} style={{ flex: 1 }}>{tr("Cancelar")}</Button>
+        <Button onClick={save} accentColor={accentColor} disabled={!name.trim()} style={{ flex: 1 }}>{tr("Guardar")}</Button>
       </div>
 
       <button
@@ -997,7 +997,7 @@ function HabitEditForm({ habit, accentColor, onSave, onCancel, onRemove }) {
           color: "var(--ink-3)", textTransform: "uppercase",
           cursor: "pointer",
         }}>
-        remover esta maré
+        {tr("remover esta maré")}
       </button>
     </div>
   );
@@ -1078,7 +1078,7 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
             width: 12, fontFamily: "var(--mono)", fontSize: 8,
             color: "var(--ink-3)", paddingTop: 0,
           }}>
-            {["", "s", "", "q", "", "s", ""].map((lbl, i) => (
+            {["", tr("s"), "", tr("q"), "", tr("s"), ""].map((lbl, i) => (
               <div key={i} style={{ height: CELL, lineHeight: CELL + "px" }}>{lbl}</div>
             ))}
           </div>
@@ -1120,14 +1120,14 @@ function HeatmapAllTime({ habit, accentColor, todayTs, isCount, onToggleDay, onI
           color: "var(--ink-2)", textAlign: "center",
         }}>
           {fmtDateShort(hover.date.getTime())}
-          {hover.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · feito")}
+          {hover.state === "done" && (isCount ? ` · ${habit.target}/${habit.target}` : " · " + tr("feito"))}
           {hover.state === "partial" && ` · ${hover.count}/${habit.target}`}
-          {hover.state === "empty" && " · não feito"}
-          {hover.state === "respiro" && " · respiro"
+          {hover.state === "empty" && " · " + tr("não feito")}
+          {hover.state === "respiro" && " · " + tr("respiro")
             + (habit.respiros[hover.key]?.reason ? ` — ${habit.respiros[hover.key].reason}` : "")}
-          {hover.state === "pre" && " · antes da maré"}
-          {hover.state === "after" && " · maré já terminou"}
-          {hover.state === "future" && " · ainda não chegou"}
+          {hover.state === "pre" && " · " + tr("antes da maré")}
+          {hover.state === "after" && " · " + tr("maré já terminou")}
+          {hover.state === "future" && " · " + tr("ainda não chegou")}
         </div>
       )}
     </div>

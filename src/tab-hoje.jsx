@@ -42,15 +42,15 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             {fmtDateLong(Date.now())}
           </div>
           <h1 style={{ fontFamily: "var(--serif)", fontSize: 44, lineHeight: 1.0, margin: 0, fontWeight: 400, letterSpacing: "-0.015em" }}>
-            O que importa <em style={{ color: accentColor }}>hoje</em>?
+            {tr("O que importa")} <em style={{ color: accentColor }}>{tr("hoje")}</em>?
           </h1>
           {totalFocusToday > 0 && (
             <div style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>
-              {fmtDuration(totalFocusToday)} em foco até agora
+              {trf("{d} em foco até agora", { d: fmtDuration(totalFocusToday) })}
             </div>
           )}
         </div>
-        <button onClick={() => setHistoryOpen(true)} className="tap" title="ver dias anteriores"
+        <button onClick={() => setHistoryOpen(true)} className="tap" title={tr("ver dias anteriores")}
           style={{
             border: "1px solid var(--rule)", background: "transparent",
             borderRadius: 8, padding: "6px 10px",
@@ -58,7 +58,7 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             textTransform: "uppercase", color: "var(--ink-3)",
             cursor: "pointer", flexShrink: 0, marginTop: 2,
           }}>
-          dias anteriores ↗
+          {tr("dias anteriores")} ↗
         </button>
       </div>
 
@@ -69,8 +69,8 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 18,
           color: "var(--ink-3)", lineHeight: 1.4,
         }}>
-          Comece por listar 1 a 4 coisas que importam hoje.<br/>
-          Não tarefas de rotina — coisas que <em>movem</em> o seu dia.
+          {tr("Comece por listar 1 a 4 coisas que importam hoje.")}<br/>
+          {tr("Não tarefas de rotina — coisas que")} <em>{tr("movem")}</em> {tr("o seu dia.")}
         </div>
       )}
 
@@ -101,7 +101,7 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             onChange={e => setNewText(e.target.value)}
             onBlur={commitNew}
             onKeyDown={e => { if (e.key === "Enter") commitNew(); if (e.key === "Escape") { setNewText(""); setAdding(false); } }}
-            placeholder="Nova intenção…"
+            placeholder={tr("Nova intenção…")}
             style={{
               flex: 1, border: "none", background: "transparent", padding: 0,
               fontSize: 16, color: "var(--ink)", lineHeight: 1.35,
@@ -121,22 +121,22 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
           }}>
             <Icon.Plus size={12}/>
           </div>
-          adicionar intenção
+          {tr("adicionar intenção")}
         </button>
       )}
 
       {/* Evening reflection */}
       <div style={{ marginTop: 40, padding: "24px 22px", background: "var(--paper-2)", borderRadius: 14, border: "1px solid var(--rule)" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
-          Reflexão da noite
+          {tr("Reflexão da noite")}
         </div>
         <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 18, color: "var(--ink-2)", marginBottom: 12 }}>
-          "O que valeu hoje?"
+          "{tr("O que valeu hoje?")}"
         </div>
         <AutoTextarea
           value={today.reflection}
           onChange={setReflection}
-          placeholder="Escreva quando quiser. Não precisa de ser longo."
+          placeholder={tr("Escreva quando quiser. Não precisa de ser longo.")}
           minRows={2}
           style={{
             fontSize: 15, lineHeight: 1.5, color: "var(--ink)",
@@ -152,7 +152,7 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
         marginTop: 32, fontFamily: "var(--mono)", fontSize: 10,
         color: "var(--ink-4)", letterSpacing: "0.04em", textAlign: "center",
       }}>
-        amanhã, recomeça.
+        {tr("amanhã, recomeça.")}
       </div>
 
       {/* History sheet */}
@@ -186,7 +186,7 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
   }) : keys;
 
   return (
-    <Sheet open={open} onClose={onClose} title="Dias anteriores">
+    <Sheet open={open} onClose={onClose} title={tr("Dias anteriores")}>
       <div style={{ padding: "8px 24px 24px" }}>
         {opened ? (
           <HojeHistoryDetail
@@ -202,17 +202,17 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
               fontFamily: "var(--serif)", fontSize: 20, lineHeight: 1.25,
               color: "var(--ink)", marginBottom: 4, letterSpacing: "-0.01em",
             }}>
-              O que importou nos dias anteriores.
+              {tr("O que importou nos dias anteriores.")}
             </div>
             <div style={{
               fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
               color: "var(--ink-3)", marginBottom: 14,
             }}>
-              As intenções e a reflexão de cada dia ficam guardadas. Toque para reler.
+              {tr("As intenções e a reflexão de cada dia ficam guardadas. Toque para reler.")}
             </div>
             {keys.length > 0 && (
               <input value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="procurar nas reflexões e intenções…"
+                placeholder={tr("procurar nas reflexões e intenções…")}
                 style={{
                   width: "100%", border: "1px solid var(--rule)", background: "var(--paper-2)",
                   borderRadius: 10, padding: "10px 14px", fontSize: 14, color: "var(--ink)",
@@ -225,8 +225,8 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
                 fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
                 color: "var(--ink-3)",
               }}>
-                Ainda não há dias arquivados.<br/>
-                Volte aqui amanhã.
+                {tr("Ainda não há dias arquivados.")}<br/>
+                {tr("Volte aqui amanhã.")}
               </div>
             ) : filteredKeys.length === 0 ? (
               <div style={{
@@ -234,7 +234,7 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
                 fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
                 color: "var(--ink-3)",
               }}>
-                Nada encontrado para "{query.trim()}".
+                {trf('Nada encontrado para "{q}".', { q: query.trim() })}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -262,9 +262,9 @@ function HojeHistorySheet({ open, onClose, days, blocks, keys, openedDayKey, onO
                           fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
                           letterSpacing: "0.06em", flexShrink: 0,
                         }}>
-                          {total > 0 && <>{done}/{total} feito{done === 1 ? "" : "s"}</>}
+                          {total > 0 && <>{done === 1 ? trf("{done}/{total} feito", { done, total }) : trf("{done}/{total} feitos", { done, total })}</>}
                           {focusMs > 0 && total > 0 && " · "}
-                          {focusMs > 0 && fmtDuration(focusMs) + " foco"}
+                          {focusMs > 0 && trf("{d} foco", { d: fmtDuration(focusMs) })}
                         </div>
                       </div>
                       {d.reflection && d.reflection.trim() && (
@@ -301,7 +301,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
           color: "var(--ink-3)", textTransform: "uppercase", cursor: "pointer",
           marginBottom: 12,
         }}>
-        ← dias
+        ← {tr("dias")}
       </button>
       <div style={{
         fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",
@@ -313,7 +313,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
         fontFamily: "var(--serif)", fontSize: 24, lineHeight: 1.15,
         color: "var(--ink)", letterSpacing: "-0.01em", marginBottom: 18,
       }}>
-        O que importou nesse dia.
+        {tr("O que importou nesse dia.")}
       </div>
 
       {day.intentions.length === 0 ? (
@@ -321,7 +321,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
           fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14,
           color: "var(--ink-3)", marginBottom: 18,
         }}>
-          Sem intenções registadas.
+          {tr("Sem intenções registadas.")}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", marginBottom: 18 }}>
@@ -350,7 +350,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
                 textDecoration: it.done ? "line-through" : "none",
                 lineHeight: 1.3,
               }}>
-                {it.text || <em style={{ color: "var(--ink-3)" }}>(intenção sem texto)</em>}
+                {it.text || <em style={{ color: "var(--ink-3)" }}>{tr("(intenção sem texto)")}</em>}
               </div>
             </div>
           ))}
@@ -367,7 +367,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
             fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.2em",
             textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8,
           }}>
-            reflexão da noite
+            {tr("reflexão da noite")}
           </div>
           <div style={{
             fontFamily: "var(--serif)", fontSize: 16, lineHeight: 1.5,
@@ -389,7 +389,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
               fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",
               textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 3,
             }}>
-              tempo em foco
+              {tr("tempo em foco")}
             </div>
             <div style={{
               fontFamily: "var(--serif)", fontSize: 22, color: accentColor,
@@ -402,7 +402,7 @@ function HojeHistoryDetail({ dayKey, day, blocks, accentColor, onBack }) {
             fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
             letterSpacing: "0.06em", textAlign: "right",
           }}>
-            {blocksDay.length} {blocksDay.length === 1 ? "bloco" : "blocos"}
+            {blocksDay.length} {blocksDay.length === 1 ? tr("bloco") : tr("blocos")}
           </div>
         </div>
       )}
@@ -427,7 +427,7 @@ function IntentionRow({ intention, isPrimary, focusMs, onToggle, onChange, onRem
         <EditableText
           value={intention.text}
           onChange={onChange}
-          placeholder="(intenção sem texto)"
+          placeholder={tr("(intenção sem texto)")}
           multiline={false}
           style={{
             display: "block",
@@ -442,13 +442,13 @@ function IntentionRow({ intention, isPrimary, focusMs, onToggle, onChange, onRem
         />
         {(focusMs > 0 || isPrimary) && (
           <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
-            {isPrimary && <span style={{ color: accentColor, fontWeight: 500 }}>● principal</span>}
-            {focusMs > 0 && <span>{fmtDuration(focusMs)} em foco</span>}
+            {isPrimary && <span style={{ color: accentColor, fontWeight: 500 }}>● {tr("principal")}</span>}
+            {focusMs > 0 && <span>{trf("{d} em foco", { d: fmtDuration(focusMs) })}</span>}
           </div>
         )}
       </div>
       <div style={{ display: "flex", gap: 4, opacity: hover ? 1 : 0, transition: "opacity 0.12s" }}>
-        <button onClick={onStart} className="tap" title="iniciar bloco com esta intenção"
+        <button onClick={onStart} className="tap" title={tr("iniciar bloco com esta intenção")}
           style={{ width: 28, height: 28, borderRadius: 6, border: "none", background: "transparent", color: "var(--ink-2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <Icon.Play size={11}/>
         </button>
