@@ -78,6 +78,58 @@ function addDaysToKey(key, n) {
 }
 const uid = (prefix) => prefix + Date.now() + Math.floor(Math.random()*1000);
 
+// ─── CADENCE / PERIODS ─────────────────────────────────────
+// Tides can repeat daily (the original model), weekly, or monthly. Weekly and
+// monthly tides are completed once per period; the period is a Monday-based
+// week or a calendar month. Day completions still live in `log`/`respiros`
+// keyed by dayKey — the period helpers just group those days.
+function habitCadence(h) { return (h && h.cadence) || "daily"; }
+// Monday-based week. getDay(): 0=Sun..6=Sat → shift so Monday is 0.
+function weekStartKey(dayKey) {
+  const dow = (new Date(tsFromDayKey(dayKey)).getDay() + 6) % 7;
+  return addDaysToKey(dayKey, -dow);
+}
+function weekEndKey(dayKey) { return addDaysToKey(weekStartKey(dayKey), 6); }
+function monthStartKey(dayKey) {
+  const d = new Date(tsFromDayKey(dayKey));
+  return dayKeyFromYMD(d.getFullYear(), d.getMonth(), 1);
+}
+function monthEndKey(dayKey) {
+  const d = new Date(tsFromDayKey(dayKey));
+  return dayKeyFromYMD(d.getFullYear(), d.getMonth(), daysInMonth(d.getFullYear(), d.getMonth()));
+}
+// The [start,end] dayKeys of the cadence period that contains dayKey.
+function periodRange(h, dayKey) {
+  const c = habitCadence(h);
+  if (c === "weekly") return { start: weekStartKey(dayKey), end: weekEndKey(dayKey) };
+  if (c === "monthly") return { start: monthStartKey(dayKey), end: monthEndKey(dayKey) };
+  return { start: dayKey, end: dayKey };
+}
+// Within the period containing dayKey, find the day that carries the completion
+// or respiro. Returns { kind: "done"|"respiro"|null, key }. For daily tides the
+// period is the single day, so this just reads that day.
+function habitPeriodMark(h, dayKey) {
+  const { start, end } = periodRange(h, dayKey);
+  let k = start, respiroKey = null;
+  while (k <= end) {
+    if (h.log && h.log[k]) return { kind: "done", key: k };
+    if (!respiroKey && h.respiros && h.respiros[k]) respiroKey = k;
+    k = addDaysToKey(k, 1);
+  }
+  return respiroKey ? { kind: "respiro", key: respiroKey } : { kind: null, key: null };
+}
+// Is this day the designated (fixed-anchor) day of its period? Manual tides
+// (anchor == null) treat every day as eligible. Daily tides are always true.
+function habitIsAnchorDay(h, dayKey) {
+  const c = habitCadence(h);
+  if (c === "daily") return true;
+  if (h.anchor == null) return true; // manual: any day eligible
+  const d = new Date(tsFromDayKey(dayKey));
+  if (c === "weekly") return d.getDay() === h.anchor;        // anchor: 0=Sun..6=Sat
+  // monthly: clamp anchor to the month length so "31" still lands on short months
+  return d.getDate() === Math.min(h.anchor, daysInMonth(d.getFullYear(), d.getMonth()));
+}
+
 // ─── PREFS ──────────────────────────────────────────────────
 // App-level preferences (theme, haptics, reminders, onboarding).
 // Persisted with the rest of the state and carried through export/import.
@@ -319,6 +371,11 @@ function migrateHabit(h, todayTs = Date.now()) {
   if (!out.counts) out.counts = {};
   // Real preferred clock time (HH:MM), used for reminders/sorting. `time` stays free text.
   if (!("clock" in out)) out.clock = "";
+  // Cadence: how often the tide repeats. Existing tides are daily.
+  if (!("cadence" in out)) out.cadence = "daily";
+  // Fixed period day: weekday 0–6 (weekly) or day-of-month 1–31 (monthly).
+  // null = manual (the user picks any one day in the period).
+  if (!("anchor" in out)) out.anchor = null;
   return out;
 }
 
@@ -542,32 +599,57 @@ function habitObservedRangeInMonth(h, year, monthIdx, todayTs = Date.now()) {
   if (start > end) return null;
   return { start, end };
 }
+// Count observation units (and their done/respiro status) over [startKey,endKey].
+// Daily tides count days; weekly/monthly tides count periods (a period is done
+// if any of its days carries a completion, respiro likewise). Periods are
+// walked by jumping period→period so each is counted once.
+function habitPeriodStats(h, startKey, endKey) {
+  let observed = 0, done = 0, respiros = 0;
+  if (habitCadence(h) === "daily") {
+    for (let k = startKey; k <= endKey; k = addDaysToKey(k, 1)) {
+      observed++;
+      if (h.log && h.log[k]) done++;
+      else if (h.respiros && h.respiros[k]) respiros++;
+    }
+    return { observed, done, respiros };
+  }
+  let cursor = startKey;
+  while (cursor <= endKey) {
+    const r = periodRange(h, cursor);
+    observed++;
+    const mark = habitPeriodMark(h, cursor);
+    if (mark.kind === "done") done++;
+    else if (mark.kind === "respiro") respiros++;
+    cursor = addDaysToKey(r.end, 1);  // next period
+  }
+  return { observed, done, respiros };
+}
+// How many observed units before a tide "matures" into the overall average and
+// drops the "unit X/N" hint. Weekly/monthly mature faster (in periods).
+function habitMaturityUnits(h) {
+  const c = habitCadence(h);
+  if (c === "weekly") return 4;
+  if (c === "monthly") return 2;
+  return HABIT_MATURITY_DAYS;
+}
+// Short unit label for a cadence ("d" / "sem" / "mês").
+function cadenceUnitShort(c) { return c === "weekly" ? "sem" : c === "monthly" ? "mês" : "d"; }
+// NOTE: the *InMonth names return observation *units* (days for daily tides,
+// periods for weekly/monthly) — kept for call-site compatibility.
 function habitDaysObservedInMonth(h, year, monthIdx, todayTs = Date.now()) {
   const r = habitObservedRangeInMonth(h, year, monthIdx, todayTs);
   if (!r) return 0;
-  return daysBetween(r.start, r.end);
+  return habitPeriodStats(h, r.start, r.end).observed;
 }
 function habitRespirosInMonth(h, year, monthIdx, todayTs = Date.now()) {
   const r = habitObservedRangeInMonth(h, year, monthIdx, todayTs);
-  if (!r || !h.respiros) return 0;
-  let count = 0;
-  let k = r.start;
-  while (k <= r.end) {
-    if (h.respiros[k]) count++;
-    k = addDaysToKey(k, 1);
-  }
-  return count;
+  if (!r) return 0;
+  return habitPeriodStats(h, r.start, r.end).respiros;
 }
 function habitDoneInMonth(h, year, monthIdx, todayTs = Date.now()) {
   const r = habitObservedRangeInMonth(h, year, monthIdx, todayTs);
   if (!r) return 0;
-  let count = 0;
-  let k = r.start;
-  while (k <= r.end) {
-    if (h.log && h.log[k]) count++;
-    k = addDaysToKey(k, 1);
-  }
-  return count;
+  return habitPeriodStats(h, r.start, r.end).done;
 }
 // Justice rule: respiros saem do denominador.
 function habitPctInMonth(h, year, monthIdx, todayTs = Date.now()) {
@@ -587,7 +669,7 @@ function overallPctInMonth(habits, year, monthIdx, todayTs = Date.now()) {
       obs: habitDaysObservedInMonth(h, year, monthIdx, todayTs) - habitRespirosInMonth(h, year, monthIdx, todayTs),
       pct: habitPctInMonth(h, year, monthIdx, todayTs),
     }))
-    .filter(x => x.pct !== null && x.obs >= HABIT_MATURITY_DAYS);
+    .filter(x => x.pct !== null && x.obs >= habitMaturityUnits(x.h));
   if (mature.length === 0) return null;
   const sum = mature.reduce((a, x) => a + x.pct, 0);
   return Math.round(sum / mature.length);
@@ -595,35 +677,70 @@ function overallPctInMonth(habits, year, monthIdx, todayTs = Date.now()) {
 
 // Streaks: respiros mantêm a streak. Não-feito quebra-a.
 // Para hábitos não-recorrentes, considera apenas a janela activa.
+// Returns { days, respiros, units, unit }. For daily tides units===days. For
+// weekly/monthly tides units = consecutive completed periods, and days is the
+// equivalent constancy in days (units × period length) so the day-based tier
+// thresholds (Onda → Tsunami) and copy stay meaningful.
+function streakDaysFromUnits(c, units) {
+  if (c === "weekly") return units * 7;
+  if (c === "monthly") return units * 30;
+  return units;
+}
 function habitCurrentStreak(h, todayTs = Date.now()) {
+  const c = habitCadence(h);
   const todayKey = dayKeyOf(todayTs);
   const createdKey = habitCreatedKey(h);
-  // Walk back from today (or habit's end, whichever is sooner)
   const habitEnd = habitEndKey(h);
-  let k = habitEnd && habitEnd < todayKey ? habitEnd : todayKey;
-  let streak = 0, respiros = 0;
-  while (k >= createdKey) {
-    if (h.log && h.log[k]) { streak++; }
-    else if (h.respiros && h.respiros[k]) { streak++; respiros++; }
-    else break;
-    k = addDaysToKey(k, -1);
+  const stopKey = habitEnd && habitEnd < todayKey ? habitEnd : todayKey;
+  const unit = cadenceUnitShort(c);
+  if (c === "daily") {
+    let k = stopKey, streak = 0, respiros = 0;
+    while (k >= createdKey) {
+      if (h.log && h.log[k]) { streak++; }
+      else if (h.respiros && h.respiros[k]) { streak++; respiros++; }
+      else break;
+      k = addDaysToKey(k, -1);
+    }
+    return { days: streak, respiros, units: streak, unit };
   }
-  return { days: streak, respiros };
+  // Periodic: walk period→period back from the current one. An unfinished
+  // current period (still has time left) doesn't break the streak.
+  let cursor = stopKey, units = 0, respiros = 0, first = true;
+  while (cursor >= createdKey) {
+    const r = periodRange(h, cursor);
+    const mark = habitPeriodMark(h, cursor);
+    if (mark.kind === "done") units++;
+    else if (mark.kind === "respiro") { units++; respiros++; }
+    else if (!(first && r.end >= todayKey)) break;  // missed a past period → stop
+    first = false;
+    cursor = addDaysToKey(r.start, -1);
+  }
+  return { days: streakDaysFromUnits(c, units), respiros, units, unit };
 }
 function habitBestStreak(h, todayTs = Date.now()) {
+  const c = habitCadence(h);
   const todayKey = dayKeyOf(todayTs);
   const createdKey = habitCreatedKey(h);
   const habitEnd = habitEndKey(h);
   const stopKey = habitEnd && habitEnd < todayKey ? habitEnd : todayKey;
   let best = 0, run = 0;
-  let k = createdKey;
-  while (k <= stopKey) {
-    const done = (h.log && h.log[k]) || (h.respiros && h.respiros[k]);
-    if (done) { run++; if (run > best) best = run; }
-    else run = 0;
-    k = addDaysToKey(k, 1);
+  if (c === "daily") {
+    let k = createdKey;
+    while (k <= stopKey) {
+      const done = (h.log && h.log[k]) || (h.respiros && h.respiros[k]);
+      if (done) { run++; if (run > best) best = run; } else run = 0;
+      k = addDaysToKey(k, 1);
+    }
+    return best;
   }
-  return best;
+  let cursor = createdKey;
+  while (cursor <= stopKey) {
+    const r = periodRange(h, cursor);
+    const mark = habitPeriodMark(h, cursor);
+    if (mark.kind) { run++; if (run > best) best = run; } else run = 0;
+    cursor = addDaysToKey(r.end, 1);
+  }
+  return best;  // in periods
 }
 
 function habitAllTimeStats(h, todayTs = Date.now()) {
@@ -632,14 +749,7 @@ function habitAllTimeStats(h, todayTs = Date.now()) {
   if (createdKey > todayKey) return { observed: 0, done: 0, respiros: 0, pct: null };
   const habitEnd = habitEndKey(h);
   const stopKey = habitEnd && habitEnd < todayKey ? habitEnd : todayKey;
-  const observed = daysBetween(createdKey, stopKey);
-  let done = 0, respiros = 0;
-  let k = createdKey;
-  while (k <= stopKey) {
-    if (h.log && h.log[k]) done++;
-    else if (h.respiros && h.respiros[k]) respiros++;
-    k = addDaysToKey(k, 1);
-  }
+  const { observed, done, respiros } = habitPeriodStats(h, createdKey, stopKey);
   const denom = observed - respiros;
   return { observed, done, respiros, pct: denom > 0 ? Math.round((done/denom)*100) : null };
 }
@@ -968,24 +1078,45 @@ function useStore() {
       const log = { ...(h.log || {}) };
       const respiros = { ...(h.respiros || {}) };
       if (log[dayKey]) {
-        delete log[dayKey];
+        delete log[dayKey];  // toggle off — unlocks the rest of the period
+        return { ...h, log, respiros };
+      }
+      // Weekly/monthly tides allow only one completion per period: bail if the
+      // period is already taken by another day, or if this isn't the fixed day.
+      if (habitCadence(h) !== "daily") {
+        const mark = habitPeriodMark(h, dayKey);
+        if (mark.kind === "done" && mark.key !== dayKey) return h;
+        if (!habitIsAnchorDay(h, dayKey)) return h;
+        const { start, end } = periodRange(h, dayKey);
+        for (let k = start; k <= end; k = addDaysToKey(k, 1)) delete respiros[k];
       } else {
-        log[dayKey] = 1;
         delete respiros[dayKey];  // toggling on → clear any respiro
       }
+      log[dayKey] = 1;
       return { ...h, log, respiros };
     })
   }));
   const toggleHabitToday = (id) => toggleHabitDay(id, dayKeyOf(Date.now()));
 
   // Mark a day as respiro (with optional reason). Clears any "done" mark.
+  // For weekly/monthly tides the respiro covers the whole period (one mark).
   const markRespiro = (id, dayKey, reason = "") => setState(s => ({
     ...s, habits: s.habits.map(h => {
       if (h.id !== id) return h;
       if (!habitIsActiveOn(h, dayKey)) return h;
       if (dayKey > dayKeyOf(Date.now())) return h;
-      const log = { ...(h.log || {}) }; delete log[dayKey];
-      const respiros = { ...(h.respiros || {}), [dayKey]: { reason: (reason || "").trim(), at: Date.now() } };
+      const log = { ...(h.log || {}) };
+      const respiros = { ...(h.respiros || {}) };
+      if (habitCadence(h) !== "daily") {
+        const mark = habitPeriodMark(h, dayKey);
+        if (mark.kind === "done") return h;            // a completed period can't be a respiro
+        if (!habitIsAnchorDay(h, dayKey)) return h;
+        const { start, end } = periodRange(h, dayKey);
+        for (let k = start; k <= end; k = addDaysToKey(k, 1)) { delete respiros[k]; delete log[k]; }
+      } else {
+        delete log[dayKey];
+      }
+      respiros[dayKey] = { reason: (reason || "").trim(), at: Date.now() };
       return { ...h, log, respiros };
     })
   }));
@@ -1006,6 +1137,8 @@ function useStore() {
         description: (opts.description || "").trim(),
         recurrence: opts.recurrence || "forever",
         endsAt: opts.endsAt || null,
+        cadence: opts.cadence || "daily",
+        anchor: (opts.anchor == null ? null : opts.anchor),
         target, unit: (opts.unit || "").trim(),
         clock: (opts.clock || "").trim(),
         log: {}, respiros: {}, counts: {},
@@ -1191,4 +1324,7 @@ Object.assign(window, {
   habitObservedRangeInMonth, habitDaysObservedInMonth, habitRespirosInMonth, habitDoneInMonth,
   habitPctInMonth, overallPctInMonth, habitCurrentStreak, habitBestStreak, habitAllTimeStats,
   habitsAllMonths, tideTier, navigatorLevel, totalDoneDays,
+  // cadence (weekly / monthly tides)
+  habitCadence, habitIsAnchorDay, habitPeriodMark, periodRange, habitPeriodStats,
+  habitMaturityUnits, cadenceUnitShort, weekStartKey, weekEndKey,
 });

@@ -108,6 +108,10 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
   if (!streak || streak.days <= 0) return null;
   const tier = tideTier(streak.days);
   if (!tier) return null;
+  // For weekly/monthly tides the streak is counted in periods; show that native
+  // count + unit ("4 sem") rather than the day-equivalent used for the tier.
+  const cnt = streak.units != null ? streak.units : streak.days;
+  const u = streak.unit || "d";
 
   if (layout === "inline") {
     return (
@@ -119,7 +123,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
           {tier.name}
         </span>
         <span style={{ color: "var(--ink-3)" }}>·</span>
-        <span style={{ color: "var(--ink-2)" }}>{streak.days}d</span>
+        <span style={{ color: "var(--ink-2)" }}>{cnt} {u}</span>
         {streak.respiros > 0 && (
           <>
             <span style={{ color: "var(--ink-3)" }}>·</span>
@@ -145,7 +149,7 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
         fontFamily: "var(--mono)", fontSize: 10,
         color: "var(--ink-2)", marginTop: 2,
       }}>
-        {streak.days} d
+        {cnt} {u}
         {streak.respiros > 0 && (
           <span style={{ color: "var(--ink-3)" }}> · {streak.respiros}<span style={{ fontSize: 8 }}> {tr("resp.")}</span></span>
         )}
@@ -154,38 +158,69 @@ function TideTierBadge({ streak, accentColor, layout = "stack" }) {
   );
 }
 
-// Recurrence chip — small badge showing if habit is forever / period / month
+// Short label for a cadence + its fixed day, e.g. "semanal · domingo" or
+// "mensal · dia 1". Manual tides omit the day.
+function cadenceLabel(habit) {
+  const c = habit && habit.cadence;
+  if (c !== "weekly" && c !== "monthly") return null;
+  const base = c === "weekly" ? tr("semanal") : tr("mensal");
+  if (habit.anchor == null) return base;
+  if (c === "weekly") {
+    const days = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+    return base + " · " + tr(days[habit.anchor] || "");
+  }
+  return base + " · " + trf("dia {n}", { n: habit.anchor });
+}
+
+// Recurrence chip — small badge for cadence (weekly/monthly) and for the
+// active window (forever / period / month).
 function RecurrenceChip({ habit, accentColor, todayTs = Date.now() }) {
-  if (!habit || habit.recurrence === "forever") return null;
+  if (!habit) return null;
+  const cad = cadenceLabel(habit);
+  const cadChip = cad ? (
+    <span style={{
+      fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
+      textTransform: "uppercase", color: accentColor,
+      padding: "2px 6px", borderRadius: 4, border: `1px solid ${accentColor}55`,
+      whiteSpace: "nowrap",
+    }}>{cad}</span>
+  ) : null;
+  if (habit.recurrence === "forever") return cadChip;
   if (habit.recurrence === "month") {
     return (
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
-        textTransform: "uppercase", color: "var(--ink-3)",
-        padding: "2px 6px", borderRadius: 4,
-        border: "1px solid var(--rule)",
-      }}>
-        {tr("só este mês")}
-      </span>
+      <>
+        {cadChip}
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
+          textTransform: "uppercase", color: "var(--ink-3)",
+          padding: "2px 6px", borderRadius: 4,
+          border: "1px solid var(--rule)",
+        }}>
+          {tr("só este mês")}
+        </span>
+      </>
     );
   }
   if (habit.recurrence === "period") {
     const created = habit.createdAt;
     const end = habit.endsAt;
-    if (!end) return null;
+    if (!end) return cadChip;
     const total = Math.round((end - created) / 86400000) + 1;
     const elapsed = Math.min(total, Math.round((todayTs - created) / 86400000) + 1);
     const finished = todayTs > end;
     return (
-      <span style={{
-        fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        color: finished ? "var(--ink-3)" : accentColor,
-        padding: "2px 6px", borderRadius: 4,
-        border: `1px solid ${finished ? "var(--rule)" : accentColor + "55"}`,
-      }}>
-        {finished ? tr("concluída") : trf("dia {elapsed}/{total}", { elapsed, total })}
-      </span>
+      <>
+        {cadChip}
+        <span style={{
+          fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: finished ? "var(--ink-3)" : accentColor,
+          padding: "2px 6px", borderRadius: 4,
+          border: `1px solid ${finished ? "var(--rule)" : accentColor + "55"}`,
+        }}>
+          {finished ? tr("concluída") : trf("dia {elapsed}/{total}", { elapsed, total })}
+        </span>
+      </>
     );
   }
   return null;
