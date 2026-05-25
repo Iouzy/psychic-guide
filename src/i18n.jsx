@@ -86,6 +86,55 @@ const I18N_EN = {
 
 // === I18N_EN_BULK_BEGIN === (entries collected from the rest of the app)
 const I18N_EN_BULK = {
+  // ─── Onboarding (interactive tour) ───
+  "exemplo": "example",
+  "foco": "focus",
+  "pronto": "ready",
+  "Tudo": "All",
+  "seu": "yours",
+  "bloco de foco": "focus block",
+  "a decorrer": "running",
+  "{n} dias": "{n} days",
+  "Um lugar calmo para o que importa. Vou mostrar com um exemplo em cada separador — depois apaga-se e fica tudo seu.":
+    "A calm place for what matters. I'll show you with an example in each tab — then it disappears and it's all yours.",
+  "Comece pelo que importa.": "Start with what matters.",
+  "Liste 1 a 4 intenções para o dia — coisas do dia-a-dia, grandes ou pequenas.":
+    "List 1 to 4 intentions for the day — everyday things, big or small.",
+  "Trabalhe em blocos.": "Work in blocks.",
+  "Quando quiser dedicar tempo a algo, inicie um bloco de foco. O tempo conta-se por si.":
+    "When you want to give something your time, start a focus block. Time counts itself.",
+  "Cultive hábitos.": "Cultivate habits.",
+  "Hábitos que sobem como a maré. Um dia falhado faz recuar — um respiro honesto, não.":
+    "Habits that rise like the tide. A missed day pulls it back — an honest breath doesn't.",
+  "O exemplo desaparece e fica uma pauta em branco. Comece quando quiser — sem pontos, sem pressão.":
+    "The example disappears and a blank pauta remains. Begin whenever you like — no points, no pressure.",
+  "feito — é assim que se risca uma intenção.": "done — that's how you cross off an intention.",
+  "toque no círculo para marcar como feita": "tap the circle to mark it done",
+  "em foco — o tempo conta-se sozinho.": "in focus — time counts itself.",
+  "toque em iniciar para começar o bloco": "tap start to begin the block",
+  "a maré sobe um dia. recuar é respirar.": "the tide rises a day. to recede is to breathe.",
+  "toque no dia de hoje para marcar": "tap today to mark it",
+  // ─── Sample data (everyday examples) ───
+  "Marcar consulta no dentista": "Book a dentist appointment",
+  "Estudar 45 min para o teste": "Study 45 min for the test",
+  "Tratar das compras da semana": "Do the week's shopping",
+  "Rever os apontamentos da semana": "Review the week's notes",
+  "Preparar a apresentação da escola": "Prepare the school presentation",
+  "Rever a matéria": "Review the material",
+  "Estudar durante 45 minutos": "Study for 45 minutes",
+  "Apresentação ficou mais clara. Falta praticar.": "The presentation got clearer. Still need to practise.",
+  "Arrumar a cozinha": "Tidy the kitchen",
+  "Demorou menos do que parecia.": "It took less time than it seemed.",
+  "Comecei pela matéria que custa mais.": "I started with the hardest material.",
+  "Fiz um resumo de uma página. Ficou mais claro.": "I made a one-page summary. It got clearer.",
+  "Defini três coisas para a semana. A das contas é a que mais adio.":
+    "I set three things for the week. The bills one is what I keep putting off.",
+  "Ouvi música e arejei a cabeça.": "I listened to music and cleared my head.",
+  "Organizar a casa": "Organise the house",
+  "Estudo": "Study",
+  "Aprender a tocar guitarra": "Learn to play guitar",
+  "Correr 5 km sem parar": "Run 5 km without stopping",
+  "Beber água": "Drink water",
   "Para instalar no iPhone/iPad: toque em ": "To install on iPhone/iPad: tap ",
   "Partilhar": "Share",
   " e depois em ": " and then ",

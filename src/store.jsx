@@ -147,9 +147,9 @@ function seed() {
     today: {
       dayKey: dayKeyOf(Date.now()),
       intentions: [
-        { id: ids.briefing, text: tr("Terminar a primeira versão do briefing"), done: false, priority: "principal", createdAt: Date.now() },
-        { id: ids.ler, text: tr("Ler o capítulo 4 de 'Deep Work'"), done: false, priority: "importante", createdAt: Date.now() },
-        { id: ids.emails, text: tr("Responder e-mails pendentes"), done: true, createdAt: Date.now() },
+        { id: ids.briefing, text: tr("Estudar 45 min para o teste"), done: false, priority: "principal", createdAt: Date.now() },
+        { id: ids.ler, text: tr("Tratar das compras da semana"), done: false, priority: "importante", createdAt: Date.now() },
+        { id: ids.emails, text: tr("Rever os apontamentos da semana"), done: true, createdAt: Date.now() },
       ],
       reflection: "",
     },
@@ -172,10 +172,10 @@ function seed() {
         if (i % 2 === 0) {
           out[k] = {
             intentions: [
-              { id: "ix"+i+"_a", text: i === 4 ? tr("Acabar o esboço da apresentação") : tr("Rever notas do livro"), done: true, createdAt: d.getTime() },
-              { id: "ix"+i+"_b", text: tr("Escrever durante 45 minutos"), done: i === 2, createdAt: d.getTime() },
+              { id: "ix"+i+"_a", text: i === 4 ? tr("Preparar a apresentação da escola") : tr("Rever a matéria"), done: true, createdAt: d.getTime() },
+              { id: "ix"+i+"_b", text: tr("Estudar durante 45 minutos"), done: i === 2, createdAt: d.getTime() },
             ],
-            reflection: i === 4 ? tr("Apresentação ficou clara. Falta cortar.") : "",
+            reflection: i === 4 ? tr("Apresentação ficou mais clara. Falta praticar.") : "",
           };
         }
       }
@@ -187,16 +187,16 @@ function seed() {
     // status: "active" | "paused" | "done"
     blocks: [
       {
-        id: "b1", title: tr("Revisar o caderno de campo"), linkedToId: null,
+        id: "b1", title: tr("Arrumar a cozinha"), linkedToId: null,
         sessions: [{ startedAt: t(8,15), endedAt: t(8,47), note: "" }],
         status: "done",
-        reflection: tr("Achei três links entre os ensaios que não tinha visto."),
+        reflection: tr("Demorou menos do que parecia."),
         createdAt: t(8,15),
       },
       {
-        id: "b2", title: tr("Terminar a primeira versão do briefing"), linkedToId: ids.briefing,
+        id: "b2", title: tr("Estudar 45 min para o teste"), linkedToId: ids.briefing,
         sessions: [
-          { startedAt: t(9,5), endedAt: t(9,45), note: tr("Estruturei o esqueleto. Encalhado no tom.") },
+          { startedAt: t(9,5), endedAt: t(9,45), note: tr("Comecei pela matéria que custa mais.") },
           { startedAt: t(11,10), endedAt: t(11,55), note: "" },
         ],
         status: "paused",
@@ -204,10 +204,10 @@ function seed() {
         createdAt: t(9,5),
       },
       {
-        id: "b3", title: tr("Responder e-mails pendentes"), linkedToId: ids.emails,
+        id: "b3", title: tr("Rever os apontamentos da semana"), linkedToId: ids.emails,
         sessions: [{ startedAt: t(10,0), endedAt: t(10,30), note: "" }],
         status: "done",
-        reflection: tr("Feito até 14:00. Inbox em 4."),
+        reflection: tr("Fiz um resumo de uma página. Ficou mais claro."),
         createdAt: t(10,0),
       },
       // yesterday
@@ -215,14 +215,14 @@ function seed() {
         id: "by1", title: tr("Planear a semana"), linkedToId: null,
         sessions: [{ startedAt: y(9,0), endedAt: y(9,40), note: "" }],
         status: "done",
-        reflection: tr("Defini três objetivos. O da escrita é o mais difícil de partir em passos concretos."),
+        reflection: tr("Defini três coisas para a semana. A das contas é a que mais adio."),
         createdAt: y(9,0),
       },
       {
         id: "by2", title: tr("Caminhada longa"), linkedToId: null,
         sessions: [{ startedAt: y(12,0), endedAt: y(12,55), note: "" }],
         status: "done",
-        reflection: tr("Ouvi um podcast sobre arquitetura. Anotei uma ideia."),
+        reflection: tr("Ouvi música e arejei a cabeça."),
         createdAt: y(12,0),
       },
       // sparse past days (for focus chart)
@@ -233,7 +233,7 @@ function seed() {
             const d = new Date(); d.setDate(d.getDate() - i); d.setHours(10, 0, 0, 0);
             const dur = (25 + (i * 7) % 50) * 60 * 1000;
             past.push({
-              id: "bp" + i, title: i % 3 === 0 ? tr("Escrita focada") : (i % 2 === 0 ? tr("Leitura") : tr("Trabalho profundo")),
+              id: "bp" + i, title: i % 3 === 0 ? tr("Organizar a casa") : (i % 2 === 0 ? tr("Leitura") : tr("Estudo")),
               linkedToId: null,
               sessions: [{ startedAt: d.getTime(), endedAt: d.getTime() + dur, note: "" }],
               status: "done",
@@ -281,8 +281,8 @@ function seed() {
         createdAt: Date.now() - 4*86400000 },
     ],
     goals: [
-      { id: "g1", text: tr("Terminar o primeiro rascunho do livro"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 20*86400000 },
-      { id: "g2", text: tr("Correr uma meia-maratona"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 10*86400000 },
+      { id: "g1", text: tr("Aprender a tocar guitarra"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 20*86400000 },
+      { id: "g2", text: tr("Correr 5 km sem parar"), quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 10*86400000 },
     ],
     prefs: defaultPrefs(),
   };

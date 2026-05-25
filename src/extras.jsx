@@ -9,71 +9,273 @@ function haptic(ms = 10) {
 }
 
 // ─── Onboarding (primeira abertura) ─────────────────────────
-function OnboardingOverlay({ onDone, accentColor }) {
+// Tour guiado: o overlay conduz pelas tabs reais (esmaecidas por trás) e mostra,
+// em cada uma, um "exemplo fantasma" interativo. O fantasma vive só aqui — nunca
+// é escrito no store — por isso desaparece sem deixar rasto quando o tour acaba.
+
+// Moldura do exemplo: cartão claro, etiqueta "exemplo" e dica pulsante.
+function GhostFrame({ children, accentColor, hint, hintDone }) {
+  return (
+    <div style={{
+      position: "relative",
+      background: "var(--paper)",
+      border: "1px solid var(--rule)",
+      borderRadius: 16,
+      padding: "18px 18px 16px",
+      boxShadow: "0 18px 50px rgba(0,0,0,0.32)",
+    }}>
+      <div style={{
+        position: "absolute", top: -10, left: 16,
+        background: accentColor, color: "var(--on-dark)",
+        fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
+        textTransform: "uppercase", padding: "3px 9px", borderRadius: 6,
+      }}>{tr("exemplo")}</div>
+      {children}
+      {hint && (
+        <div style={{
+          marginTop: 13, paddingTop: 11, borderTop: "1px solid var(--rule)",
+          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.04em",
+          color: hintDone ? accentColor : "var(--ink-3)",
+          display: "flex", alignItems: "center", gap: 7,
+        }}>
+          {!hintDone && <span style={{
+            width: 6, height: 6, borderRadius: "50%", background: accentColor,
+            animation: "pulse 1.4s infinite", flexShrink: 0,
+          }}/>}
+          {hint}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GhostIntention({ accentColor }) {
+  const [done, setDone] = useState(false);
+  return (
+    <GhostFrame accentColor={accentColor} hintDone={done}
+      hint={done ? tr("feito — é assim que se risca uma intenção.") : tr("toque no círculo para marcar como feita")}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <div style={{ paddingTop: 2 }}>
+          <Check checked={done} onChange={() => { haptic(10); setDone(d => !d); }} accentColor={accentColor}/>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.2,
+            color: done ? "var(--ink-3)" : "var(--ink)",
+            textDecoration: done ? "line-through" : "none", textDecorationColor: "var(--ink-3)",
+          }}>{tr("Marcar consulta no dentista")}</div>
+          <div style={{
+            marginTop: 5, fontFamily: "var(--mono)", fontSize: 10,
+            letterSpacing: "0.06em", color: accentColor,
+          }}>{tr("principal")}</div>
+        </div>
+      </div>
+    </GhostFrame>
+  );
+}
+
+function GhostBlock({ accentColor }) {
+  const [running, setRunning] = useState(false);
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    if (!running) { setSecs(0); return; }
+    const id = setInterval(() => setSecs(s => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [running]);
+  const clock = `00:${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
+  return (
+    <GhostFrame accentColor={accentColor} hintDone={running}
+      hint={running ? tr("em foco — o tempo conta-se sozinho.") : tr("toque em iniciar para começar o bloco")}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
+            color: running ? accentColor : "var(--ink-3)", marginBottom: 5,
+          }}>{running ? tr("a decorrer") : tr("bloco de foco")}</div>
+          <div style={{ fontFamily: "var(--serif)", fontSize: 20, lineHeight: 1.15, color: "var(--ink)" }}>
+            {tr("Estudar 45 min para o teste")}
+          </div>
+          {running && (
+            <div style={{
+              marginTop: 7, fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink-2)",
+              display: "flex", alignItems: "center", gap: 7,
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: accentColor, animation: "pulse 1.2s infinite" }}/>
+              {clock}
+            </div>
+          )}
+        </div>
+        <button onClick={() => { haptic(10); setRunning(r => !r); }} className="tap"
+          style={{
+            width: 50, height: 50, borderRadius: "50%", border: "none", flexShrink: 0,
+            background: running ? "var(--paper-3)" : accentColor,
+            color: running ? "var(--ink)" : "var(--on-dark)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+          {running ? <Icon.Pause size={16}/> : <Icon.Play size={15}/>}
+        </button>
+      </div>
+    </GhostFrame>
+  );
+}
+
+function GhostHabit({ accentColor }) {
+  const [done, setDone] = useState(false);
+  const past = [1, 1, 0, 1, 1, 1]; // dias anteriores (cheio = feito)
+  return (
+    <GhostFrame accentColor={accentColor} hintDone={done}
+      hint={done ? tr("a maré sobe um dia. recuar é respirar.") : tr("toque no dia de hoje para marcar")}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 20, color: "var(--ink)" }}>{tr("Beber água")}</div>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.06em", color: accentColor }}>
+          {trf("{n} dias", { n: done ? 6 : 5 })}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 7 }}>
+        {past.map((v, i) => (
+          <span key={i} style={{
+            flex: 1, height: 28, borderRadius: 7,
+            background: v ? accentColor + "30" : "var(--paper-3)",
+            border: `1px solid ${v ? accentColor + "55" : "var(--rule)"}`,
+          }}/>
+        ))}
+        <button onClick={() => { haptic(10); setDone(d => !d); }} className="tap"
+          style={{
+            flex: 1, height: 28, borderRadius: 7, padding: 0,
+            background: done ? accentColor : "transparent",
+            border: `1.5px ${done ? "solid" : "dashed"} ${done ? accentColor : "var(--ink-3)"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+          {done && <Icon.Check size={14} color="var(--paper)"/>}
+        </button>
+      </div>
+      <div style={{
+        marginTop: 7, textAlign: "right", fontFamily: "var(--mono)", fontSize: 9,
+        letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-4)",
+      }}>{tr("hoje")} ↑</div>
+    </GhostFrame>
+  );
+}
+
+function OnboardingOverlay({ onDone, accentColor, onTab }) {
   const [step, setStep] = useState(0);
-  const slides = [
+  const [leaving, setLeaving] = useState(false);
+
+  const steps = [
     {
-      tag: tr("bem-vindo"),
+      kind: "intro", tag: tr("bem-vindo"),
       title: <>{tr("Esta é a sua")} <em style={{ color: accentColor }}>{tr("pauta")}</em>.</>,
-      body: tr("Um lugar calmo para o que importa: intenções, foco e hábitos. Sem pontos, sem pressão — só ritmo."),
+      body: tr("Um lugar calmo para o que importa. Vou mostrar com um exemplo em cada separador — depois apaga-se e fica tudo seu."),
     },
     {
-      tag: tr("hoje"),
-      title: <>{tr("Comece pelo")} <em style={{ color: accentColor }}>{tr("Hoje")}</em>.</>,
-      body: tr("Liste 1 a 4 coisas que movem o seu dia. À noite, escreva uma reflexão curta. Amanhã, recomeça."),
+      kind: "tour", tab: "hoje", ghost: "intention", tag: tr("hoje"),
+      title: tr("Comece pelo que importa."),
+      body: tr("Liste 1 a 4 intenções para o dia — coisas do dia-a-dia, grandes ou pequenas."),
     },
     {
-      tag: tr("pauta"),
-      title: <>{tr("Foque em")} <em style={{ color: accentColor }}>{tr("blocos")}</em>.</>,
-      body: tr("Inicie um bloco, pause, troque ou conclua. A linha temporal mostra o ritmo real do seu dia."),
+      kind: "tour", tab: "pauta", ghost: "block", tag: tr("foco"),
+      title: tr("Trabalhe em blocos."),
+      body: tr("Quando quiser dedicar tempo a algo, inicie um bloco de foco. O tempo conta-se por si."),
     },
     {
-      tag: tr("marés"),
-      title: <>{tr("Cultive")} <em style={{ color: accentColor }}>{tr("marés")}</em>.</>,
-      body: tr("Hábitos que sobem e descem como a maré. Um respiro honesto não quebra a corrente — recuar é respirar."),
+      kind: "tour", tab: "mares", ghost: "habit", tag: tr("marés"),
+      title: tr("Cultive hábitos."),
+      body: tr("Hábitos que sobem como a maré. Um dia falhado faz recuar — um respiro honesto, não."),
+    },
+    {
+      kind: "outro", tag: tr("pronto"),
+      title: <>{tr("Tudo")} <em style={{ color: accentColor }}>{tr("seu")}</em>.</>,
+      body: tr("O exemplo desaparece e fica uma pauta em branco. Comece quando quiser — sem pontos, sem pressão."),
     },
   ];
-  const s = slides[step];
-  const last = step === slides.length - 1;
+  const s = steps[step];
+  const last = step === steps.length - 1;
+  const isTour = s.kind === "tour";
+
+  // Conduz a tab real por trás do overlay.
+  useEffect(() => { if (s.tab && onTab) onTab(s.tab); }, [step]);
+
+  const finish = () => {
+    setLeaving(true);
+    setTimeout(() => onDone && onDone(), 300);
+  };
+  const next = () => { haptic(8); last ? finish() : setStep(step + 1); };
+
+  const ghost = s.ghost === "intention" ? <GhostIntention accentColor={accentColor}/>
+    : s.ghost === "block" ? <GhostBlock accentColor={accentColor}/>
+    : s.ghost === "habit" ? <GhostHabit accentColor={accentColor}/>
+    : null;
+
   return (
     <div style={{
       position: "absolute", inset: 0, zIndex: 400,
-      background: "var(--paper)",
       display: "flex", flexDirection: "column",
-      animation: "fadeIn 0.3s ease",
+      // Tour: scrim translúcido — a tab real fica visível (esmaecida) por trás.
+      // Intro/outro: papel sólido para um ecrã de boas-vindas limpo.
+      background: isTour ? "rgba(8,6,4,0.34)" : "var(--paper)",
+      backdropFilter: isTour ? "blur(1.5px)" : "none",
+      WebkitBackdropFilter: isTour ? "blur(1.5px)" : "none",
+      animation: leaving ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
     }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px" }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
-          textTransform: "uppercase", color: accentColor, marginBottom: 14,
-        }}>{s.tag}</div>
-        <h1 style={{
-          fontFamily: "var(--serif)", fontSize: 40, lineHeight: 1.05,
-          margin: 0, fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
-        }}>{s.title}</h1>
-        <p style={{
-          fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
-          color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
-        }}>{s.body}</p>
-      </div>
-      <div style={{ padding: "0 32px 40px" }}>
+      {isTour ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "56px 24px 0", minHeight: 0 }}>
+          <div style={{
+            background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: 16,
+            padding: "16px 18px", boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+          }}>
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
+              textTransform: "uppercase", color: accentColor, marginBottom: 8,
+            }}>{s.tag}</div>
+            <h1 style={{
+              fontFamily: "var(--serif)", fontSize: 25, lineHeight: 1.1,
+              margin: 0, fontWeight: 400, letterSpacing: "-0.01em", color: "var(--ink)",
+            }}>{s.title}</h1>
+            <p style={{
+              fontFamily: "var(--serif)", fontSize: 15, lineHeight: 1.45,
+              color: "var(--ink-2)", margin: "10px 0 0",
+            }}>{s.body}</p>
+          </div>
+          <div style={{ flex: 0.7 }}/>
+          {ghost}
+          <div style={{ flex: 1 }}/>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px" }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
+            textTransform: "uppercase", color: accentColor, marginBottom: 14,
+          }}>{s.tag}</div>
+          <h1 style={{
+            fontFamily: "var(--serif)", fontSize: 40, lineHeight: 1.05,
+            margin: 0, fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
+          }}>{s.title}</h1>
+          <p style={{
+            fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
+            color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
+          }}>{s.body}</p>
+        </div>
+      )}
+
+      <div style={{ padding: "0 32px 40px", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {slides.map((_, i) => (
+          {steps.map((_, i) => (
             <div key={i} style={{
               height: 3, flex: 1, borderRadius: 2,
-              background: i <= step ? accentColor : "var(--rule)",
+              background: i <= step ? accentColor : (isTour ? "rgba(255,255,255,0.25)" : "var(--rule)"),
               transition: "background 0.2s",
             }}/>
           ))}
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={onDone} className="tap" style={{
-            background: "transparent", border: "none", padding: "12px 0",
-            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "var(--ink-3)", cursor: "pointer",
-          }}>{tr("saltar")}</button>
-          <Button onClick={() => { haptic(8); last ? onDone() : setStep(step + 1); }}
-            accentColor={accentColor} style={{ flex: 1 }}>
+          {!last && (
+            <button onClick={finish} className="tap" style={{
+              background: "transparent", border: "none", padding: "12px 0",
+              fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
+              textTransform: "uppercase", color: isTour ? "var(--on-dark-2)" : "var(--ink-3)", cursor: "pointer",
+            }}>{tr("saltar")}</button>
+          )}
+          <Button onClick={next} accentColor={accentColor} style={{ flex: 1 }}>
             {last ? tr("Começar") : tr("Continuar")}
           </Button>
         </div>
