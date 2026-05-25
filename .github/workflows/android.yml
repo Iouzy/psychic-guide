@@ -45,6 +45,11 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - name: Use stable debug keystore (so app updates keep your data)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
       - name: Build debug APK
         run: |
           cd android
