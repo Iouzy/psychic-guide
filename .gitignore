@@ -1,6 +1,6 @@
 node_modules/
 www/
-android/
+/android/
 resources/
 # Mas o ícone-fonte para o Android APK é gerado por gen-icons.mjs e deve
 # ser versionado para que `npx @capacitor/assets generate` funcione após clone.
