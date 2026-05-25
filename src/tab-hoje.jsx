@@ -114,6 +114,7 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
         </div>
       ) : (
         <button onClick={() => setAdding(true)} className="tap"
+          data-tour="add-intention"
           style={{
             marginTop: 12, background: "transparent", border: "none",
             padding: "10px 0", display: "flex", alignItems: "center", gap: 10,
