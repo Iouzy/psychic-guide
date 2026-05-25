@@ -1,96 +1,174 @@
+<!-- ──────────────────────────────────────────────────────────────
+  PAUTA — README
+  Intentions, focus blocks and habits — your daily pauta.
+─────────────────────────────────────────────────────────────── -->
+
 <div align="center">
-  <img src="icons/icon-192.png" width="96" alt="Pauta icon" />
 
-  # Pauta
+<a href="../../">
+  <img src=".github/assets/banner.svg" alt="Pauta — Intentions, focus blocks and habits" width="100%" />
+</a>
 
-  *Intentions, focus blocks and habits — your daily pauta.*
+<br/>
 
-  🌐 **English** · [Português](#pauta--português)
+<!-- ── Status badges ─────────────────────────────────────────── -->
+<p>
+  <a href="../../actions/workflows/android.yml">
+    <img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/Iouzy/psychic-guide/android.yml?branch=main&style=for-the-badge&label=BUILD&labelColor=0a0f1e&color=7df9ff" />
+  </a>
+  <a href="../../releases/latest">
+    <img alt="Latest release" src="https://img.shields.io/github/v/release/Iouzy/psychic-guide?style=for-the-badge&label=RELEASE&labelColor=0a0f1e&color=b06bff" />
+  </a>
+  <a href="../../releases">
+    <img alt="APK downloads" src="https://img.shields.io/github/downloads/Iouzy/psychic-guide/total?style=for-the-badge&label=DOWNLOADS&labelColor=0a0f1e&color=ffb38a&logo=android&logoColor=white" />
+  </a>
+  <a href="https://creativecommons.org/licenses/by-nc/4.0/">
+    <img alt="License: CC BY-NC 4.0" src="https://img.shields.io/badge/LICENSE-CC%20BY--NC%204.0-5b8cff?style=for-the-badge&labelColor=0a0f1e" />
+  </a>
+</p>
 
-  [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
-  [![Android APK](https://img.shields.io/badge/Android-APK%20download-3DDC84?logo=android&logoColor=white)](../../releases/latest)
-  [![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](../../)
+<p>
+  <img alt="Stars"  src="https://img.shields.io/github/stars/Iouzy/psychic-guide?style=flat-square&label=%E2%98%85%20stars&labelColor=0a0f1e&color=7df9ff" />
+  <img alt="Forks"  src="https://img.shields.io/github/forks/Iouzy/psychic-guide?style=flat-square&label=forks&labelColor=0a0f1e&color=5b8cff" />
+  <img alt="Issues" src="https://img.shields.io/github/issues/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=b06bff" />
+  <img alt="Last commit" src="https://img.shields.io/github/last-commit/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=ffb38a" />
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/Iouzy/psychic-guide?style=flat-square&labelColor=0a0f1e&color=cbd5ff" />
+  <a href="https://hits.seeyoufarm.com">
+    <img alt="Visitors" src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FIouzy%2Fpsychic-guide&count_bg=%237DF9FF&title_bg=%230A0F1E&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=true" />
+  </a>
+</p>
+
+<!-- ── Tech stack chips ─────────────────────────────────────── -->
+<p>
+  <img alt="React"      src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=0a0f1e" />
+  <img alt="PWA"        src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white" />
+  <img alt="Capacitor"  src="https://img.shields.io/badge/Capacitor-119EFF?style=flat-square&logo=capacitor&logoColor=white" />
+  <img alt="Android"    src="https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white" />
+  <img alt="No tracking" src="https://img.shields.io/badge/No%20tracking-0a0f1e?style=flat-square&logo=duckduckgo&logoColor=7df9ff" />
+  <img alt="Offline first" src="https://img.shields.io/badge/Offline%20first-0a0f1e?style=flat-square&logo=icloud&logoColor=7df9ff" />
+</p>
+
+<br/>
+
+🌐 **English** · [Português](#-português) · [🚀 Live landing page](https://iouzy.github.io/psychic-guide/)
+
 </div>
 
 ---
 
-**Pauta** is a free, private daily-planning app that helps you stay focused and build lasting habits. Write down your intentions for the day, use the built-in focus timer, and track your habits — all without an account or an internet connection.
+<p align="center">
+  <b>Pauta</b> is a free, private, daily-planning app that helps you stay focused and build lasting habits.<br/>
+  Write down your intentions, run focus blocks, and track your habits — <b>no account, no internet, no tracking</b>.
+</p>
 
-Works on **Android** (install the app), **iPhone/iPad** (add to home screen), and any modern **web browser** on your computer.
+<p align="center">
+  Works on <b>Android</b>, <b>iPhone/iPad</b> (Add to Home Screen) and any modern <b>web browser</b>.
+</p>
+
+<p align="center">
+  <a href="../../releases/latest"><b>⬇️ Download APK</b></a> ·
+  <a href="https://iouzy.github.io/psychic-guide/"><b>🌐 Open landing page</b></a> ·
+  <a href="#%EF%B8%8F-for-developers"><b>🛠 Dev guide</b></a>
+</p>
 
 ---
 
-## Contents
+## ✦ Contents
 
-- [Get the app](#get-the-app)
-- [What can I do with it?](#what-can-i-do-with-it)
-- [Your data & privacy](#your-data--privacy)
-- [Settings & features](#settings--features)
-- [License](#license)
-- [For developers ›](#️-for-developers)
+- [Get the app](#-get-the-app)
+- [What can I do with it?](#-what-can-i-do-with-it)
+- [Your data & privacy](#-your-data--privacy)
+- [Settings & features](#-settings--features)
+- [License](#-license)
+- [For developers ›](#%EF%B8%8F-for-developers)
+- [🇵🇹 Português](#-português)
 
 ---
 
-## Get the app
+## 📲 Get the app
 
-| Platform | How to install |
-|----------|----------------|
-| **Android** | Download the latest `.apk` from the [Releases page](../../releases/latest) and open it to install |
-| **iPhone / iPad** | Open the app in Safari → tap the **Share** icon → tap **Add to Home Screen** |
-| **Desktop / Browser** | Open the app in Chrome or Edge → look for the **install icon** (⊕) in the address bar |
+<table>
+  <tr>
+    <th align="left">Platform</th>
+    <th align="left">How to install</th>
+  </tr>
+  <tr>
+    <td>🤖 <b>Android</b></td>
+    <td>Download the latest <code>.apk</code> from the <a href="../../releases/latest">Releases page</a> and open it to install</td>
+  </tr>
+  <tr>
+    <td>🍎 <b>iPhone / iPad</b></td>
+    <td>Open the app in Safari → tap <b>Share</b> → tap <b>Add to Home Screen</b></td>
+  </tr>
+  <tr>
+    <td>💻 <b>Desktop / Browser</b></td>
+    <td>Open the app in Chrome or Edge → click the <b>install</b> icon (⊕) in the address bar</td>
+  </tr>
+</table>
 
 > No sign-up. No account. No internet required after the first load.
 
 ---
 
-## What can I do with it?
+## ✨ What can I do with it?
 
-Pauta has three sections you can switch between by tapping the tabs or swiping left and right.
+Pauta has three sections — switch by tapping tabs or swiping left/right.
 
-### 📋 Today
-Start each day by writing down your **intentions** — the things you actually want to get done. Tick them off as you go, and close the day with a short **reflection**. Simple, honest, and yours alone.
-
-### ⏱️ Focus (Pauta)
-Need to concentrate? Start a **focus block** — a timed session you can link to one of your intentions or a project. Pause and resume it whenever you like, jot down session notes, and look back at everything you've accomplished on a scrollable timeline.
-
-### 🌊 Tides (Habits)
-Build habits that actually stick. Track your habits on a monthly calendar with a maritime theme. The longer your streak, the higher your tier — from *Wave* all the way up to *Ocean*. Miss a day on purpose? Use a **Breath** — an honest, guilt-free skip that keeps your streak alive.
+<table>
+<tr>
+  <td align="center" width="33%">
+    <h3>📋 Today</h3>
+    <sub>Daily intentions + evening reflection</sub>
+    <p>Start each day by writing what you actually want to get done. Tick them off as you go and close the day with a short reflection.</p>
+  </td>
+  <td align="center" width="33%">
+    <h3>⏱️ Focus</h3>
+    <sub>Timed focus blocks with notes</sub>
+    <p>Run a <b>focus block</b> linked to one of your intentions. Pause, resume, add session notes, and review everything on a timeline.</p>
+  </td>
+  <td align="center" width="33%">
+    <h3>🌊 Tides</h3>
+    <sub>Habits with maritime tiers</sub>
+    <p>Track habits on a monthly calendar. The longer your streak, the higher the tier — from <i>Wave</i> all the way to <i>Ocean</i>. Use a <b>Breath</b> for guilt-free skips.</p>
+  </td>
+</tr>
+</table>
 
 ---
 
-## Your data & privacy
+## 🔒 Your data & privacy
 
-- **Everything stays on your device.** There are no accounts, no servers, and no internet required.
-- **Zero tracking.** No analytics, no ads, no third-party services of any kind.
-- **Back up your data anytime.** Go to *Settings → Backup → Export data* to save a file with everything. Restore it just as easily with *Import data*.
-- **Fresh start when you want.** *Reload sample data* fills the app with demo content; *Erase everything* wipes it clean.
+- **Everything stays on your device.** No accounts, no servers, no internet required.
+- **Zero tracking.** No analytics, no ads, no third-party services.
+- **Backup anytime.** *Settings → Backup → Export* saves a file with everything; *Import* restores it.
+- **Fresh start.** *Reload sample data* fills the app with demo content; *Erase everything* wipes it clean.
 
 ---
 
-## Settings & features
+## ⚙️ Settings & features
 
-Tap the **menu** in the top bar to open Settings. Here's what you'll find:
+Tap the **menu** in the top bar to open Settings.
 
 | Setting | What it does |
 |---------|-------------|
 | 🌍 **Language** | Switch between English and Portuguese any time |
-| 🌗 **Theme** | Auto (follows your device), Light, or Dark |
+| 🌗 **Theme** | Auto (follows device), Light, or Dark |
 | 🎨 **Accent colour** | Pick a colour that feels like you |
 | 🔔 **Reminders** | Optional on-device nudges for pending habits and your evening reflection |
 | 💾 **Backup** | Export or import your data as a file |
 | 📲 **Install** | Instructions to add the app to your home screen |
-| 📊 **Weekly Review** | A 7-day summary of your focus sessions, habits, and patterns |
+| 📊 **Weekly Review** | A 7-day summary of focus sessions, habits and patterns |
 
 ---
 
-## License
+## 📄 License
 
 [Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/) — free to use and share for non-commercial purposes, with attribution. Commercial use is not permitted.
 
 ---
 
 <details>
-<summary>🛠️ For developers</summary>
+<summary><b>🛠️ For developers</b></summary>
 
 ## Architecture
 
@@ -114,6 +192,8 @@ Pauta deliberately avoids a JavaScript build step for application code. JSX is t
 ├── debug.keystore          Stable debug signing key (so app updates keep data)
 ├── icons/                  App / PWA icons
 ├── vendor/                 Local React, ReactDOM and Babel (no CDN)
+├── docs/                   GitHub Pages landing site (futuristic showcase)
+├── .github/assets/         README artwork (animated SVG banner)
 ├── scripts/
 │   └── build-web.mjs       Assembles the web bundle into ./www
 ├── tools/
@@ -146,8 +226,6 @@ npm install
 
 ### Run the web app locally
 
-Because everything is static and self-contained, any static file server works:
-
 ```bash
 npx serve .
 # or
@@ -158,8 +236,6 @@ Open the served URL (e.g. `http://localhost:8000`). The app transpiles its JSX i
 
 ### Build the web bundle
 
-Assemble the deployable bundle into `./www`:
-
 ```bash
 npm run build:web
 ```
@@ -167,8 +243,6 @@ npm run build:web
 This is also what you deploy to any static host (GitHub Pages, Netlify, etc.).
 
 ### Build the Android app
-
-Assemble the web bundle and sync it into the Android project:
 
 ```bash
 npm run sync          # runs build:web, then `npx cap sync android`
@@ -179,11 +253,9 @@ From there, open `android/` in Android Studio or build from the command line (`c
 
 ## Continuous integration
 
-`.github/workflows/android.yml` builds an installable `.apk` on every push (and on manual dispatch) and publishes it to a rolling **`latest`** GitHub Release, so you never need a local Android toolchain. The committed `debug.keystore` keeps the signing key stable across builds, so reinstalling an update preserves your data.
+`.github/workflows/android.yml` builds an installable `.apk` on every push (and on manual dispatch) and publishes it to a rolling **`latest`** GitHub Release. The committed `debug.keystore` keeps the signing key stable across builds, so reinstalling an update preserves your data.
 
 ## Keyboard shortcuts
-
-When the app is focused and you're not typing in a field:
 
 | Key | Action |
 |-----|--------|
@@ -205,202 +277,150 @@ Targets modern evergreen browsers (Chromium, Firefox, Safari) and Android WebVie
 ---
 ---
 
+<a id="-português"></a>
 <div align="center">
-  <img src="icons/icon-192.png" width="96" alt="Ícone da Pauta" />
 
-  # Pauta — Português
+<img src=".github/assets/banner.svg" alt="Pauta — Intenções, blocos de foco e hábitos" width="100%" />
 
-  *Intenções, blocos de foco e hábitos — a sua pauta diária.*
+<br/>
 
-  [English](#pauta) · 🌐 **Português**
+### 🇵🇹 Português
+
+[English](#) · 🌐 **Português** · [🚀 Página em direto](https://iouzy.github.io/psychic-guide/)
+
 </div>
 
 ---
 
-A **Pauta** é uma aplicação gratuita e privada de planeamento diário que o ajuda a manter o foco e a criar hábitos consistentes. Defina as suas intenções para o dia, use o cronómetro de foco integrado e acompanhe os seus hábitos — tudo sem conta nem ligação à internet.
+<p align="center">
+  A <b>Pauta</b> é uma aplicação gratuita e privada de planeamento diário que o ajuda a manter o foco e a criar hábitos consistentes.<br/>
+  Defina intenções, use o cronómetro de foco e acompanhe os seus hábitos — <b>sem conta, sem internet, sem rastreio</b>.
+</p>
 
-Funciona no **Android** (instale a app), no **iPhone/iPad** (adicione ao ecrã principal) e em qualquer **browser** moderno no computador.
+<p align="center">
+  Funciona no <b>Android</b>, no <b>iPhone/iPad</b> (Adicionar ao ecrã principal) e em qualquer <b>browser</b> moderno.
+</p>
+
+<p align="center">
+  <a href="../../releases/latest"><b>⬇️ Transferir APK</b></a> ·
+  <a href="https://iouzy.github.io/psychic-guide/"><b>🌐 Abrir página</b></a> ·
+  <a href="#%EF%B8%8F-para-programadores"><b>🛠 Guia para devs</b></a>
+</p>
 
 ---
 
-## Índice
+## ✦ Índice
 
-- [Como obter a app](#como-obter-a-app)
-- [O que posso fazer?](#o-que-posso-fazer)
-- [Os seus dados e privacidade](#os-seus-dados-e-privacidade)
-- [Definições e funcionalidades](#definições-e-funcionalidades)
-- [Licença](#licença)
-- [Para programadores ›](#️-para-programadores)
+- [Como obter a app](#-como-obter-a-app)
+- [O que posso fazer?](#-o-que-posso-fazer)
+- [Os seus dados e privacidade](#-os-seus-dados-e-privacidade)
+- [Definições e funcionalidades](#-definições-e-funcionalidades)
+- [Licença](#-licença)
+- [Para programadores ›](#%EF%B8%8F-para-programadores)
 
 ---
 
-## Como obter a app
+## 📲 Como obter a app
 
-| Plataforma | Como instalar |
-|------------|---------------|
-| **Android** | Transfira o `.apk` mais recente na [página de Releases](../../releases/latest) e abra-o para instalar |
-| **iPhone / iPad** | Abra a app no Safari → toque no ícone de **Partilhar** → toque em **Adicionar ao ecrã principal** |
-| **Computador / Browser** | Abra a app no Chrome ou Edge → procure o ícone de instalação (⊕) na barra de endereço |
+<table>
+  <tr>
+    <th align="left">Plataforma</th>
+    <th align="left">Como instalar</th>
+  </tr>
+  <tr>
+    <td>🤖 <b>Android</b></td>
+    <td>Transfira o <code>.apk</code> mais recente na <a href="../../releases/latest">página de Releases</a> e abra-o para instalar</td>
+  </tr>
+  <tr>
+    <td>🍎 <b>iPhone / iPad</b></td>
+    <td>Abra a app no Safari → toque em <b>Partilhar</b> → toque em <b>Adicionar ao ecrã principal</b></td>
+  </tr>
+  <tr>
+    <td>💻 <b>Computador / Browser</b></td>
+    <td>Abra a app no Chrome ou Edge → procure o ícone de <b>instalação</b> (⊕) na barra de endereço</td>
+  </tr>
+</table>
 
 > Sem registo. Sem conta. Sem internet após o primeiro carregamento.
 
 ---
 
-## O que posso fazer?
+## ✨ O que posso fazer?
 
-A Pauta tem três secções entre as quais pode navegar tocando nos separadores ou deslizando para a esquerda e direita.
+A Pauta tem três secções — alterne tocando nos separadores ou deslizando para os lados.
 
-### 📋 Hoje
-Comece cada dia a escrever as suas **intenções** — as coisas que realmente quer fazer. Marque-as à medida que avança e termine o dia com uma breve **reflexão**. Simples, honesto e só seu.
-
-### ⏱️ Foco (Pauta)
-Precisa de se concentrar? Inicie um **bloco de foco** — uma sessão cronometrada que pode ligar a uma das suas intenções ou a um projeto. Pause e retome quando quiser, adicione notas da sessão e reveja tudo o que realizou numa linha temporal.
-
-### 🌊 Marés (Hábitos)
-Crie hábitos que persistem. Acompanhe os seus hábitos num calendário mensal com um tema marítimo. Quanto mais mantiver uma sequência, mais alto sobe o seu nível — de *Onda* até *Oceano*. Faltou um dia de propósito? Use um **Respiro** — uma pausa honesta e sem culpa que mantém a sua sequência viva.
+<table>
+<tr>
+  <td align="center" width="33%">
+    <h3>📋 Hoje</h3>
+    <sub>Intenções diárias + reflexão</sub>
+    <p>Comece o dia a escrever o que quer realmente fazer. Marque à medida que avança e termine com uma breve reflexão.</p>
+  </td>
+  <td align="center" width="33%">
+    <h3>⏱️ Pauta</h3>
+    <sub>Blocos de foco cronometrados</sub>
+    <p>Inicie um <b>bloco de foco</b> ligado a uma intenção. Pause, retome, adicione notas e reveja tudo numa linha temporal.</p>
+  </td>
+  <td align="center" width="33%">
+    <h3>🌊 Marés</h3>
+    <sub>Hábitos com níveis marítimos</sub>
+    <p>Acompanhe hábitos num calendário mensal. Quanto maior a sequência, mais alto o nível — de <i>Onda</i> a <i>Oceano</i>. Use um <b>Respiro</b> para pausas sem culpa.</p>
+  </td>
+</tr>
+</table>
 
 ---
 
-## Os seus dados e privacidade
+## 🔒 Os seus dados e privacidade
 
-- **Tudo fica no seu dispositivo.** Não existem contas, servidores nem internet necessária.
-- **Zero rastreio.** Sem analítica, publicidade nem serviços de terceiros de qualquer tipo.
-- **Faça cópias de segurança quando quiser.** Vá a *Definições → Backup → Exportar dados* para guardar um ficheiro com tudo. Restaure-o igualmente com *Importar dados*.
-- **Recomeço quando precisar.** *Recarregar exemplo* preenche a app com dados de demonstração; *Apagar tudo* limpa tudo permanentemente.
+- **Tudo fica no seu dispositivo.** Sem contas, servidores ou internet necessária.
+- **Zero rastreio.** Sem analítica, publicidade ou serviços de terceiros.
+- **Faça cópias de segurança.** *Definições → Backup → Exportar* guarda um ficheiro com tudo; *Importar* restaura.
+- **Recomeço quando precisar.** *Recarregar exemplo* enche a app com dados de demo; *Apagar tudo* limpa tudo.
 
 ---
 
-## Definições e funcionalidades
-
-Toque no **menu** da barra superior para abrir as Definições. Encontrará:
+## ⚙️ Definições e funcionalidades
 
 | Definição | O que faz |
 |-----------|-----------|
 | 🌍 **Idioma** | Mude entre português e inglês a qualquer momento |
 | 🌗 **Tema** | Automático (segue o dispositivo), Claro ou Escuro |
 | 🎨 **Cor de destaque** | Escolha uma cor que se identifique consigo |
-| 🔔 **Lembretes** | Notificações locais opcionais para hábitos pendentes e a reflexão noturna |
+| 🔔 **Lembretes** | Notificações locais opcionais para hábitos e reflexão noturna |
 | 💾 **Backup** | Exporte ou importe os seus dados como ficheiro |
 | 📲 **Instalar** | Instruções para adicionar a app ao ecrã principal |
-| 📊 **Revisão semanal** | Um resumo de 7 dias das suas sessões de foco, hábitos e padrões |
+| 📊 **Revisão semanal** | Um resumo de 7 dias das sessões, hábitos e padrões |
 
 ---
 
-## Licença
+## 📄 Licença
 
-[Creative Commons Atribuição-NãoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.pt) — livre para usar e partilhar para fins não comerciais, com atribuição. O uso comercial não é permitido.
+[Creative Commons Atribuição-NãoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.pt) — livre para usar e partilhar para fins não comerciais, com atribuição. Uso comercial não é permitido.
 
 ---
 
 <details>
-<summary>🛠️ Para programadores</summary>
+<summary><b>🛠️ Para programadores</b></summary>
 
-## Arquitetura
+A versão portuguesa do guia técnico é idêntica à secção em inglês acima — consulte [For developers](#%EF%B8%8F-for-developers) para arquitetura, estrutura, comandos de build, CI/CD, atalhos de teclado e suporte de plataformas.
 
-A Pauta evita deliberadamente um passo de compilação de JavaScript para o código da aplicação. O JSX é transpilado **no browser** pelo Babel Standalone, e o React é carregado a partir de ficheiros incluídos localmente. Isto mantém o projeto leve em dependências e trivialmente portável — os mesmos ficheiros correm como um site simples, como uma PWA e dentro do WebView do Android.
-
-- **Interface:** React (componentes de função + hooks), com estilos inline e propriedades CSS personalizadas (os tokens de design definidos em `index.html`).
-- **Estado:** um store feito à mão (`src/store.jsx`, esquema `pauta.v4`) suportado pelo `localStorage`.
-- **i18n:** `src/i18n.jsx` expõe os auxiliares `tr()` / `trf()` carregados antes de todos os outros scripts. O português é a língua de origem (as strings PT funcionam também como chaves de pesquisa); o inglês é adicionado via dicionário, e as chaves em falta voltam ao texto em português.
-- **Offline:** o `service-worker.js` guarda em cache a estrutura da app (`CACHE_VERSION` é incrementado sempre que os recursos em cache mudam).
-- **Empacotamento:** o `scripts/build-web.mjs` copia `index.html`, `manifest.json`, `icons/`, `src/` e `vendor/` para `www/`, que o Capacitor empacota na app nativa (`webDir: "www"`, `appId: "com.pauta.app"`).
-
-## Estrutura do projeto
-
-```
-.
-├── index.html              Estrutura da app, tokens de design, carregamento de scripts, arranque PWA + SW
-├── manifest.json           Manifesto da PWA
-├── service-worker.js       Cache da estrutura offline da app
-├── capacitor.config.json   Configuração do Capacitor (appId, appName, webDir)
-├── package.json            Scripts e dependências do Capacitor
-├── debug.keystore          Chave de assinatura de depuração estável (para que as atualizações mantenham os dados)
-├── icons/                  Ícones da app / PWA
-├── vendor/                 React, ReactDOM e Babel locais (sem CDN)
-├── scripts/
-│   └── build-web.mjs       Monta o pacote web em ./www
-├── tools/
-│   └── gen-icons.mjs       Auxiliar de geração de ícones
-├── src/
-│   ├── app.jsx             Raiz da app: separadores, painel de definições, atalhos, navegação por deslize
-│   ├── store.jsx           Store de estado suportado por localStorage (v4)
-│   ├── i18n.jsx            Auxiliares tr()/trf() + dicionário inglês (fonte PT)
-│   ├── ui-primitives.jsx   Primitivas partilhadas (Sheet, TabBar, ícones, inputs…)
-│   ├── sub-components.jsx  Cartões de bloco, linha temporal, chips de filtro, sheets
-│   ├── sheets.jsx          Modais inferiores (iniciar / pausar / concluir…)
-│   ├── tab-hoje.jsx        Separador "Hoje" — intenções + reflexão
-│   ├── tab-pauta.jsx       Separador "Pauta" — bloco ativo + linha temporal
-│   ├── tab-mares.jsx       Separador "Marés" — registo de hábitos
-│   ├── mares-phrases.jsx   Biblioteca de frases da metáfora marítima
-│   ├── mares-sheets.jsx    Sheets de tendência e de detalhe de hábito das Marés
-│   ├── extras.jsx          Boas-vindas, insights, guia de tiers, lembretes, háptico
-│   └── tweaks-panel.jsx    Estrutura de tweaks reutilizável + controlos de formulário
-└── .github/workflows/
-    └── android.yml         CI: compila o APK e publica uma release "latest" contínua
-```
-
-## Como começar
-
-**Pré-requisitos:** [Node.js](https://nodejs.org/) 20+. Compilar a app Android requer adicionalmente um JDK 17 e o Android SDK (tratados automaticamente na CI).
+**Resumo rápido:**
 
 ```bash
 npm install
+npx serve .              # correr web localmente
+npm run build:web        # montar pacote em ./www
+npm run sync             # build:web + sincronizar Android
+cd android && ./gradlew assembleDebug   # compilar APK
 ```
 
-### Executar a app web localmente
-
-Como tudo é estático e autónomo, qualquer servidor de ficheiros estáticos serve:
-
-```bash
-npx serve .
-# ou
-python3 -m http.server 8000
-```
-
-Abra o URL servido (por exemplo, `http://localhost:8000`). A app transpila o seu JSX no browser, por isso não é necessário qualquer passo de compilação para desenvolvimento.
-
-### Compilar o pacote web
-
-Monte o pacote a publicar em `./www`:
-
-```bash
-npm run build:web
-```
-
-É também isto que se publica em qualquer alojamento estático (GitHub Pages, Netlify, etc.).
-
-### Compilar a app Android
-
-Monte o pacote web e sincronize-o com o projeto Android:
-
-```bash
-npm run sync          # corre build:web e depois `npx cap sync android`
-npx cap add android   # só na primeira vez, para criar o projeto android/
-```
-
-A partir daí, abra `android/` no Android Studio ou compile pela linha de comandos (`cd android && ./gradlew assembleDebug`). Os artefactos `android/`, `www/` e `*.apk` estão excluídos do git.
-
-## Integração contínua
-
-O `.github/workflows/android.yml` compila um `.apk` instalável a cada push (e por acionamento manual) e publica-o numa release contínua do GitHub chamada **`latest`**, para que nunca precise de uma cadeia de ferramentas Android local. O `debug.keystore` versionado mantém a chave de assinatura estável entre compilações, por isso reinstalar uma atualização preserva os seus dados.
-
-## Atalhos de teclado
-
-Com a app em foco e sem estar a escrever num campo:
-
-| Tecla | Ação |
-|-------|------|
-| `1` | Separador Hoje |
-| `2` | Separador Pauta |
-| `3` | Separador Marés |
-| `g` | Abrir Definições |
-| `i` | Abrir Revisão semanal |
-| `?` | Abrir o guia de tiers das Marés |
-
-No telemóvel, deslize para a esquerda/direita para mudar de separador.
-
-## Compatibilidade de browsers e plataformas
-
-Destina-se a browsers modernos e atualizados (Chromium, Firefox, Safari) e ao WebView do Android. A instalação como PWA está disponível em browsers baseados em Chromium e através de *Adicionar ao ecrã principal* no Safari do iOS. As notificações locais e o háptico degradam-se de forma elegante onde não são suportados.
+O `.github/workflows/android.yml` compila um `.apk` a cada push e publica numa release contínua **`latest`**.
 
 </details>
+
+<br/>
+
+<div align="center">
+  <sub>Made with care · <a href="https://iouzy.github.io/psychic-guide/">iouzy.github.io/psychic-guide</a></sub>
+</div>

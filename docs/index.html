@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pauta — intentions, focus blocks and habits</title>
+  <meta name="description" content="A free, private, offline daily-planning app. Intentions, focus blocks, and habits with a maritime twist." />
+  <meta name="theme-color" content="#0a0f1e" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Pauta — your daily pauta" />
+  <meta property="og:description" content="Intentions · Focus blocks · Habits. Private, offline, yours." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://iouzy.github.io/psychic-guide/" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/Iouzy/psychic-guide/main/.github/assets/banner.svg" />
+
+  <link rel="icon" href="../icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─────────────────────────────────────────────
+       Design tokens
+    ───────────────────────────────────────────── */
+    :root {
+      --bg-0: #05080f;
+      --bg-1: #0a0f1e;
+      --bg-2: #0c1530;
+      --ink: #e8edff;
+      --ink-dim: #9aa6c9;
+      --neon-cyan: #7df9ff;
+      --neon-blue: #5b8cff;
+      --neon-violet: #b06bff;
+      --ember: #ffb38a;
+      --ember-deep: #b8533a;
+      --good: #5be8b0;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-stroke: rgba(125, 249, 255, 0.18);
+      --shadow-neon: 0 0 24px rgba(125, 249, 255, 0.35), 0 0 60px rgba(91, 140, 255, 0.18);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-0);
+      color: var(--ink);
+      font-family: 'Geist', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse at 20% 10%, rgba(91, 140, 255, 0.22), transparent 60%),
+        radial-gradient(ellipse at 80% 30%, rgba(176, 107, 255, 0.18), transparent 60%),
+        radial-gradient(ellipse at 50% 100%, rgba(125, 249, 255, 0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+      min-height: 100vh;
+    }
+
+    /* Subtle grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(91, 140, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 140, 255, 0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      z-index: 0;
+    }
+
+    /* Animated particle canvas */
+    #stars {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    main { position: relative; z-index: 1; }
+
+    /* ─────────────────────────────────────────────
+       Top nav
+    ───────────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    nav .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; letter-spacing: 2px; font-size: 14px;
+      color: var(--ink);
+    }
+    nav .brand .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan), 0 0 24px var(--neon-blue);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    nav .links { display: flex; gap: 22px; font-size: 13px; }
+    nav .links a {
+      color: var(--ink-dim); text-decoration: none;
+      transition: color .2s;
+    }
+    nav .links a:hover { color: var(--neon-cyan); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .5; transform: scale(.85); }
+      50%      { opacity: 1;  transform: scale(1.1); }
+    }
+
+    /* ─────────────────────────────────────────────
+       Hero
+    ───────────────────────────────────────────── */
+    .hero {
+      max-width: 1180px;
+      margin: 40px auto 80px;
+      padding: 0 28px;
+      text-align: center;
+      position: relative;
+    }
+    .hero .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 16px;
+      border: 1px solid var(--glass-stroke);
+      border-radius: 999px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 12px; letter-spacing: 6px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+    }
+    .hero .eyebrow .pip {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+    }
+    .hero h1 {
+      margin: 24px 0 16px;
+      font-size: clamp(56px, 11vw, 152px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 0.95;
+      background: linear-gradient(135deg, #ffffff 0%, #7df9ff 40%, #b06bff 80%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 60px rgba(91, 140, 255, 0.3);
+      animation: shimmer 6s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { filter: brightness(1); }
+      50%      { filter: brightness(1.15); }
+    }
+    .hero .tagline {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: clamp(20px, 2.4vw, 28px);
+      color: var(--ink-dim);
+      max-width: 640px;
+      margin: 0 auto 36px;
+    }
+
+    /* CTA */
+    .cta-row {
+      display: flex; flex-wrap: wrap; gap: 14px;
+      justify-content: center; align-items: center;
+    }
+    .btn {
+      position: relative;
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600; font-size: 15px;
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary {
+      color: #0a0f1e;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue) 50%, var(--neon-violet));
+      box-shadow: var(--shadow-neon);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 36px rgba(125, 249, 255, 0.55), 0 0 80px rgba(176, 107, 255, 0.35);
+    }
+    .btn-ghost {
+      color: var(--ink);
+      background: var(--glass);
+      border-color: var(--glass-stroke);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .btn-ghost:hover {
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+      transform: translateY(-2px);
+    }
+
+    /* Stats strip */
+    .stats {
+      margin-top: 56px;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 12px;
+    }
+    .stats img {
+      height: 28px;
+      filter: drop-shadow(0 4px 12px rgba(91, 140, 255, 0.25));
+    }
+
+    /* ─────────────────────────────────────────────
+       Features
+    ───────────────────────────────────────────── */
+    section.features {
+      max-width: 1180px;
+      margin: 60px auto;
+      padding: 0 28px;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 12px; letter-spacing: 8px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-title + h2 {
+      text-align: center;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 0 0 48px;
+      background: linear-gradient(135deg, #ffffff, #cbd5ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      position: relative;
+      padding: 32px;
+      border-radius: 20px;
+      background: var(--glass);
+      border: 1px solid var(--glass-stroke);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: transform .3s, border-color .3s, box-shadow .3s;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent, var(--neon-cyan) 50%, transparent);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(91, 140, 255, 0.22);
+    }
+    .card:hover::before { opacity: 1; }
+    .card .icon {
+      font-size: 36px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 16px rgba(125, 249, 255, 0.4));
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -.4px;
+    }
+    .card .sub {
+      font-size: 12px;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .card p {
+      margin: 0;
+      color: var(--ink-dim);
+      line-height: 1.65;
+    }
+
+    /* ─────────────────────────────────────────────
+       Privacy strip
+    ───────────────────────────────────────────── */
+    .privacy {
+      max-width: 1180px;
+      margin: 80px auto;
+      padding: 48px 28px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(125, 249, 255, 0.06), rgba(176, 107, 255, 0.06));
+      border: 1px solid var(--glass-stroke);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      text-align: center;
+    }
+    .privacy h2 {
+      font-size: clamp(24px, 3vw, 36px);
+      margin: 0 0 16px;
+      font-weight: 800;
+    }
+    .privacy p {
+      max-width: 640px;
+      margin: 0 auto 24px;
+      color: var(--ink-dim);
+      line-height: 1.7;
+    }
+    .badges {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(10, 15, 30, 0.6);
+      border: 1px solid var(--glass-stroke);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--neon-cyan);
+    }
+    .chip .ok { color: var(--good); }
+
+    /* ─────────────────────────────────────────────
+       Install matrix
+    ───────────────────────────────────────────── */
+    .install {
+      max-width: 1180px;
+      margin: 80px auto;
+      padding: 0 28px;
+    }
+    .install-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .platform {
+      padding: 28px;
+      border-radius: 18px;
+      background: var(--glass);
+      border: 1px solid var(--glass-stroke);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: transform .3s, border-color .3s;
+    }
+    .platform:hover {
+      transform: translateY(-4px);
+      border-color: var(--neon-cyan);
+    }
+    .platform .label {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .platform p {
+      margin: 0;
+      color: var(--ink-dim);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .platform code {
+      background: rgba(125, 249, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--neon-cyan);
+    }
+
+    /* ─────────────────────────────────────────────
+       Tides strip (decorative waves)
+    ───────────────────────────────────────────── */
+    .waves {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      overflow: hidden;
+      margin: 40px 0;
+      mask-image: linear-gradient(180deg, black, transparent);
+    }
+    .waves svg {
+      position: absolute;
+      width: 200%;
+      height: 100%;
+      left: 0;
+    }
+    .waves .w1 { animation: drift 14s linear infinite; }
+    .waves .w2 { animation: drift 22s linear infinite reverse; opacity: .5; }
+    .waves .w3 { animation: drift 30s linear infinite; opacity: .3; }
+    @keyframes drift {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ─────────────────────────────────────────────
+       Footer
+    ───────────────────────────────────────────── */
+    footer {
+      max-width: 1180px;
+      margin: 60px auto 40px;
+      padding: 32px 28px;
+      text-align: center;
+      border-top: 1px solid var(--glass-stroke);
+      color: var(--ink-dim);
+      font-size: 13px;
+    }
+    footer a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+    footer .visit { margin-top: 16px; }
+    footer .visit img { height: 22px; opacity: .8; }
+
+    /* ─────────────────────────────────────────────
+       Reveal on scroll
+    ───────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .8s ease, transform .8s ease;
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      nav .links { gap: 14px; font-size: 12px; }
+      .hero { margin: 24px auto 60px; }
+      .stats img { height: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="stars"></canvas>
+
+  <main>
+    <!-- ── Nav ─────────────────────────────────── -->
+    <nav>
+      <div class="brand">
+        <span class="dot"></span>
+        PAUTA
+      </div>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/Iouzy/psychic-guide" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+
+    <!-- ── Hero ────────────────────────────────── -->
+    <section class="hero">
+      <span class="eyebrow"><span class="pip"></span>INTENTIONS · FOCUS · HABITS</span>
+      <h1>PAUTA</h1>
+      <p class="tagline">your daily pauta — private, offline, yours.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/Iouzy/psychic-guide/releases/latest" target="_blank" rel="noopener">
+          ⬇ Download APK
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Iouzy/psychic-guide" target="_blank" rel="noopener">
+          ⌘ View on GitHub
+        </a>
+      </div>
+
+      <div class="stats">
+        <img alt="Stars"     src="https://img.shields.io/github/stars/Iouzy/psychic-guide?style=for-the-badge&label=%E2%98%85%20stars&labelColor=0a0f1e&color=7df9ff" />
+        <img alt="Downloads" src="https://img.shields.io/github/downloads/Iouzy/psychic-guide/total?style=for-the-badge&label=downloads&labelColor=0a0f1e&color=b06bff&logo=android&logoColor=white" />
+        <img alt="Release"   src="https://img.shields.io/github/v/release/Iouzy/psychic-guide?style=for-the-badge&label=release&labelColor=0a0f1e&color=ffb38a" />
+        <img alt="Build"     src="https://img.shields.io/github/actions/workflow/status/Iouzy/psychic-guide/android.yml?branch=main&style=for-the-badge&label=build&labelColor=0a0f1e&color=5be8b0" />
+        <img alt="Visitors"  src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fiouzy.github.io%2Fpsychic-guide%2F&count_bg=%237DF9FF&title_bg=%230A0F1E&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=true" />
+      </div>
+    </section>
+
+    <!-- ── Animated waves ──────────────────────── -->
+    <div class="waves" aria-hidden="true">
+      <svg class="w1" viewBox="0 0 1440 140" preserveAspectRatio="none">
+        <path d="M0,60 C160,20 320,100 480,60 C640,20 800,100 960,60 C1120,20 1280,100 1440,60 L1440,140 L0,140 Z" fill="rgba(125,249,255,.18)"/>
+        <path d="M1440,60 C1600,20 1760,100 1920,60 C2080,20 2240,100 2400,60 C2560,20 2720,100 2880,60 L2880,140 L1440,140 Z" fill="rgba(125,249,255,.18)"/>
+      </svg>
+      <svg class="w2" viewBox="0 0 1440 140" preserveAspectRatio="none">
+        <path d="M0,70 C200,30 400,110 600,70 C800,30 1000,110 1200,70 C1400,30 1600,110 1800,70 L1800,140 L0,140 Z" fill="rgba(91,140,255,.18)"/>
+      </svg>
+      <svg class="w3" viewBox="0 0 1440 140" preserveAspectRatio="none">
+        <path d="M0,80 C240,40 480,120 720,80 C960,40 1200,120 1440,80 C1680,40 1920,120 2160,80 L2160,140 L0,140 Z" fill="rgba(176,107,255,.16)"/>
+      </svg>
+    </div>
+
+    <!-- ── Features ────────────────────────────── -->
+    <section id="features" class="features">
+      <div class="section-title">// FEATURES</div>
+      <h2>Three sections, one daily flow</h2>
+
+      <div class="grid">
+        <article class="card reveal">
+          <div class="icon">📋</div>
+          <div class="sub">Today</div>
+          <h3>Intentions &amp; reflection</h3>
+          <p>Start each day by writing what you actually want to get done. Tick them off as you go and close the day with a short reflection. Honest, simple, yours alone.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon">⏱️</div>
+          <div class="sub">Focus · Pauta</div>
+          <h3>Timed focus blocks</h3>
+          <p>Run a focus block linked to one of your intentions. Pause, resume, add notes, and review everything on a scrollable timeline.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon">🌊</div>
+          <div class="sub">Tides · Marés</div>
+          <h3>Habits with maritime tiers</h3>
+          <p>Track habits on a monthly calendar. The longer your streak, the higher your tier — from <em>Wave</em> all the way up to <em>Ocean</em>. Use a <strong>Breath</strong> for guilt-free skips.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ── Privacy ─────────────────────────────── -->
+    <section id="privacy" class="privacy reveal">
+      <h2>🔒 Built for privacy</h2>
+      <p>Everything stays on your device. No accounts, no servers, no analytics, no third-party tracking — ever. Backup and restore as a single file whenever you want.</p>
+      <div class="badges">
+        <span class="chip"><span class="ok">●</span> No accounts</span>
+        <span class="chip"><span class="ok">●</span> No tracking</span>
+        <span class="chip"><span class="ok">●</span> No ads</span>
+        <span class="chip"><span class="ok">●</span> Offline first</span>
+        <span class="chip"><span class="ok">●</span> Open source</span>
+        <span class="chip"><span class="ok">●</span> CC BY-NC 4.0</span>
+      </div>
+    </section>
+
+    <!-- ── Install ─────────────────────────────── -->
+    <section id="install" class="install">
+      <div class="section-title">// INSTALL</div>
+      <h2>Get Pauta on every device</h2>
+
+      <div class="install-grid">
+        <div class="platform reveal">
+          <div class="label">🤖 Android</div>
+          <p>Download the latest <code>.apk</code> from the <a href="https://github.com/Iouzy/psychic-guide/releases/latest" style="color: var(--neon-cyan)">Releases page</a> and open it to install. Your data persists across updates.</p>
+        </div>
+        <div class="platform reveal">
+          <div class="label">🍎 iPhone / iPad</div>
+          <p>Open the app in Safari → tap <strong>Share</strong> → tap <strong>Add to Home Screen</strong>. Works as a full-screen PWA.</p>
+        </div>
+        <div class="platform reveal">
+          <div class="label">💻 Desktop / Browser</div>
+          <p>Open the app in Chrome or Edge → click the <strong>install</strong> icon <code>⊕</code> in the address bar. Runs offline after the first load.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Footer ──────────────────────────────── -->
+    <footer>
+      <div>
+        Pauta · <a href="https://github.com/Iouzy/psychic-guide">github.com/Iouzy/psychic-guide</a> ·
+        <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>
+      </div>
+      <div class="visit">
+        <img alt="Visitors" src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fiouzy.github.io%2Fpsychic-guide%2F&count_bg=%237DF9FF&title_bg=%230A0F1E&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=true" />
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // Starfield (lightweight, respects reduced-motion)
+    // ─────────────────────────────────────────────
+    (function starfield() {
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const canvas = document.getElementById('stars');
+      const ctx = canvas.getContext('2d');
+      let w, h, stars;
+      const COUNT = window.innerWidth < 640 ? 60 : 140;
+
+      function resize() {
+        w = canvas.width  = window.innerWidth  * devicePixelRatio;
+        h = canvas.height = window.innerHeight * devicePixelRatio;
+        canvas.style.width  = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        stars = Array.from({ length: COUNT }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.4 * devicePixelRatio + 0.3,
+          a: Math.random() * Math.PI * 2,
+          s: Math.random() * 0.0015 + 0.0005,
+          v: Math.random() * 0.04 + 0.01,
+        }));
+      }
+
+      function frame() {
+        ctx.clearRect(0, 0, w, h);
+        for (const star of stars) {
+          star.a += star.s;
+          const opacity = 0.35 + Math.sin(star.a) * 0.45;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(203, 213, 255, ${opacity})`;
+          ctx.shadowColor = 'rgba(125, 249, 255, 0.7)';
+          ctx.shadowBlur = star.r * 4;
+          ctx.fill();
+          star.y -= star.v * devicePixelRatio;
+          if (star.y < -10) {
+            star.y = h + 10;
+            star.x = Math.random() * w;
+          }
+        }
+        if (!reduced) requestAnimationFrame(frame);
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+      if (reduced) {
+        // Draw once, no animation
+        for (const star of stars) {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(203, 213, 255, 0.6)';
+          ctx.fill();
+        }
+      } else {
+        frame();
+      }
+    })();
+
+    // ─────────────────────────────────────────────
+    // Reveal on scroll
+    // ─────────────────────────────────────────────
+    (function reveal() {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        }
+      }, { threshold: 0.15 });
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+    })();
+  </script>
+</body>
+</html>
