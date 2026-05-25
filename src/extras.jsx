@@ -105,8 +105,8 @@ function TierGuideSheet({ open, onClose, accentColor }) {
                 {trf("{min}+ d", { min: t.min })}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--serif)", fontSize: 17, color: "var(--ink)" }}>{t.name}</div>
-                <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginTop: 1 }}>{t.subtitle}</div>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 17, color: "var(--ink)" }}>{tr(t.name)}</div>
+                <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", marginTop: 1 }}>{tr(t.subtitle)}</div>
               </div>
             </div>
           ))}

@@ -636,44 +636,47 @@ function habitAllTimeStats(h, todayTs = Date.now()) {
   return { observed, done, respiros, pct: denom > 0 ? Math.round((done/denom)*100) : null };
 }
 
-// Streak tier (Onda → Oceano).
+// Streak tier (Onda → Oceano). Names/subtitles are stored in Portuguese (source)
+// and translated at access time via trTier() so they follow live language switches.
 const TIDE_TIERS = [
-  { min: 360, name: tr("Oceano"), subtitle: tr("já não é uma maré") },
-  { min: 240, name: tr("Maré anual"), subtitle: tr("quase um ano de constância") },
-  { min: 120, name: tr("Maré viva"), subtitle: tr("a mais forte do mês") },
-  { min: 60,  name: tr("Maré alta"), subtitle: tr("a corrente é forte") },
-  { min: 30,  name: tr("Maré média"), subtitle: tr("a corrente assentou") },
-  { min: 7,   name: tr("Maré baixa"), subtitle: tr("a água começou a subir") },
-  { min: 1,   name: tr("Onda"),       subtitle: tr("primeira agitação") },
+  { min: 360, name: "Oceano", subtitle: "já não é uma maré" },
+  { min: 240, name: "Maré anual", subtitle: "quase um ano de constância" },
+  { min: 120, name: "Maré viva", subtitle: "a mais forte do mês" },
+  { min: 60,  name: "Maré alta", subtitle: "a corrente é forte" },
+  { min: 30,  name: "Maré média", subtitle: "a corrente assentou" },
+  { min: 7,   name: "Maré baixa", subtitle: "a água começou a subir" },
+  { min: 1,   name: "Onda",       subtitle: "primeira agitação" },
 ];
+// Translate a tier/level entry's display fields at render time.
+function trTier(t) { return t ? { ...t, name: tr(t.name), subtitle: tr(t.subtitle) } : t; }
 function tideTier(days) {
   if (days <= 0) return null;
   for (const t of TIDE_TIERS) if (days >= t.min) {
     const idx = TIDE_TIERS.indexOf(t);
     const next = idx > 0 ? TIDE_TIERS[idx - 1] : null;
-    return { ...t, next };
+    return { ...trTier(t), next: trTier(next) };
   }
   return null;
 }
 
 // User level (Aprendiz → Almirante). Based on total "feito" days across all habits.
 const NAVIGATOR_LEVELS = [
-  { min: 5000, name: tr("Almirante"), subtitle: tr("mestre dos mares") },
-  { min: 2000, name: tr("Navegador"), subtitle: tr("com N maiúsculo") },
-  { min: 1000, name: tr("Capitão"),   subtitle: tr("comanda a sua embarcação") },
-  { min: 600,  name: tr("Piloto"),    subtitle: tr("lê a água e o tempo") },
-  { min: 300,  name: tr("Timoneiro"), subtitle: tr("leme firme") },
-  { min: 100,  name: tr("Marujo"),    subtitle: tr("já é da tripulação") },
-  { min: 30,   name: tr("Grumete"),   subtitle: tr("aprendeu as cordas") },
-  { min: 0,    name: tr("Aprendiz"),  subtitle: tr("pés ainda em terra firme") },
+  { min: 5000, name: "Almirante", subtitle: "mestre dos mares" },
+  { min: 2000, name: "Navegador", subtitle: "com N maiúsculo" },
+  { min: 1000, name: "Capitão",   subtitle: "comanda a sua embarcação" },
+  { min: 600,  name: "Piloto",    subtitle: "lê a água e o tempo" },
+  { min: 300,  name: "Timoneiro", subtitle: "leme firme" },
+  { min: 100,  name: "Marujo",    subtitle: "já é da tripulação" },
+  { min: 30,   name: "Grumete",   subtitle: "aprendeu as cordas" },
+  { min: 0,    name: "Aprendiz",  subtitle: "pés ainda em terra firme" },
 ];
 function navigatorLevel(totalDoneDays) {
   for (const lvl of NAVIGATOR_LEVELS) if (totalDoneDays >= lvl.min) {
     const idx = NAVIGATOR_LEVELS.indexOf(lvl);
     const next = idx > 0 ? NAVIGATOR_LEVELS[idx - 1] : null;
-    return { ...lvl, next };
+    return { ...trTier(lvl), next: trTier(next) };
   }
-  return NAVIGATOR_LEVELS[NAVIGATOR_LEVELS.length - 1];
+  return trTier(NAVIGATOR_LEVELS[NAVIGATOR_LEVELS.length - 1]);
 }
 function totalDoneDays(habits) {
   let sum = 0;

@@ -78,7 +78,7 @@ function TabMares({ store, accentColor }) {
             padding: "24px 0", fontFamily: "var(--serif)", fontStyle: "italic",
             fontSize: 17, color: "var(--ink-3)", lineHeight: 1.4,
           }}>
-            {pickPhrase("intro")}<br/><br/>
+            {tr(pickPhrase("intro"))}<br/><br/>
             <span style={{ fontSize: 14 }}>{tr("Adicione comportamentos que quer praticar regularmente. Cada mês tem o seu grid.")}</span>
           </div>
         )}
@@ -169,7 +169,7 @@ function TabMares({ store, accentColor }) {
             fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
             color: "var(--ink-3)", textAlign: "center", lineHeight: 1.4,
           }}>
-            "{homePhrase}"
+            "{tr(homePhrase)}"
           </div>
         )}
       </div>

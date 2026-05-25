@@ -567,7 +567,7 @@ function HabitDetailSheet({ open, onClose, habit, accentColor, todayTs,
                 fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
                 color: "var(--ink-3)", lineHeight: 1.4,
               }}>
-                {headerPhrase}
+                {tr(headerPhrase)}
               </div>
             </div>
 
