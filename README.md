@@ -9,8 +9,10 @@ day, run focus blocks with a built-in timer, and keep honest habit streaks. It
 runs as an installable Progressive Web App (PWA) and ships as a self-contained
 native **Android** build via [Capacitor](https://capacitorjs.com/).
 
-The interface is in Portuguese (pt-PT / pt-BR). Everything is stored locally on
-your device — there is no account, no server, and no network dependency.
+The interface is available in **English and Portuguese** (pt-PT / pt-BR): it
+follows your device language on first launch and can be switched any time in
+*Settings → Preferences → Language*. Everything is stored locally on your
+device — there is no account, no server, and no network dependency.
 
 ---
 
@@ -48,6 +50,9 @@ your device — there is no account, no server, and no network dependency.
   "paper & ink" design system with a configurable accent colour.
 - **Local reminders.** Optional notifications for pending habits and the nightly
   reflection (delivered while the app is open — no push server).
+- **Bilingual (English / Portuguese).** Auto-detects your device language and
+  offers an in-app toggle. Portuguese is the source language, with English
+  layered on top; untranslated strings fall back to Portuguese gracefully.
 
 ---
 
@@ -55,7 +60,7 @@ your device — there is no account, no server, and no network dependency.
 
 Pauta is organised into three tabs, navigable by tap, swipe, or keyboard.
 
-### 1. Hoje (Today)
+### 1. Today (Hoje)
 Your day at a glance. Capture the day's **intentions**, check them off, and close
 the day with a **nightly reflection**. Intentions can be promoted straight into a
 focus block on the Pauta tab.
@@ -66,13 +71,13 @@ intention or project), pause and resume it, jot session notes, and conclude it.
 Completed and in-progress blocks appear on a filterable timeline, each block
 tracking its individual work sessions and elapsed time.
 
-### 3. Marés (Habits / "Tides")
+### 3. Tides (Marés)
 A habit tracker built around a maritime metaphor. Habits are tracked on a
 month-by-month calendar with:
 
-- **Streak tiers** that grow with consistency — from *Onda* (wave) up to *Oceano*
-  (ocean).
-- **Respiros** ("breaths") — honest, guilt-free breaks that don't shatter a streak.
+- **Streak tiers** that grow with consistency — from *Wave* (Onda) up to *Ocean*
+  (Oceano).
+- **Breaths** (*Respiros*) — honest, guilt-free breaks that don't shatter a streak.
 - **Flexible recurrence** — permanent habits, fixed-period habits, or single-month
   habits.
 - **Heatmaps & trends** — a per-habit detail view plus a 12-month "wave" trend.
@@ -84,27 +89,28 @@ month-by-month calendar with:
 - **Storage:** everything persists in the browser's `localStorage` under the key
   `pauta.v4`. Nothing leaves your device.
 - **No tracking:** there are no analytics, telemetry, or third-party requests.
-- **Backup:** *Definições → Backup → Exportar dados* downloads a `.json` file with
-  all of your data. *Importar dados* restores from that file (replacing current
+- **Backup:** *Settings → Backup → Export data* downloads a `.json` file with
+  all of your data. *Import data* restores from that file (replacing current
   data after a confirmation prompt).
-- **Reset:** *Recarregar exemplo* repopulates demo data; *Apagar tudo* permanently
-  clears everything.
+- **Reset:** *Reload sample data* repopulates demo data; *Erase everything*
+  permanently clears everything.
 
 ---
 
 ## Settings & extras
 
-Open **Definições** from the status-bar menu. It includes:
+Open **Settings** from the status-bar menu. It includes:
 
-- **Análise** — *Revisão semanal* (a 7-day review of focus, habits and patterns,
-  including best-hour and correlation insights) and a guide to how the Marés tiers
+- **Analysis** — *Weekly review* (a 7-day review of focus, habits and patterns,
+  including best-hour and correlation insights) and a guide to how the Tides tiers
   work.
-- **Preferências** — theme (Auto / Claro / Escuro) and haptic feedback.
-- **Lembretes** — enable local notifications and set times for pending-habit and
+- **Preferences** — language (Português / English), theme (Auto / Light / Dark)
+  and haptic feedback.
+- **Reminders** — enable local notifications and set times for pending-habit and
   nightly-reflection reminders.
 - **Backup** — export / import JSON.
-- **Instalar** — install prompt (Android) or platform-specific instructions (iOS).
-- **Aplicação** — reseed demo data or wipe everything.
+- **Install** — install prompt (Android) or platform-specific instructions (iOS).
+- **Application** — reseed demo data or wipe everything.
 
 A built-in **Tweaks panel** exposes accent colour, timer visibility and layout
 density for quick experimentation, and a one-time **onboarding** overlay greets
@@ -123,6 +129,10 @@ the same files run as a plain website, a PWA, and inside the Android WebView.
   custom properties (the design tokens defined in `index.html`).
 - **State:** a hand-rolled store (`src/store.jsx`, schema `pauta.v4`) backed by
   `localStorage`.
+- **i18n:** `src/i18n.jsx` exposes `tr()` / `trf()` helpers loaded before every
+  other script. Portuguese is the source language (PT strings double as lookup
+  keys); English is layered on via a dictionary, and missing keys fall back to
+  the Portuguese text unchanged.
 - **Offline:** `service-worker.js` precaches the app shell (`CACHE_VERSION` is
   bumped whenever precached assets change).
 - **Packaging:** `scripts/build-web.mjs` copies `index.html`, `manifest.json`,
@@ -150,6 +160,7 @@ the same files run as a plain website, a PWA, and inside the Android WebView.
 ├── src/
 │   ├── app.jsx             App root: tabs, settings sheet, shortcuts, swipe nav
 │   ├── store.jsx           localStorage-backed state store (v4)
+│   ├── i18n.jsx            tr()/trf() helpers + English dictionary (PT source)
 │   ├── ui-primitives.jsx   Shared primitives (Sheet, TabBar, icons, inputs…)
 │   ├── sub-components.jsx   Block cards, timeline, filter chips, sheets
 │   ├── sheets.jsx          Bottom-modal sheets (start / pause / conclude…)
@@ -229,12 +240,12 @@ When the app is focused (and you're not typing in a field):
 
 | Key | Action            |
 |-----|-------------------|
-| `1` | Hoje tab          |
+| `1` | Today tab         |
 | `2` | Pauta tab         |
-| `3` | Marés tab         |
-| `g` | Open Definições   |
-| `i` | Open Revisão semanal (insights) |
-| `?` | Open the Marés tier guide |
+| `3` | Tides tab         |
+| `g` | Open Settings     |
+| `i` | Open Weekly review (insights) |
+| `?` | Open the Tides tier guide |
 
 On mobile, swipe left/right to move between tabs.
 
