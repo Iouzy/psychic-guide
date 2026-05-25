@@ -393,7 +393,12 @@ function MonthDrillDown({ year, monthIdx, habits, accentColor, todayTs, onOpen, 
                   fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
                   letterSpacing: "0.04em", marginTop: 2,
                 }}>
-                  {done}/{obs - resp} {(obs - resp) === 1 ? tr("dia") : tr("dias")}
+                  {done}/{obs - resp} {(() => {
+                    const c = habitCadence(h), one = (obs - resp) === 1;
+                    if (c === "weekly") return one ? tr("semana") : tr("semanas");
+                    if (c === "monthly") return one ? tr("mês") : tr("meses");
+                    return one ? tr("dia") : tr("dias");
+                  })()}
                   {resp > 0 && (
                     <span style={{ fontStyle: "italic", marginLeft: 6 }}>
                       · {resp} {resp === 1 ? tr("respiro") : tr("respiros")}
