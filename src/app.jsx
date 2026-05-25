@@ -125,22 +125,51 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
 
   return (
     <Sheet open={open} onClose={onClose} title={tr("Definições")}>
-      <div style={{ padding: "4px 22px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ padding: "0 22px 28px", display: "flex", flexDirection: "column", gap: 24 }}>
 
-        <DataGroup label={tr("Análise")}>
+        {/* Hero header — sets the tone of the sheet */}
+        <div style={{
+          padding: "4px 0 18px",
+          borderBottom: "1px solid var(--rule)",
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: `${accentColor}14`,
+            border: `1px solid ${accentColor}33`,
+            color: accentColor,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Icon.Mares size={22}/>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: "var(--serif)", fontSize: 24, lineHeight: 1.05,
+              color: "var(--ink)", letterSpacing: "-0.01em",
+            }}>Pauta</div>
+            <div style={{
+              fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
+              color: "var(--ink-3)", lineHeight: 1.3, marginTop: 2,
+            }}>{tr("Hoje · Pauta · Marés")}</div>
+          </div>
+        </div>
+
+        <DataGroup label={tr("Análise")} icon={<Icon.Mares size={13}/>}>
           <DataAction accentColor={accentColor}
+            icon={<Icon.Mares size={16}/>}
             title={tr("Revisão semanal")}
             subtitle={tr("Foco, hábitos e padrões dos últimos 7 dias.")}
             onClick={() => { onClose(); onOpenInsights && onOpenInsights(); }}/>
           <DataAction accentColor={accentColor}
+            icon={<Icon.Info size={16}/>}
             title={tr("Como funcionam as marés")}
             subtitle={tr("O que significam os tiers, de Onda a Tsunami.")}
             onClick={() => { onClose(); onOpenTierGuide && onOpenTierGuide(); }}/>
         </DataGroup>
 
-        <DataGroup label={tr("Preferências")}>
-          <div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>{tr("Idioma")}</div>
+        <DataGroup label={tr("Aparência")} icon={<Icon.Palette size={13}/>}>
+          <div style={prefBlock}>
+            <div style={prefLabel}>{tr("Idioma")}</div>
             <Segmented value={prefs.lang} accentColor={accentColor}
               onChange={v => store.setPref("lang", v)}
               options={[
@@ -148,8 +177,8 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
                 { value: "en", label: "English" },
               ]}/>
           </div>
-          <div>
-            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", marginBottom: 8, marginTop: 2 }}>{tr("Tema")}</div>
+          <div style={prefBlock}>
+            <div style={prefLabel}>{tr("Tema")}</div>
             <Segmented value={prefs.theme} accentColor={accentColor}
               onChange={v => store.setPref("theme", v)}
               options={[
@@ -162,11 +191,15 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             value={prefs.haptics} onChange={v => store.setPref("haptics", v)}/>
         </DataGroup>
 
-        <DataGroup label={tr("Lembretes")}>
+        <DataGroup label={tr("Lembretes")} icon={<Icon.Bell size={13}/>}>
           <PrefToggle label={tr("Notificações")} sub={tr("Avisos locais enquanto a app está aberta.")} accentColor={accentColor}
             value={prefs.reminders.enabled} onChange={onToggleReminders}/>
           {prefs.reminders.enabled && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "4px 2px" }}>
+            <div style={{
+              display: "flex", flexDirection: "column", gap: 10,
+              padding: "12px 14px", background: "var(--paper-2)",
+              border: "1px solid var(--rule)", borderRadius: 12,
+            }}>
               <label style={timeRow}>
                 <span>{tr("Hábitos pendentes")}</span>
                 <input type="time" value={prefs.reminders.habitsTime}
@@ -184,7 +217,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
           )}
         </DataGroup>
 
-        <DataGroup label={tr("Backup")}>
+        <DataGroup label={tr("Dados")} icon={<Icon.Database size={13}/>}>
           <DataAction icon={<Icon.Download size={16}/>} accentColor={accentColor}
             title={tr("Exportar dados")}
             subtitle={tr("Transfere um ficheiro .json com tudo.")}
@@ -198,7 +231,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
         </DataGroup>
 
         {!isStandalone && (
-          <DataGroup label={tr("Instalar")}>
+          <DataGroup label={tr("Instalar")} icon={<Icon.Plus size={13}/>}>
             {canInstall && (
               <DataAction icon={<Icon.Plus size={16}/>} accentColor={accentColor}
                 title={tr("Instalar app")}
@@ -218,25 +251,16 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
                 )}
               </div>
             )}
-            <div style={{
-              fontFamily: "var(--sans)", fontSize: 13, color: "var(--ink-2)",
-              lineHeight: 1.5, marginTop: canInstall ? 10 : 0,
-            }}>
-              {tr("Código-fonte e instruções no repositório: ")}
-              <a href="https://github.com/Iouzy/psychic-guide" target="_blank" rel="noopener noreferrer"
-                style={{ color: accentColor, textDecoration: "underline", wordBreak: "break-all" }}>
-                github.com/Iouzy/psychic-guide
-              </a>
-            </div>
           </DataGroup>
         )}
 
-        <DataGroup label={tr("Aplicação")}>
+        <DataGroup label={tr("Zona perigosa")} icon={<Icon.Trash size={13}/>}>
           <DataAction accentColor={accentColor}
             title={tr("Recarregar exemplo")}
             subtitle={tr("Substitui tudo por dados de demonstração.")}
             onClick={() => { store.reseed(); }}/>
           <DataAction accentColor={accentColor} danger={true}
+            icon={<Icon.Trash size={16}/>}
             title={tr("Apagar tudo")}
             subtitle={tr("Remove permanentemente todos os dados.")}
             onClick={() => { store.resetAll(); }}/>
@@ -251,18 +275,41 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             {msg.text}
           </div>
         )}
+
+        {/* About footer */}
+        <div style={{
+          marginTop: 6, paddingTop: 16, borderTop: "1px solid var(--rule)",
+          fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12,
+          color: "var(--ink-3)", lineHeight: 1.5, textAlign: "center",
+        }}>
+          {tr("Código-fonte e instruções:")}<br/>
+          <a href="https://github.com/Iouzy/psychic-guide" target="_blank" rel="noopener noreferrer"
+            style={{ color: accentColor, textDecoration: "none", fontStyle: "normal", fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.04em" }}>
+            github.com/Iouzy/psychic-guide ↗
+          </a>
+        </div>
       </div>
     </Sheet>
   );
 }
 
-function DataGroup({ label, children }) {
+const prefBlock = { display: "flex", flexDirection: "column", gap: 8 };
+const prefLabel = {
+  fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em",
+  textTransform: "uppercase", color: "var(--ink-3)",
+};
+
+function DataGroup({ label, icon, children }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{
+        display: "flex", alignItems: "center", gap: 6,
         fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.16em",
         textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 2,
-      }}>{label}</div>
+      }}>
+        {icon && <span style={{ display: "inline-flex", color: "var(--ink-3)" }}>{icon}</span>}
+        <span>{label}</span>
+      </div>
       {children}
     </div>
   );

@@ -86,6 +86,34 @@ const Icon = {
       <path d="M12 16V4M7 8l5-4 5 4M4 20h16"/>
     </svg>
   ),
+  Bell: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/>
+      <path d="M10 19a2 2 0 0 0 4 0"/>
+    </svg>
+  ),
+  Palette: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.2-1-1.5-1-2.5s.8-1.5 2-1.5h2a4 4 0 0 0 4-4 8 8 0 0 0-9-8z"/>
+      <circle cx="7.5" cy="12" r="1"/>
+      <circle cx="10" cy="7.5" r="1"/>
+      <circle cx="15" cy="7.5" r="1"/>
+      <circle cx="17.5" cy="11" r="1"/>
+    </svg>
+  ),
+  Info: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 11v6M12 7.5v.5"/>
+    </svg>
+  ),
+  Database: (p) => (
+    <svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="8" ry="2.5"/>
+      <path d="M4 5v6c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5V5"/>
+      <path d="M4 11v6c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-6"/>
+    </svg>
+  ),
 };
 
 // ─── Status bar ─────────────────────────────────────────────

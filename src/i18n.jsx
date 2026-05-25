@@ -76,6 +76,10 @@ const I18N_EN = {
   "Substitui tudo por dados de demonstração.": "Replaces everything with demo data.",
   "Apagar tudo": "Erase everything",
   "Remove permanentemente todos os dados.": "Permanently removes all data.",
+  "Aparência": "Appearance",
+  "Zona perigosa": "Danger zone",
+  "Hoje · Pauta · Marés": "Today · Pauta · Tides",
+  "Código-fonte e instruções:": "Source code and instructions:",
 
   // ─── Tweaks panel ───
   "Cor de destaque": "Accent colour",
