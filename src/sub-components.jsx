@@ -11,7 +11,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
 
   return (
     <div style={{
-      background: "var(--ink)", color: "var(--paper)",
+      background: "var(--surface-dark)", color: "var(--on-dark)",
       borderRadius: 16, padding: "22px 22px 18px",
       marginBottom: 22, position: "relative", overflow: "hidden",
     }}>
@@ -24,12 +24,12 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
             boxShadow: `0 0 10px ${accentColor}`,
             animation: "pulse 1.6s ease-in-out infinite",
           }}/>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
             {hasResumed ? "retomado · em curso" : "em curso"}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
             início {fmtClock(currentSeg.startedAt)}
           </div>
           {onCancel && (
@@ -37,7 +37,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
               style={{
                 width: 22, height: 22, borderRadius: "50%",
                 background: "rgba(245,241,234,0.08)", border: "none",
-                color: "var(--ink-4)", cursor: "pointer",
+                color: "var(--on-dark-2)", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
               <Icon.X size={10}/>
@@ -47,7 +47,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
       </div>
 
       {intention && (
-        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-4)", marginBottom: 4 }}>
+        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--on-dark-2)", marginBottom: 4 }}>
           intenção do dia →
         </div>
       )}
@@ -65,7 +65,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
               {fmtDuration(elapsed, { timer: true })}
             </div>
             {hasResumed && (
-              <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
                 {fmtDuration(totalElapsed)} no total
               </div>
             )}
@@ -78,7 +78,7 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
           </div>
           <button onClick={onConclude} className="tap"
             style={{
-              background: accentColor, color: "var(--paper)",
+              background: accentColor, color: "var(--on-dark)",
               border: "none", borderRadius: 999, padding: "10px 16px",
               fontSize: 11, fontFamily: "var(--mono)", letterSpacing: "0.1em",
               textTransform: "uppercase", fontWeight: 500, cursor: "pointer",
@@ -94,7 +94,7 @@ function DarkBtn({ onClick, label, icon }) {
     <button onClick={onClick} className="tap"
       style={{
         background: "transparent", border: "1px solid rgba(245,241,234,0.22)",
-        color: "var(--paper)", borderRadius: 999, padding: "9px 12px",
+        color: "var(--on-dark)", borderRadius: 999, padding: "9px 12px",
         fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em",
         textTransform: "uppercase", cursor: "pointer",
         display: "flex", alignItems: "center", gap: 6,
@@ -135,7 +135,7 @@ function PausedBlockCard({ block, onResume, onConclude, onEdit, accentColor }) {
         <button onClick={onResume} className="tap"
           title="Retomar"
           style={{
-            background: accentColor, color: "var(--paper)",
+            background: accentColor, color: "var(--on-dark)",
             border: "none", borderRadius: 999, padding: "9px 14px",
             fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em",
             textTransform: "uppercase", cursor: "pointer",
@@ -229,7 +229,7 @@ function Chip({ label, active, muted, accentColor, onClick }) {
     <button onClick={onClick} className="tap"
       style={{
         background: active ? accentColor : (muted ? "transparent" : "var(--paper-2)"),
-        color: active ? "var(--paper)" : "var(--ink-2)",
+        color: active ? "var(--on-dark)" : "var(--ink-2)",
         border: muted && !active ? "1px dashed var(--rule)" : "1px solid " + (active ? accentColor : "var(--rule)"),
         borderRadius: 999, padding: "5px 11px",
         fontSize: 11, fontFamily: "var(--sans)", fontWeight: 500,
@@ -402,7 +402,7 @@ function Marker({ kind, color, bg, border }) {
         display: "flex", alignItems: "center", justifyContent: "center",
         position: "relative", zIndex: 2,
       }}>
-        <Icon.Check size={8} color="var(--paper)"/>
+        <Icon.Check size={8} color="var(--on-dark)"/>
       </div>
     );
   }

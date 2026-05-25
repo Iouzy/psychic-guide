@@ -137,21 +137,21 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
           <button onClick={() => setSheetStart({})} className="tap"
             style={{
               width: "100%", marginBottom: 22,
-              background: "var(--ink)", color: "var(--paper)",
+              background: "var(--surface-dark)", color: "var(--on-dark)",
               border: "none", borderRadius: 14,
               padding: "20px 22px",
               display: "flex", alignItems: "center", justifyContent: "space-between",
               cursor: "pointer",
             }}>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+              <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
                 começar
               </div>
               <div style={{ fontFamily: "var(--serif)", fontSize: 22, marginTop: 4 }}>
                 Um novo bloco
               </div>
             </div>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: accentColor, color: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "50%", background: accentColor, color: "var(--on-dark)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon.Play size={14}/>
             </div>
           </button>

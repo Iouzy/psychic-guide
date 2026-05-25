@@ -1047,7 +1047,7 @@ function HeatmapCell({ cell, accentColor, cellSize, onTap, onLongPress, onHover 
 
   return (
     <div
-      onClick={() => { if (pressed.current) { pressed.current = false; return; } if (clickable) onTap(); }}
+      onClick={() => { if (pressed.current) { pressed.current = false; return; } if (clickable) { if (window.haptic) window.haptic(8); onTap(); } }}
       onMouseDown={startPress}
       onMouseUp={endPress}
       onMouseLeave={() => { endPress(); onHover(null); }}

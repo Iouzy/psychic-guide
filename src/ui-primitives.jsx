@@ -115,7 +115,7 @@ function TabBar({ tab, onTab, accentColor }) {
     <div style={{
       flexShrink: 0,
       borderTop: "1px solid var(--rule)",
-      background: "rgba(245,241,234,0.92)",
+      background: "var(--tabbar-bg)",
       backdropFilter: "blur(8px)",
       WebkitBackdropFilter: "blur(8px)",
       display: "flex",
@@ -288,8 +288,8 @@ function Button({ children, onClick, variant = "primary", style, disabled, accen
     transition: "transform 0.08s, opacity 0.12s",
   };
   const variants = {
-    primary: { background: accentColor || "var(--accent)", color: "var(--paper)" },
-    inkPrimary: { background: "var(--ink)", color: "var(--paper)" },
+    primary: { background: accentColor || "var(--accent)", color: "var(--on-dark)" },
+    inkPrimary: { background: "var(--surface-dark)", color: "var(--on-dark)" },
     ghost: { background: "transparent", color: "var(--ink-2)", padding: "11px 14px" },
     outline: { background: "transparent", color: "var(--ink)", border: "1px solid var(--rule)" },
   };
@@ -304,7 +304,7 @@ function Button({ children, onClick, variant = "primary", style, disabled, accen
 // ─── Checkbox circle (custom) ──────────────────────────────
 function Check({ checked, onChange, size = 22, accentColor }) {
   return (
-    <button onClick={onChange} className="tap"
+    <button onClick={() => { if (window.haptic) window.haptic(8); onChange && onChange(); }} className="tap"
       style={{
         width: size, height: size, borderRadius: "50%",
         border: `1.6px solid ${checked ? (accentColor || "var(--accent)") : "var(--ink-3)"}`,

@@ -78,6 +78,39 @@ function addDaysToKey(key, n) {
 }
 const uid = (prefix) => prefix + Date.now() + Math.floor(Math.random()*1000);
 
+// ─── PREFS ──────────────────────────────────────────────────
+// App-level preferences (theme, haptics, reminders, onboarding).
+// Persisted with the rest of the state and carried through export/import.
+function defaultPrefs() {
+  return {
+    theme: "auto",          // "auto" | "light" | "dark"
+    haptics: true,
+    onboardingSeen: false,
+    reminders: {
+      enabled: false,
+      habitsTime: "09:00",      // daily nudge while habits are still pending
+      reflectionTime: "21:30",  // evening reflection nudge
+    },
+  };
+}
+function mergePrefs(p) {
+  const d = defaultPrefs();
+  const out = { ...d, ...(p || {}) };
+  out.reminders = { ...d.reminders, ...((p && p.reminders) || {}) };
+  return out;
+}
+
+// Quarter helpers for long-term goals.
+function quarterOf(ts) {
+  const d = new Date(ts);
+  return d.getFullYear() + "-Q" + (Math.floor(d.getMonth() / 3) + 1);
+}
+function quarterLabel(q) {
+  const [y, qq] = q.split("-Q");
+  const names = { 1: "Jan–Mar", 2: "Abr–Jun", 3: "Jul–Set", 4: "Out–Dez" };
+  return "Q" + qq + " " + y + " · " + names[qq];
+}
+
 // ─── SEED ───────────────────────────────────────────────
 // Realistic data so the app feels lived-in on first open.
 function seed() {
@@ -238,6 +271,11 @@ function seed() {
         log: habitLog(75, false, 4), respiros: {},
         createdAt: Date.now() - 4*86400000 },
     ],
+    goals: [
+      { id: "g1", text: "Terminar o primeiro rascunho do livro", quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 20*86400000 },
+      { id: "g2", text: "Correr uma meia-maratona", quarter: quarterOf(Date.now()), done: false, createdAt: Date.now() - 10*86400000 },
+    ],
+    prefs: defaultPrefs(),
   };
 }
 
@@ -266,6 +304,12 @@ function migrateHabit(h, todayTs = Date.now()) {
   if (!out.recurrence) out.recurrence = "forever";
   if (!("endsAt" in out)) out.endsAt = null;
   if (!("description" in out)) out.description = "";
+  // Countable habits: target per day + unit + per-day counts (sparse).
+  if (!("target" in out)) out.target = null;
+  if (!("unit" in out)) out.unit = "";
+  if (!out.counts) out.counts = {};
+  // Real preferred clock time (HH:MM), used for reminders/sorting. `time` stays free text.
+  if (!("clock" in out)) out.clock = "";
   return out;
 }
 
@@ -291,6 +335,8 @@ function loadState() {
     }
     // Migrate habits to new schema
     if (Array.isArray(s.habits)) s.habits = s.habits.map(h => migrateHabit(h));
+    if (!Array.isArray(s.goals)) s.goals = [];
+    s.prefs = mergePrefs(s.prefs);
     return s;
   } catch (e) { return window.PAUTA_CLEAN_START ? emptyState() : seed(); }
 }
@@ -302,6 +348,8 @@ function emptyState() {
     activeId: null,
     blocks: [],
     habits: [],
+    goals: [],
+    prefs: defaultPrefs(),
   };
 }
 function saveState(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {} }
@@ -338,8 +386,10 @@ function normalizeImported(s) {
   }
   const blocks = Array.isArray(s.blocks) ? s.blocks : [];
   const habits = Array.isArray(s.habits) ? s.habits.map(h => migrateHabit(h)) : [];
+  const goals = Array.isArray(s.goals) ? s.goals : [];
+  const prefs = mergePrefs(s.prefs);
   const activeId = blocks.some(b => b.id === s.activeId) ? s.activeId : null;
-  return { today, days, activeId, blocks, habits };
+  return { today, days, activeId, blocks, habits, goals, prefs };
 }
 
 // Parse + validate backup text. Returns the normalized state or throws.
@@ -647,6 +697,126 @@ function habitsAllMonths(habits, todayTs = Date.now()) {
   return list;
 }
 
+// ─── INSIGHTS ──────────────────────────────────────────────
+// Focus ms bucketed by hour-of-day (0–23), splitting sessions across hour
+// boundaries so a 8:45→9:30 block credits both hours fairly.
+function focusByHour(blocks, now = Date.now()) {
+  const hours = new Array(24).fill(0);
+  for (const b of blocks) {
+    for (const seg of b.sessions) {
+      let start = seg.startedAt;
+      const end = seg.endedAt || now;
+      while (start < end) {
+        const d = new Date(start);
+        const hr = d.getHours();
+        const nextHour = new Date(d); nextHour.setMinutes(0, 0, 0); nextHour.setHours(hr + 1);
+        const sliceEnd = Math.min(end, nextHour.getTime());
+        hours[hr] += sliceEnd - start;
+        start = sliceEnd;
+      }
+    }
+  }
+  return hours;
+}
+function bestHourStats(blocks, now = Date.now()) {
+  const hours = focusByHour(blocks, now);
+  const total = hours.reduce((a, x) => a + x, 0);
+  let peak = -1, peakMs = 0;
+  hours.forEach((ms, h) => { if (ms > peakMs) { peakMs = ms; peak = h; } });
+  return { hours, total, peak, peakMs };
+}
+
+// For each habit, compare average daily focus on days it was done vs days it was
+// missed (within its active window, last `days` days). Surfaces "on days you walk,
+// you focus +30%". Only returns habits with enough samples on both sides.
+function habitFocusCorrelation(habits, blocks, days = 30, now = Date.now()) {
+  const todayKey = dayKeyOf(now);
+  const focusCache = {};
+  const focusOn = (k) => (k in focusCache) ? focusCache[k] : (focusCache[k] = dailyFocusMs(blocks, k, now));
+  const out = [];
+  for (const h of habits) {
+    let doneSum = 0, doneN = 0, missSum = 0, missN = 0;
+    for (let i = 0; i < days; i++) {
+      const k = addDaysToKey(todayKey, -i);
+      if (!habitIsActiveOn(h, k)) continue;
+      if (h.respiros && h.respiros[k]) continue;       // respiros don't count either way
+      const f = focusOn(k);
+      if (h.log && h.log[k]) { doneSum += f; doneN++; }
+      else { missSum += f; missN++; }
+    }
+    if (doneN >= 3 && missN >= 3) {
+      const doneAvg = doneSum / doneN;
+      const missAvg = missSum / missN;
+      const deltaPct = missAvg > 0 ? Math.round(((doneAvg - missAvg) / missAvg) * 100)
+                                   : (doneAvg > 0 ? 100 : 0);
+      out.push({ id: h.id, name: h.name, doneAvg, missAvg, deltaPct, doneN, missN });
+    }
+  }
+  out.sort((a, b) => Math.abs(b.deltaPct) - Math.abs(a.deltaPct));
+  return out;
+}
+
+// Summary of the 7 days ending at endKey (inclusive). Sunday-review friendly.
+function weeklyReview(state, endKey = dayKeyOf(Date.now()), now = Date.now()) {
+  const blocks = state.blocks || [];
+  const habits = state.habits || [];
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(addDaysToKey(endKey, -i));
+  const startKey = days[0];
+
+  let focusMs = 0, activeDays = 0, topKey = null, topMs = 0;
+  for (const k of days) {
+    const f = dailyFocusMs(blocks, k, now);
+    focusMs += f;
+    if (f > 0) activeDays++;
+    if (f > topMs) { topMs = f; topKey = k; }
+  }
+  const blockIds = new Set();
+  for (const b of blocks) for (const seg of b.sessions) {
+    const k = dayKeyOf(seg.startedAt);
+    if (k >= startKey && k <= endKey) { blockIds.add(b.id); break; }
+  }
+
+  // Intentions across the week (archived days + live today).
+  let intTotal = 0, intDone = 0;
+  for (const k of days) {
+    let day = null;
+    if (state.today && state.today.dayKey === k) day = state.today;
+    else if (state.days && state.days[k]) day = state.days[k];
+    if (day && day.intentions) { intTotal += day.intentions.length; intDone += day.intentions.filter(i => i.done).length; }
+  }
+
+  // Habits: done-day count + how many distinct habits were active.
+  let habitDone = 0, habitObservedSlots = 0, respiros = 0;
+  for (const h of habits) {
+    for (const k of days) {
+      if (!habitIsActiveOn(h, k)) continue;
+      habitObservedSlots++;
+      if (h.log && h.log[k]) habitDone++;
+      else if (h.respiros && h.respiros[k]) respiros++;
+    }
+  }
+  const habitPct = (habitObservedSlots - respiros) > 0
+    ? Math.round((habitDone / (habitObservedSlots - respiros)) * 100) : null;
+
+  // Reflections written this week.
+  let reflections = 0;
+  for (const k of days) {
+    let day = null;
+    if (state.today && state.today.dayKey === k) day = state.today;
+    else if (state.days && state.days[k]) day = state.days[k];
+    if (day && day.reflection && day.reflection.trim()) reflections++;
+  }
+
+  return {
+    startKey, endKey, days,
+    focusMs, activeDays, blockCount: blockIds.size, topKey, topMs,
+    intTotal, intDone,
+    habitDone, habitObservedSlots, respiros, habitPct,
+    reflections,
+  };
+}
+
 // ─── HOOK ────────────────────────────────────────────────
 function useStore() {
   const [state, setState] = useState(loadState);
@@ -809,13 +979,16 @@ function useStore() {
 
   const addHabit = (name, time, opts = {}) => {
     const id = uid("h_");
+    const target = opts.target != null && opts.target > 1 ? Math.round(opts.target) : null;
     setState(s => ({
       ...s, habits: [...s.habits, {
         id, name: name.trim(), time: (time || "").trim(),
         description: (opts.description || "").trim(),
         recurrence: opts.recurrence || "forever",
         endsAt: opts.endsAt || null,
-        log: {}, respiros: {},
+        target, unit: (opts.unit || "").trim(),
+        clock: (opts.clock || "").trim(),
+        log: {}, respiros: {}, counts: {},
         createdAt: Date.now(),
       }]
     }));
@@ -824,13 +997,74 @@ function useStore() {
   const removeHabit = (id) => setState(s => ({ ...s, habits: s.habits.filter(h => h.id !== id) }));
   const updateHabit = (id, patch) => setState(s => ({ ...s, habits: s.habits.map(h => h.id === id ? { ...h, ...patch } : h) }));
 
+  // Countable habits: set the count for a day. Auto-syncs the binary `log`
+  // (done when count >= target) so all existing stats/streaks keep working.
+  const setHabitCount = (id, dayKey, n) => setState(s => ({
+    ...s, habits: s.habits.map(h => {
+      if (h.id !== id) return h;
+      if (!habitIsActiveOn(h, dayKey)) return h;
+      if (dayKey > dayKeyOf(Date.now())) return h;
+      const target = h.target || 1;
+      const count = Math.max(0, Math.round(n));
+      const counts = { ...(h.counts || {}) };
+      const log = { ...(h.log || {}) };
+      const respiros = { ...(h.respiros || {}) };
+      if (count <= 0) { delete counts[dayKey]; delete log[dayKey]; }
+      else {
+        counts[dayKey] = count;
+        if (count >= target) { log[dayKey] = 1; delete respiros[dayKey]; }
+        else delete log[dayKey];
+      }
+      return { ...h, counts, log, respiros };
+    })
+  }));
+  const incHabitDay = (id, dayKey, delta = 1) => setState(s => ({
+    ...s, habits: s.habits.map(h => {
+      if (h.id !== id) return h;
+      if (!habitIsActiveOn(h, dayKey)) return h;
+      if (dayKey > dayKeyOf(Date.now())) return h;
+      const target = h.target || 1;
+      const cur = (h.counts && h.counts[dayKey]) || 0;
+      let next = cur + delta;
+      if (next > target) next = 0;       // tapping past target cycles back to 0
+      if (next < 0) next = 0;
+      const counts = { ...(h.counts || {}) };
+      const log = { ...(h.log || {}) };
+      const respiros = { ...(h.respiros || {}) };
+      if (next <= 0) { delete counts[dayKey]; delete log[dayKey]; }
+      else {
+        counts[dayKey] = next;
+        if (next >= target) { log[dayKey] = 1; delete respiros[dayKey]; }
+        else delete log[dayKey];
+      }
+      return { ...h, counts, log, respiros };
+    })
+  }));
+
+  // ─ Prefs ─
+  const setPref = (key, value) => setState(s => ({ ...s, prefs: { ...mergePrefs(s.prefs), [key]: value } }));
+  const setReminderPref = (key, value) => setState(s => {
+    const prefs = mergePrefs(s.prefs);
+    return { ...s, prefs: { ...prefs, reminders: { ...prefs.reminders, [key]: value } } };
+  });
+
+  // ─ Goals (long-term / quarterly) ─
+  const addGoal = (text, quarter) => {
+    const t = (text || "").trim(); if (!t) return null;
+    const id = uid("g_");
+    setState(s => ({ ...s, goals: [...(s.goals || []), { id, text: t, quarter: quarter || quarterOf(Date.now()), done: false, createdAt: Date.now() }] }));
+    return id;
+  };
+  const updateGoal = (id, patch) => setState(s => ({ ...s, goals: (s.goals || []).map(g => g.id === id ? { ...g, ...patch } : g) }));
+  const toggleGoal = (id) => setState(s => ({ ...s, goals: (s.goals || []).map(g => g.id === id ? { ...g, done: !g.done } : g) }));
+  const removeGoal = (id) => setState(s => ({ ...s, goals: (s.goals || []).filter(g => g.id !== id) }));
+
   const resetAll = () => {
     if (confirm("Apagar tudo e recomeçar? Isto não pode ser desfeito.")) {
-      setState({
-        today: { dayKey: dayKeyOf(Date.now()), intentions: [], reflection: "" },
-        days: {},
-        activeId: null, blocks: [], habits: [],
-      });
+      setState(s => ({
+        ...emptyState(),
+        prefs: s.prefs,  // keep theme/haptics/reminders prefs across a reset
+      }));
     }
   };
 
@@ -870,7 +1104,11 @@ function useStore() {
     updateBlock, updateSessionNote, deleteBlock,
     // marés
     toggleHabitToday, toggleHabitDay, markRespiro, unmarkRespiro,
-    addHabit, removeHabit, updateHabit,
+    addHabit, removeHabit, updateHabit, setHabitCount, incHabitDay,
+    // prefs
+    setPref, setReminderPref,
+    // goals
+    addGoal, updateGoal, toggleGoal, removeGoal,
     // misc
     resetAll, reseed,
     // backup
@@ -894,6 +1132,9 @@ Object.assign(window, {
   dayKeyOf, dayKeyFromYMD, tsFromDayKey, monthKeyOf, daysInMonth, daysBetween, addDaysToKey,
   pad, uid,
   buildTimeline, blockFocusMs, dailyFocusMs, dailyBlockCount, blocksAllDays, pastDayKeys,
+  // prefs / goals / insights
+  defaultPrefs, mergePrefs, quarterOf, quarterLabel,
+  focusByHour, bestHourStats, habitFocusCorrelation, weeklyReview,
   // habit stats
   HABIT_MATURITY_DAYS, TIDE_TIERS, NAVIGATOR_LEVELS,
   habitCreatedKey, habitEndKey, habitIsActiveOn, habitHasFinished,

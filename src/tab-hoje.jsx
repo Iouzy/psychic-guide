@@ -145,6 +145,9 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
         />
       </div>
 
+      {/* Quarterly goals */}
+      <GoalsSection store={store} accentColor={accentColor}/>
+
       <div style={{
         marginTop: 32, fontFamily: "var(--mono)", fontSize: 10,
         color: "var(--ink-4)", letterSpacing: "0.04em", textAlign: "center",

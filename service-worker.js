@@ -1,6 +1,6 @@
 // Pauta service worker — offline app shell.
 // Bump CACHE_VERSION whenever the precached assets change so clients refresh.
-const CACHE_VERSION = "pauta-v2";
+const CACHE_VERSION = "pauta-v3";
 
 // Same-origin assets that make up the app shell. Relative paths keep this
 // working whether served from a domain root or a GitHub Pages subpath.
@@ -22,6 +22,7 @@ const LOCAL_ASSETS = [
   "./src/mares-phrases.jsx",
   "./src/tab-mares.jsx",
   "./src/mares-sheets.jsx",
+  "./src/extras.jsx",
   "./src/app.jsx",
   "./vendor/react.development.js",
   "./vendor/react-dom.development.js",

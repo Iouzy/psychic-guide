@@ -234,6 +234,7 @@ function MonthStrip({ habits, view, setView, accentColor, todayTs }) {
     }}>
       <div
         ref={scrollRef}
+        data-noswipe="true"
         style={{
           display: "flex", overflowX: "auto", gap: 4,
           scrollbarWidth: "none",
@@ -559,8 +560,8 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
             bottom: "calc(100% + 2px)",
             left: `${((tooltip.d - 0.5) / ndays) * 100}%`,
             transform: "translateX(-50%)",
-            background: "var(--ink)",
-            color: "var(--paper)",
+            background: "var(--surface-dark)",
+            color: "var(--on-dark)",
             padding: "3px 7px",
             borderRadius: 4,
             fontFamily: "var(--mono)",
@@ -630,7 +631,7 @@ function DayCell({ day, accentColor, ndays, onTap, onLongPress, onTooltip }) {
       ref={cellRef}
       onClick={(e) => {
         if (pressed.current) { pressed.current = false; return; }
-        if (clickable) onTap();
+        if (clickable) { if (window.haptic) window.haptic(8); onTap(); }
       }}
       onMouseDown={startPress}
       onMouseUp={endPress}

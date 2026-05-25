@@ -32,14 +32,38 @@
     --accent-soft: #E8C3B5;
     --accent-bg: #F4E2DA;
     --good: #5A6B3E;
+    /* Inverse surfaces (the focus card, primary buttons) stay dark in both themes. */
+    --surface-dark: #1A1815;
+    --on-dark: #F5F1EA;
+    --on-dark-2: #B5AC9C;
+    --tabbar-bg: rgba(245,241,234,0.92);
+    --page-bg: #d6cfc2;
+    --page-grad: radial-gradient(circle at 30% 20%, #e0d9cb, #c8c0b1);
     --serif: "Instrument Serif", "Times New Roman", serif;
     --sans: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
     --mono: "Geist Mono", ui-monospace, monospace;
   }
+  html[data-theme="dark"] {
+    --paper: #1B1A17;
+    --paper-2: #232220;
+    --paper-3: #2C2A26;
+    --ink: #ECE6DA;
+    --ink-2: #C3BCAD;
+    --ink-3: #8A8275;
+    --ink-4: #5F5A50;
+    --rule: #322F2A;
+    --good: #8DA068;
+    --surface-dark: #2A2824;
+    --on-dark: #F2ECE0;
+    --on-dark-2: #B5AC9C;
+    --tabbar-bg: rgba(20,19,16,0.92);
+    --page-bg: #0f0e0c;
+    --page-grad: radial-gradient(circle at 30% 20%, #1a1815, #0c0b0a);
+  }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
-    background: #d6cfc2;
+    background: var(--page-bg);
     font-family: var(--sans);
     color: var(--ink);
     height: 100%;
@@ -49,7 +73,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image: radial-gradient(circle at 30% 20%, #e0d9cb, #c8c0b1);
+    background-image: var(--page-grad);
   }
   #root {
     width: 100%;
@@ -146,7 +170,34 @@
     "reflectionPrompts": true,
     "density": "cozy"
   }/*EDITMODE-END*/;
-</script>
+
+  // Apply the saved theme before React paints, so there's no light→dark flash.
+  // Theme is mirrored to a tiny key by the app; "auto" follows the OS.
+  (function () {
+    try {
+      var pref = localStorage.getItem("pauta.theme") || "auto";
+      var dark = pref === "dark" || (pref === "auto" &&
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      var root = document.documentElement;
+      if (dark) root.setAttribute("data-theme", "dark");
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", dark ? "#1B1A17" : "#F5F1EA");
+      window.PAUTA_APPLY_THEME = function (p) {
+        var d = p === "dark" || (p === "auto" &&
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (d) root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
+        try { localStorage.setItem("pauta.theme", p); } catch (e) {}
+        if (meta) meta.setAttribute("content", d ? "#1B1A17" : "#F5F1EA");
+      };
+      // React to OS theme changes while in "auto".
+      if (window.matchMedia) {
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+          var p = localStorage.getItem("pauta.theme") || "auto";
+          if (p === "auto") window.PAUTA_APPLY_THEME("auto");
+        });
+      }
+    } catch (e) {}
+  })();
 
 <script type="text/babel" src="src/tweaks-panel.jsx"></script>
 <script type="text/babel" src="src/store.jsx"></script>
@@ -158,6 +209,7 @@
 <script type="text/babel" src="src/mares-phrases.jsx"></script>
 <script type="text/babel" src="src/tab-mares.jsx"></script>
 <script type="text/babel" src="src/mares-sheets.jsx"></script>
+<script type="text/babel" src="src/extras.jsx"></script>
 <script type="text/babel" src="src/app.jsx"></script>
 
 <!-- PWA: register service worker + capture Android install prompt -->
