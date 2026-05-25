@@ -344,6 +344,10 @@ function App() {
   // Local reminders (only while the app is open).
   useReminders(store);
 
+  // Native-only: ongoing focus-session notification with pause/resume/conclude
+  // actions (Android APK). Inert on the web build.
+  useNativeFocusNotification(store);
+
   // Keyboard shortcuts (desktop): 1/2/3 tabs, g settings, i insights, ? guide.
   useEffect(() => {
     const onKey = (e) => {

@@ -150,6 +150,8 @@ const I18N_EN_BULK = {
   "em pausa": "paused",
   "Foco total": "Full focus",
   "Sair do foco total": "Exit full focus",
+  "Em pausa · {d} acumulado": "Paused · {d} logged",
+  "Em curso · desde {t}": "In progress · since {t}",
   "início {t}": "started {t}",
   "descartar este bloco": "discard this block",
   "intenção do dia →": "intention of the day →",
