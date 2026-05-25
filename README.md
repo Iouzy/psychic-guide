@@ -1,6 +1,6 @@
 # Pauta
 
-> Intenções, blocos de foco e hábitos — a sua pauta diária.
+> Intentions, focus blocks and habits — your daily pauta.
 
 🌐 **English** · [Português](#pauta--português)
 
@@ -60,7 +60,7 @@ device — there is no account, no server, and no network dependency.
 
 Pauta is organised into three tabs, navigable by tap, swipe, or keyboard.
 
-### 1. Today (Hoje)
+### 1. Today
 Your day at a glance. Capture the day's **intentions**, check them off, and close
 the day with a **nightly reflection**. Intentions can be promoted straight into a
 focus block on the Pauta tab.
@@ -71,13 +71,12 @@ intention or project), pause and resume it, jot session notes, and conclude it.
 Completed and in-progress blocks appear on a filterable timeline, each block
 tracking its individual work sessions and elapsed time.
 
-### 3. Tides (Marés)
+### 3. Tides
 A habit tracker built around a maritime metaphor. Habits are tracked on a
 month-by-month calendar with:
 
-- **Streak tiers** that grow with consistency — from *Wave* (Onda) up to *Ocean*
-  (Oceano).
-- **Breaths** (*Respiros*) — honest, guilt-free breaks that don't shatter a streak.
+- **Streak tiers** that grow with consistency — from *Wave* up to *Ocean*.
+- **Breaths** — honest, guilt-free breaks that don't shatter a streak.
 - **Flexible recurrence** — permanent habits, fixed-period habits, or single-month
   habits.
 - **Heatmaps & trends** — a per-habit detail view plus a 12-month "wave" trend.
