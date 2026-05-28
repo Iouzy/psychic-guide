@@ -146,10 +146,5 @@ compares the build stamp injected by `build-web.mjs` against that release.
 - `docs/NATIVE_ROADMAP.md` — why iOS/Dynamic Island/Live Activities aren't in
   the web tree and what building them would take.
 - `README.md` — user-facing docs (EN + PT) and developer guide.
-
-> Note: `src/a299bb75-274c-46b1-b62c-8b3dea6000b7.jsx` is an unreferenced,
-> byte-for-byte copy of `vendor/react.development.js` (loaded by no `<script>`),
-> yet `build-web.mjs` still ships it into `www/` and `check-jsx.mjs` lints it.
-> It's safe to delete.
 </content>
 </invoke>
