@@ -35,9 +35,13 @@ deps). Consequences that matter:
   `Object.assign(window, { ... })` at the bottom of the file (see `store.jsx`,
   `ui-primitives.jsx`, etc.). To use something from another file, just
   reference it as a global.
-- **Script load order in `index.html` is significant.** `i18n.jsx` loads first
-  (so `tr`/`trf` exist globally), then `store.jsx`, then primitives, then tabs,
-  then `app.jsx` last (it calls `ReactDOM.createRoot(...).render(<App/>)`).
+- **Script load order in `index.html` is significant.** Vendored React/ReactDOM/
+  Babel load first, then the plain-JS `focus-activity.js`, then the `.jsx` files
+  in dependency order: `i18n.jsx` (so `tr`/`trf` exist globally) → `tweaks-panel.jsx`
+  → `store.jsx` → primitives (`ui-primitives.jsx`, `sub-components.jsx`) → `sheets.jsx`
+  → tabs and their helpers → `extras.jsx` → `app.jsx` **last** (it calls
+  `ReactDOM.createRoot(...).render(<App/>)`). When you add a file, slot its
+  `<script>` after everything it references.
 - **A JSX syntax error fails silently in the browser** (the whole app stops
   rendering). Always run the JSX check before committing — see below.
 
@@ -120,14 +124,32 @@ compares the build stamp injected by `build-web.mjs` against that release.
 
 ## Pointers
 
-- `src/store.jsx` — state, persistence, all date/cadence/stat math, backup.
+- `src/store.jsx` — `useStore()`, persistence (`localStorage` key `pauta.v4`),
+  all date/cadence/stat math, backup/export/import.
 - `src/app.jsx` — root `App`, tab navigation, settings sheet, update checker.
 - `src/tab-hoje.jsx` / `tab-pauta.jsx` / `tab-mares.jsx` — the three tabs.
-- `src/i18n.jsx` — `tr`/`trf` + the English dictionary.
-- `src/ui-primitives.jsx` / `sub-components.jsx` — shared UI building blocks.
-- `src/extras.jsx` — reminders, native focus-activity hook, misc.
+- `src/i18n.jsx` — `tr`/`trf` + the English dictionary (`I18N_EN`).
+- `src/ui-primitives.jsx` — shared atoms: `Icon`, `Sheet`, `TabBar`, `Button`,
+  `AutoTextarea`, `useDragReorder`, etc.
+- `src/sub-components.jsx` — focus-block UI: `ActiveBlockCard`, `PausedBlockCard`,
+  `FilterChips`, `Timeline`.
+- `src/sheets.jsx` — bottom-modal sheets for the Pauta tab (start/pause/conclude/switch).
+- `src/tweaks-panel.jsx` — the live "Tweaks" panel shell + form controls, plus the
+  host-protocol message handlers.
+- `src/mares-phrases.jsx` — the Portuguese phrase library + small atoms for the
+  Marés maritime metaphor (`pickPhrase`, etc.).
+- `src/mares-sheets.jsx` — Marés sheets: `TrendSheet` (12-month wave),
+  `HabitDetailSheet`, `WaveChart`, `HeatmapAllTime`.
+- `src/extras.jsx` — onboarding, weekly insights, quarterly goals, reminders,
+  `haptic()`, and the native focus-activity hook.
+- `src/focus-activity.js` — plain-JS JS↔native bridge; no-ops in a plain browser.
 - `docs/NATIVE_ROADMAP.md` — why iOS/Dynamic Island/Live Activities aren't in
   the web tree and what building them would take.
 - `README.md` — user-facing docs (EN + PT) and developer guide.
+
+> Note: `src/a299bb75-274c-46b1-b62c-8b3dea6000b7.jsx` is an unreferenced,
+> byte-for-byte copy of `vendor/react.development.js` (loaded by no `<script>`),
+> yet `build-web.mjs` still ships it into `www/` and `check-jsx.mjs` lints it.
+> It's safe to delete.
 </content>
 </invoke>
