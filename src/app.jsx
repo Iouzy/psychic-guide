@@ -704,6 +704,8 @@ function App() {
   window.PAUTA_LANG = prefs.lang === "en" ? "en" : "pt";
   useEffect(() => {
     try { localStorage.setItem("pauta.lang", prefs.lang); } catch (e) {}
+    // Keep the document language in sync so screen readers use the right voice.
+    document.documentElement.lang = prefs.lang === "en" ? "en" : "pt-PT";
   }, [prefs.lang]);
 
   const jumpToPauta = ({ intention }) => {
