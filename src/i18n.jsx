@@ -659,6 +659,37 @@ const I18N_EN_BULK = {
   "{min}+ d": "{min}+ d",
   "À medida que acumula dias feitos em todos os hábitos, sobe também de posto — de Aprendiz a Almirante. Encontra-o em \"Marés Passadas\".": "As you accumulate done days across every habit, you also rise in rank — from Apprentice to Admiral. Find it in \"Past Tides\".",
   "→ {name} em {n}d": "→ {name} in {n}d",
+
+  // ─── Backup import errors ───
+  "Ficheiro demasiado grande para ser um backup do Pauta.": "File is too large to be a Pauta backup.",
+  "Ficheiro não é JSON válido. Verifique se o ficheiro está intacto.": "File is not valid JSON. Check that the file is intact.",
+  "Isto não parece um backup do Pauta. Verifique que exportou o ficheiro correto.": "This doesn't look like a Pauta backup. Check that you exported the right file.",
+
+  // ─── Contextual connectors ───
+  " com": " with",
+
+  // ─── Hoje tab — priority sort ───
+  "ordenar por prioridade": "sort by priority",
+  "ordem manual": "manual order",
+
+  // ─── Weekly review (WeekReview in extras.jsx) ───
+  "Pico:": "Peak:",
+  "Marés esta semana": "Tides this week",
+  "↑ +{pct}% foco vs. semana anterior ({prev})": "↑ +{pct}% focus vs. previous week ({prev})",
+  "↓ {pct}% foco vs. semana anterior ({prev})": "↓ {pct}% focus vs. previous week ({prev})",
+  "= mesmo foco da semana anterior ({prev})": "= same focus as previous week ({prev})",
+  "1 respiro esta semana. Honesto.": "1 breath this week. Honest.",
+  "{n} respiros esta semana. Honesto.": "{n} breaths this week. Honest.",
+
+  // ─── Notifications test ───
+  "Pauta · teste": "Pauta · test",
+  "As notificações estão a funcionar.": "Notifications are working.",
+  "Testar notificação": "Test notification",
+  "Notificação de teste enviada.": "Test notification sent.",
+  "Não foi possível enviar a notificação de teste.": "Could not send the test notification.",
+
+  // ─── Block templates (StartSheet) ───
+  "retomar de antes": "resume from before",
 };
 // === I18N_EN_BULK_END ===
 

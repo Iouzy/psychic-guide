@@ -39,7 +39,17 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
 
   const pastKeys = useMemo(() => pastDayKeys(state), [state.days]);
 
-  const intentionIds = today.intentions.map(i => i.id);
+  const [sortByPriority, setSortByPriority] = useState(false);
+
+  const PRIO_ORDER = { principal: 0, importante: 1 };
+  const displayIntentions = useMemo(() => {
+    if (!sortByPriority) return today.intentions;
+    return [...today.intentions].sort((a, b) =>
+      (PRIO_ORDER[a.priority] ?? 2) - (PRIO_ORDER[b.priority] ?? 2)
+    );
+  }, [today.intentions, sortByPriority]);
+
+  const intentionIds = displayIntentions.map(i => i.id);
   const { dragId, start } = useDragReorder(intentionIds, reorderIntentions);
 
   // Render today's summary as a shareable PNG (Web Share, else download).
@@ -142,8 +152,24 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
         </div>
       )}
 
+      {/* Sort controls */}
+      {today.intentions.length > 1 && (
+        <div style={{ marginBottom: 4, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={() => setSortByPriority(s => !s)} className="tap"
+            style={{
+              border: "none", background: "transparent",
+              fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: sortByPriority ? accentColor : "var(--ink-4)",
+              cursor: "pointer", padding: "2px 0",
+            }}>
+            {sortByPriority ? tr("ordem manual") : tr("ordenar por prioridade")}
+          </button>
+        </div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {today.intentions.map((it) => (
+        {displayIntentions.map((it) => (
           <IntentionRow
             key={it.id}
             intention={it}

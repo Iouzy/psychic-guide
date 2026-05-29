@@ -348,8 +348,43 @@ const navBtn = {
 function WeekReview({ store, accentColor }) {
   const { state } = store;
   const r = useMemo(() => weeklyReview(state), [state]);
-  const big = (v) => ({ fontFamily: "var(--serif)", fontSize: 24, color: "var(--ink)", lineHeight: 1 });
+  const prev = useMemo(() => prevWeeklyReview(state), [state]);
+  const big = () => ({ fontFamily: "var(--serif)", fontSize: 24, color: "var(--ink)", lineHeight: 1 });
   const cap = { fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ink-3)", marginTop: 4 };
+
+  // Week-over-week focus delta
+  const focusDelta = prev.focusMs > 0
+    ? Math.round(((r.focusMs - prev.focusMs) / prev.focusMs) * 100)
+    : null;
+
+  // Top habits by done-days this week
+  const topHabits = useMemo(() => {
+    const habits = state.habits || [];
+    return habits
+      .map(h => {
+        let done = 0;
+        for (const k of r.days) {
+          if (habitIsActiveOn(h, k) && h.log && h.log[k]) done++;
+        }
+        return { h, done };
+      })
+      .filter(x => x.done > 0)
+      .sort((a, b) => b.done - a.done)
+      .slice(0, 3);
+  }, [state.habits, r.days]);
+
+  // Most common respiro day-of-week this week
+  const respiroNote = useMemo(() => {
+    const habits = state.habits || [];
+    let total = 0;
+    for (const h of habits) {
+      for (const k of r.days) {
+        if (h.respiros && h.respiros[k]) total++;
+      }
+    }
+    return total;
+  }, [state.habits, r.days]);
+
   return (
     <div>
       <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.12em", color: "var(--ink-3)", marginBottom: 12 }}>
@@ -378,11 +413,65 @@ function WeekReview({ store, accentColor }) {
           <div style={cap}>{trf("hábitos · {n} feitos", { n: r.habitDone })}</div>
         </div>
       </div>
+
+      {/* Week-over-week comparison */}
+      {focusDelta !== null && prev.focusMs > 0 && (
+        <div style={{
+          marginTop: 10, padding: "8px 12px",
+          background: "var(--paper-2)", borderRadius: 8,
+          fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.04em",
+        }}>
+          {focusDelta > 0
+            ? trf("↑ +{pct}% foco vs. semana anterior ({prev})", { pct: focusDelta, prev: fmtDuration(prev.focusMs) })
+            : focusDelta < 0
+            ? trf("↓ {pct}% foco vs. semana anterior ({prev})", { pct: Math.abs(focusDelta), prev: fmtDuration(prev.focusMs) })
+            : trf("= mesmo foco da semana anterior ({prev})", { prev: fmtDuration(prev.focusMs) })}
+        </div>
+      )}
+
       {r.topKey && r.topMs > 0 && (
         <div style={{ marginTop: 14, fontFamily: "var(--serif)", fontSize: 15, color: "var(--ink-2)", lineHeight: 1.45 }}>
-          {tr("O seu pico foi")} <span style={{ fontStyle: "italic" }}>{fmtDateLong(tsFromDayKey(r.topKey)).split(",")[0]}</span>,
-          {tr("com")} <span style={{ color: accentColor }}>{fmtDuration(r.topMs)}</span> {tr("em foco.")}
+          {tr("Pico:")} <span style={{ fontStyle: "italic" }}>{fmtDateLong(tsFromDayKey(r.topKey)).split(",")[0]}</span>
+          {tr(" com")} <span style={{ color: accentColor }}>{fmtDuration(r.topMs)}</span> {tr("em foco.")}
           {r.reflections > 0 && <> {trf("Escreveu {n} {label}.", { n: r.reflections, label: r.reflections === 1 ? tr("reflexão") : tr("reflexões") })}</>}
+        </div>
+      )}
+
+      {/* Top habits this week */}
+      {topHabits.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
+            {tr("Marés esta semana")}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {topHabits.map(({ h, done }) => (
+              <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ fontFamily: "var(--serif)", fontSize: 14, color: "var(--ink)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {h.name}
+                </div>
+                <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+                  {r.days.map(k => (
+                    <div key={k} style={{
+                      width: 8, height: 8, borderRadius: 2,
+                      background: (h.log && h.log[k]) ? accentColor : (h.respiros && h.respiros[k]) ? `${accentColor}55` : "var(--rule)",
+                    }}/>
+                  ))}
+                </div>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", flexShrink: 0 }}>
+                  {done}/7
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Respiro note */}
+      {respiroNote > 0 && (
+        <div style={{ marginTop: 12, fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.4 }}>
+          {respiroNote === 1
+            ? tr("1 respiro esta semana. Honesto.")
+            : trf("{n} respiros esta semana. Honesto.", { n: respiroNote })}
         </div>
       )}
     </div>
@@ -726,7 +815,7 @@ function useReminders(store) {
       const dayKey = dayKeyOf(now.getTime());
       const hhmm = pad(now.getHours()) + ":" + pad(now.getMinutes());
 
-      // Habits nudge
+      // Habits nudge (global time)
       if (rem.habitsTime && hhmm >= rem.habitsTime) {
         const pending = (state.habits || []).filter(h =>
           habitIsActiveOn(h, dayKey) && !(h.log && h.log[dayKey]) && !(h.respiros && h.respiros[dayKey])
@@ -740,6 +829,23 @@ function useReminders(store) {
             "pauta-habits"
           );
           if (ok) localStorage.setItem(firedKey("habits", dayKey), "1");
+        }
+      }
+
+      // Per-habit clock reminders — each habit fires at its own designated time
+      for (const h of (state.habits || [])) {
+        if (!h.clock || !habitIsActiveOn(h, dayKey)) continue;
+        if ((h.log && h.log[dayKey]) || (h.respiros && h.respiros[dayKey])) continue;
+        if (hhmm >= h.clock) {
+          const k = firedKey("clock_" + h.id, dayKey);
+          if (!localStorage.getItem(k)) {
+            const ok = await fireReminder(
+              tr("Pauta · marés de hoje"),
+              trf('Falta "{name}".', { name: h.name }),
+              "pauta-habit-" + h.id
+            );
+            if (ok) localStorage.setItem(k, "1");
+          }
         }
       }
       // Evening reflection nudge

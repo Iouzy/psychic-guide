@@ -430,6 +430,26 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
               <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
                 {tr("Sem servidor: os avisos só chegam com a app aberta no telemóvel ou no browser.")}
               </div>
+              <button
+                onClick={async () => {
+                  const ok = await window.fireReminder(
+                    tr("Pauta · teste"),
+                    tr("As notificações estão a funcionar."),
+                    "pauta-test-manual"
+                  );
+                  setMsg(ok
+                    ? { kind: "ok", text: tr("Notificação de teste enviada.") }
+                    : { kind: "err", text: tr("Não foi possível enviar a notificação de teste.") });
+                }}
+                className="tap"
+                style={{
+                  border: "1px solid var(--rule)", background: "transparent",
+                  borderRadius: 8, padding: "8px 12px", cursor: "pointer",
+                  fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.08em",
+                  textTransform: "uppercase", color: "var(--ink-2)", alignSelf: "flex-start",
+                }}>
+                {tr("Testar notificação")}
+              </button>
             </div>
           )}
         </DataGroup>

@@ -43,6 +43,15 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     return Array.from(set);
   }, [blocks]);
 
+  const recentBlocks = useMemo(() => {
+    const seen = new Set();
+    return blocks
+      .filter(b => b.status === "done" || b.status === "paused")
+      .slice().sort((a, b) => b.createdAt - a.createdAt)
+      .filter(b => { if (seen.has(b.title)) return false; seen.add(b.title); return true; })
+      .slice(0, 5);
+  }, [blocks]);
+
   const totalFocus = useMemo(() => {
     const set = new Set(events.map(e => e.blockId));
     return blocks.filter(b => set.has(b.id)).reduce((acc, b) => {
@@ -258,6 +267,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         intentions={today.intentions}
         prefilledIntention={sheetStart?.intention}
         projects={projects}
+        recentBlocks={recentBlocks}
         onStart={handleStart}
         accentColor={accentColor}
         hasActive={!!activeBlock}
