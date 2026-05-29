@@ -623,9 +623,18 @@ function FocusNotifControl({ accentColor }) {
         </button>
       )}
       {granted === false && asked && (
-        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
-          {tr("Se nada acontecer, ative as notificações do Pauta nas definições do sistema.")}
-        </div>
+        <>
+          <button onClick={() => { try { window.FocusActivity.openSettings(); } catch (_) {} }} className="tap"
+            style={{
+              border: "1px solid var(--rule)", background: "transparent", borderRadius: 8,
+              padding: "9px 12px", cursor: "pointer", color: "var(--ink-2)", fontSize: 13, fontWeight: 500,
+            }}>
+            {tr("Abrir definições do sistema")}
+          </button>
+          <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
+            {tr("Se nada acontecer, ative as notificações do Pauta nas definições do sistema.")}
+          </div>
+        </>
       )}
     </div>
   );

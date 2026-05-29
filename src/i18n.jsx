@@ -81,6 +81,7 @@ const I18N_EN = {
   "mostrada": "shown",
   "falhou": "failed",
   "Enviar teste": "Send test",
+  "Abrir definições do sistema": "Open system settings",
   "Se a instalação falhar com «conflito com um pacote existente»: exporta uma cópia de segurança, desinstala a app e instala de novo. Só é preciso uma vez — daí em diante as atualizações mantêm os teus dados.":
     "If the install fails with “conflicts with an existing package”: export a backup, uninstall the app, and install again. You only need to do this once — after that, updates keep your data.",
   "Revisão semanal": "Weekly review",

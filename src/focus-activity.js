@@ -75,6 +75,11 @@
   //   after a hard denial the user must enable it in system Settings, so callers
   //   should guide there if the result is still false.
   //
+  // FocusActivity.openSettings() → Promise<void>
+  //   Opens this app's OS notification settings — the recovery path after a hard
+  //   denial (Android stops re-showing the dialog) and on MIUI where per-app
+  //   notifications are off by default.
+  //
   // FocusActivity.notify({ title, body, tag }) → Promise<{ shown }>
   //   Posts a one-shot local reminder on its own channel. This is the ONLY
   //   notification channel that works inside the Capacitor WebView. `tag`
@@ -99,5 +104,6 @@
     addListener: function (ev, cb) { var p = plugin(); return p ? p.addListener(ev, cb) : noopHandle(); },
     checkPermission:   function () { var p = plugin(); return p ? p.checkPermission()   : Promise.resolve({ granted: false }); },
     requestPermission: function () { var p = plugin(); return p ? p.requestPermission() : Promise.resolve({ granted: false }); },
+    openSettings:      function () { var p = plugin(); return p ? p.openNotificationSettings() : Promise.resolve(); },
   };
 })();

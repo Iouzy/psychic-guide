@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -90,6 +92,24 @@ class FocusActivityPlugin : Plugin() {
     @PermissionCallback
     fun notifPermCallback(call: PluginCall) {
         resolveGranted(call, hasNotifPermission())
+    }
+
+    // Open the OS notification settings for this app. After a POST_NOTIFICATIONS
+    // denial Android stops showing the runtime dialog, and on Xiaomi/MIUI the
+    // per-app notification switch is off by default — so this is the reliable way
+    // to let the user turn notifications on. Falls back to the app-details screen.
+    @PluginMethod
+    fun openNotificationSettings(call: PluginCall) {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        } else {
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.fromParts("package", context.packageName, null))
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try { context.startActivity(intent) } catch (e: Exception) { /* no settings activity */ }
+        call.resolve()
     }
 
     // ── Plugin methods ───────────────────────────────────────────
