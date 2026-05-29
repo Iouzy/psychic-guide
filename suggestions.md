@@ -33,11 +33,24 @@ rationale. Ordered roughly by value.
   WCAG contrast check (and nudging any that fail AA) would make the palette
   provably accessible rather than eyeballed.
 
+## Reporting
+- **`weeklyReview` over-counts periodic habits.** It increments
+  `habitObservedSlots` once per *day* a habit is active (`store.jsx`, the
+  `weeklyReview` loop), but a weekly/monthly tide only needs one completion per
+  *period*. So `habitPct` under-reports weekly/monthly habit completion. *Left
+  out:* a correct fix has to reconcile a rolling 7-day window with
+  Monday-anchored / month-anchored periods, so it deserves its own PR plus
+  cadence tests rather than riding along an unrelated change.
+
 ## Testing
 - **Component/interaction tests** (sheets open/close, swipe nav, timer ticking)
   would need a DOM environment (jsdom/@testing-library). *Left out:* keeps the
   zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
   layer where the real data-loss risk lives.
+- **Migration regression tests.** `schema.test.mjs` covers `migrateHabit`, but
+  `loadState`'s day-archival and prefs-merge paths have no explicit coverage —
+  the places a silent migration regression would lose data. Worth a focused
+  test file.
 
 ## Misc
 - **Update checker is the only outbound request in the web app** (`app.jsx`
