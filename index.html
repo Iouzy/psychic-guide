@@ -61,6 +61,24 @@
     --page-grad: radial-gradient(circle at 30% 20%, #1a1815, #0c0b0a);
   }
   * { box-sizing: border-box; }
+  /* The app is a native-feeling surface, not a web page: suppress text
+     selection, the long-press selection menu and tap-highlight flashes
+     app-wide. Inputs/textareas opt back IN so notes, intentions, reflections
+     and habit names stay fully editable and selectable. // PT: sem seleção de
+     texto na interface; só os campos de escrita permanecem selecionáveis. */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
   html, body {
     margin: 0; padding: 0;
     background: var(--page-bg);
