@@ -79,12 +79,20 @@ function TabMares({ store, accentColor }) {
 
         {/* Empty state */}
         {habits.length === 0 && !adding && (
-          <div style={{
-            padding: "24px 0", fontFamily: "var(--serif)", fontStyle: "italic",
-            fontSize: 17, color: "var(--ink-3)", lineHeight: 1.4,
-          }}>
-            {tr(pickPhrase("intro"))}<br/><br/>
-            <span style={{ fontSize: 14 }}>{tr("Adicione comportamentos que quer praticar regularmente. Cada mês tem o seu grid.")}</span>
+          <div style={{ padding: "24px 0" }}>
+            <div style={{
+              fontFamily: "var(--serif)", fontStyle: "italic",
+              fontSize: 17, color: "var(--ink-3)", lineHeight: 1.4,
+            }}>
+              {tr(pickPhrase("intro"))}<br/><br/>
+              <span style={{ fontSize: 14 }}>{tr("Adicione comportamentos que quer praticar regularmente. Cada mês tem o seu grid.")}</span>
+            </div>
+            <StarterChips
+              label={tr("Marés comuns")}
+              accentColor={accentColor}
+              items={["Beber água", "Ler", "Meditar", "Exercício", "Dormir cedo"]}
+              onPick={(name) => addHabit(name, "")}
+            />
           </div>
         )}
 
@@ -684,6 +692,22 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
   const cellRef = useRef(null);
 
   const isPartial = day.state === "partial";
+  const filledNow = day.state === "done";
+  // "Tide fills in" pop the moment a cell transitions to done (only on a fresh
+  // toggle — not when an already-done grid renders). Reduced-motion is honoured
+  // by the global CSS rule, which neutralises the keyframe.
+  const wasFilled = useRef(filledNow);
+  const [pop, setPop] = useState(false);
+  useEffect(() => {
+    if (filledNow && !wasFilled.current) {
+      setPop(true);
+      const id = setTimeout(() => setPop(false), 460);
+      wasFilled.current = filledNow;
+      return () => clearTimeout(id);
+    }
+    wasFilled.current = filledNow;
+  }, [filledNow]);
+
   const clickable = day.state === "empty" || day.state === "done" || day.state === "respiro" || isPartial;
   const filled = day.state === "done";
   const isRespiro = day.state === "respiro";
@@ -765,7 +789,16 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
         userSelect: "none",
         WebkitUserSelect: "none",
         transition: "background 0.15s, transform 0.08s",
+        animation: pop ? "tideFill 0.46s ease both" : undefined,
       }}>
+      {pop && (
+        <div style={{
+          position: "absolute", inset: -1, borderRadius: 5,
+          border: `2px solid ${isToday ? accentColor : "var(--ink)"}`,
+          animation: "tideRipple 0.5s ease-out forwards",
+          pointerEvents: "none",
+        }}/>
+      )}
       {day.state === "pre" && (
         <div style={{
           width: "30%", height: "30%",

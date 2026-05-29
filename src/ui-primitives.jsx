@@ -394,4 +394,37 @@ function useDragReorder(ids, onReorder) {
   return { dragId, start };
 }
 
-Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder });
+// ─── Starter chips ──────────────────────────────────────────
+// Tappable suggestions shown in empty states, so a fresh tab invites action
+// instead of presenting a void. `items` are PT source strings (translated for
+// display); onPick receives the already-translated label so it's stored in the
+// user's language, matching how seeded data is created.
+function StarterChips({ items, onPick, accentColor, label }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 14, animation: "riseIn 0.45s ease both" }}>
+      {label && (
+        <div style={{
+          fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.16em",
+          textTransform: "uppercase", color: "var(--ink-4)", fontStyle: "normal",
+        }}>{label}</div>
+      )}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {items.map((it, i) => (
+          <button key={i} className="tap" type="button"
+            onClick={() => onPick(tr(it))}
+            style={{
+              border: "1px solid " + accentColor + "44",
+              background: accentColor + "12",
+              color: "var(--ink-2)", borderRadius: 999,
+              padding: "7px 13px", fontSize: 13.5, cursor: "pointer",
+              fontFamily: "var(--sans)", fontStyle: "normal", lineHeight: 1.2,
+            }}>
+            <span style={{ color: accentColor, marginRight: 6, fontWeight: 600 }}>+</span>{tr(it)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder, StarterChips });

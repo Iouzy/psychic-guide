@@ -97,6 +97,32 @@ const I18N_EN = {
   "Acento": "Accent",
   "Cronómetro visível": "Timer visible",
   "Dados": "Data",
+
+  // ─── Appearance / motion / accent (Settings) ───
+  "Reduzir movimento": "Reduce motion",
+  "Desliga animações. Segue o sistema por omissão.": "Turns off animations. Follows the system by default.",
+
+  // ─── Focus notification (native) ───
+  "Notificação de foco": "Focus notification",
+  "Mostra o cronómetro do bloco ativo na barra de notificações.": "Shows the active block's timer in the notification bar.",
+  "ativa": "on",
+  "desligada": "off",
+  "Permitir notificações": "Allow notifications",
+  "Se nada acontecer, ative as notificações do Pauta nas definições do sistema.": "If nothing happens, enable Pauta's notifications in your system settings.",
+
+  // ─── Empty-state starters ───
+  "Para começar": "To begin",
+  "Ler 20 minutos": "Read for 20 minutes",
+  "Caminhar 30 min": "Walk for 30 min",
+  "Escrever 3 ideias": "Write 3 ideas",
+  "Uma conversa importante": "An important conversation",
+  "Marés comuns": "Common tides",
+  "Beber água": "Drink water",
+  "Ler": "Read",
+  "Meditar": "Meditate",
+  "Exercício": "Exercise",
+  "Dormir cedo": "Sleep early",
+  "Começar um bloco de foco": "Start a focus block",
 };
 
 // === I18N_EN_BULK_BEGIN === (entries collected from the rest of the app)
