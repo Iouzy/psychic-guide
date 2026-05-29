@@ -181,24 +181,26 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  /* Pip the parrot flies in from the right and settles. */
+  /* Pip the parrot flies in from the right and settles with a tiny overshoot. */
   @keyframes parrotIn {
-    0%   { opacity: 0; transform: translateX(120px) translateY(8px) rotate(10deg); }
-    70%  { opacity: 1; transform: translateX(-6px) translateY(0) rotate(-4deg); }
+    0%   { opacity: 0; transform: translateX(130px) translateY(10px) rotate(12deg); }
+    60%  { opacity: 1; transform: translateX(-8px) translateY(-2px) rotate(-5deg); }
+    80%  { transform: translateX(3px) translateY(0) rotate(2deg); }
     100% { opacity: 1; transform: translateX(0) rotate(0); }
   }
-  /* Idle hover — Pip bobs gently in place. */
+  /* Idle hover — Pip bobs gently in place with a subtle tilt so he feels alive. */
   @keyframes parrotFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-5px); }
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-5px) rotate(-2.5deg); }
   }
-  /* A happy hop when you finish something. */
+  /* A happy, springy hop when you finish something. */
   @keyframes parrotHop {
-    0%   { transform: translateY(0) rotate(0); }
-    25%  { transform: translateY(-15px) rotate(-9deg); }
-    50%  { transform: translateY(0) rotate(0); }
-    72%  { transform: translateY(-8px) rotate(7deg); }
-    100% { transform: translateY(0) rotate(0); }
+    0%   { transform: translateY(0) rotate(0) scale(1); }
+    20%  { transform: translateY(-17px) rotate(-10deg) scale(1.06); }
+    45%  { transform: translateY(0) rotate(0) scale(0.97); }
+    65%  { transform: translateY(-9px) rotate(8deg) scale(1.03); }
+    85%  { transform: translateY(0) rotate(-2deg) scale(1); }
+    100% { transform: translateY(0) rotate(0) scale(1); }
   }
   /* Riding the wave on the Marés tab: a buoyant bob + tilt. */
   @keyframes parrotSurf {
