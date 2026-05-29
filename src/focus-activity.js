@@ -27,10 +27,13 @@
     }
   } catch (e) { native = null; }
 
-  // FocusActivity.start({ title, startedAt, elapsedMs })
+  // FocusActivity.start({ title, startedAt, elapsedMs, targetMs, accent })
   //   Launches the foreground service and shows the ongoing notification.
   //   elapsedMs is the total accumulated focus time (all previous sessions
   //   for the same block), so the chronometer starts from the right offset.
+  //   targetMs (optional, 0 = open-ended) makes the notification count DOWN to
+  //   the Pomodoro target instead of up. accent (optional hex) tints the
+  //   notification so it reads like the in-app focus control.
   //
   // FocusActivity.update({ elapsedMs, paused })
   //   Called when the block is paused/resumed to switch the notification
@@ -58,6 +61,19 @@
   //   service-worker notifications are unavailable there, so without this the
   //   reminder toggle did nothing on the native app. `tag` dedupes/replaces
   //   (habits vs reflection get stable, distinct notifications).
+  //
+  // FocusActivity.scheduleReminders({ enabled, habitsTime, reflectionTime,
+  //                                   habitsTitle, habitsBody,
+  //                                   reflectionTitle, reflectionBody })
+  //                                   → Promise<{ scheduled, exact }>
+  //   Schedules the daily habit/reflection reminders via native AlarmManager so
+  //   they fire even when the app is fully CLOSED (the JS reminder loop only runs
+  //   while the page is open). Times are "HH:mm"; the title/body strings are
+  //   passed already-localized (translation stays in the JS i18n layer). `exact`
+  //   is false when the OS denied exact alarms (Android 12+) → inexact fallback.
+  //
+  // FocusActivity.cancelReminders() → Promise<{ scheduled:false }>
+  //   Cancels any scheduled background reminders.
 
   window.FocusActivity = {
     isNative:    !!native,
@@ -65,6 +81,8 @@
     update:      function (o) { if (native) native.update(o); },
     stop:        function ()  { if (native) native.stop(); },
     notify:      function (o) { return native ? native.showReminder(o) : Promise.resolve({ shown: false }); },
+    scheduleReminders: function (o) { return native ? native.scheduleReminders(o) : Promise.resolve({ scheduled: false, exact: false }); },
+    cancelReminders:   function ()  { return native ? native.cancelReminders()    : Promise.resolve({ scheduled: false }); },
     addListener: function (ev, cb) { return native ? native.addListener(ev, cb) : noopHandle(); },
     checkPermission:   function () { return native ? native.checkPermission()   : Promise.resolve({ granted: false }); },
     requestPermission: function () { return native ? native.requestPermission() : Promise.resolve({ granted: false }); },

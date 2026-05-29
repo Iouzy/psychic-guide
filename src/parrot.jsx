@@ -5,12 +5,24 @@
 // nods), and tab-specific lines — and reacts, happily, whenever you finish
 // something (mark a habit, conclude a block, complete an intention, write the
 // nightly reflection, tick a quarter goal). It actually *flies* to the corner
-// the line is about, and on the Marés tab it surfs along the bottom without
-// covering the screen. Content is bilingual inline (PT/EN) so it follows the
-// language toggle without bloating the i18n dictionary; pl() picks.
+// the line is about, and on the Marés tab it surfs a wave on a board.
 //
-// Disable: Definições → "Papagaio ajudante". Renders nothing when off or during
-// onboarding. Pure front-end; no storage, no network.
+// MOTION IS 100% JAVASCRIPT (requestAnimationFrame writing inline transforms to
+// DOM nodes via refs). It deliberately does NOT use CSS animations/transitions:
+// some Androids (e.g. MIUI "Remove animations" / OS reduce-motion) kill every
+// CSS animation and transition app-wide, which left Pip a dead, sliding sticker.
+// JS-set inline transforms are immune to that setting, so Pip flaps, bobs and
+// flies regardless. We never drive motion through React state per frame — only
+// the speech bubble and reactions use state; the loop mutates refs directly.
+//
+// Battery: the loop throttles to ~30fps while idle, runs full-rate during a
+// flight/hop, fully parks when the tab is hidden (visibilitychange), and never
+// starts when Pip is disabled.
+//
+// Content is bilingual inline (PT/EN) so it follows the language toggle without
+// bloating the i18n dictionary; pl() picks. Disable: Definições → "Papagaio
+// ajudante". Renders nothing when off or during onboarding. Pure front-end; no
+// storage, no network.
 
 // Pick the line for the current language (PT is the source).
 function pl(msg) { return (window.PAUTA_LANG === "en" ? msg.en : msg.pt); }
@@ -142,117 +154,138 @@ const PARROT_REACT_GOAL = [
   { pt: "Grande coisa feita. O Magalhães ficaria orgulhoso. 🧭", en: "A big thing done. Magellan would be proud. 🧭" },
 ];
 
-// Where Pip rests/flies. top/left are % of the frame so they scale with size and
-// CSS-transition smoothly (a real "fly to"). He lives in the lower, usually-empty
-// half of the screen so he never sits on top of the header or the cards, and each
-// tab has a distinct spot so switching tabs sends him on a visible flight across
-// the screen. `surf` rides the bottom on a wave.
+// Where Pip rests/flies, as fractions of the frame so they scale with size.
+// He lives in the lower, usually-empty half so he never sits on the header or
+// the cards, and each tab has a distinct spot so switching tabs sends him on a
+// visible flight across the screen. `surf` rides a wave at the bottom-centre.
+// `side`/`vert` only steer which way the speech bubble opens.
 const PARROT_ANCHORS = {
-  hoje:  { top: "66%", left: "64%", side: "right",  vert: "bottom" },
-  pauta: { top: "66%", left: "8%",  side: "left",   vert: "bottom" },
-  surf:  { top: "74%", left: "50%", side: "center", vert: "bottom", surf: true },
+  hoje:  { fx: 0.68, fy: 0.60, side: "right",  vert: "bottom" },
+  pauta: { fx: 0.16, fy: 0.60, side: "left",   vert: "bottom" },
+  surf:  { fx: 0.50, fy: 0.72, side: "center", vert: "bottom", surf: true },
 };
 // Resting anchor for each tab.
 const TAB_ANCHOR = { hoje: "hoje", pauta: "pauta", mares: "surf" };
 
-// Cute, stylised parrot facing left. Body uses the live accent colour.
-function ParrotSvg({ accent, size = 56 }) {
-  const dark = "rgba(0,0,0,0.18)";
+// Pivots (in the bird's 0..72 viewBox) the rAF loop rotates the articulated
+// parts about. They MUST match where those parts are drawn in ParrotSvg.
+const WING_PIVOT = [35, 33];   // shoulder
+const HEAD_PIVOT = [40, 30];   // neck
+const TAIL_PIVOT = [25, 46];   // tail base
+const EYE_CY     = 21;         // eye centre Y, for the blink squash
+
+// ── Easing ──
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// Articulated parrot, facing left. The body uses the live accent colour. Each
+// movable part is its own <g> with a ref so the rAF loop can rotate it about a
+// fixed pivot (via the SVG `transform` attribute — robust across browsers and
+// immune to reduce-motion). Drawn in a 72×72 viewBox.
+function ParrotSvg({ accent, size, wingRef, headRef, tailRef, eyeRef }) {
+  const shade = "rgba(0,0,0,0.20)";    // soft shading on the wing
+  const belly = "#F4E4C1";             // warm cream chest
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <path d="M14 40 C8 48 8 56 14 58 C16 52 20 48 25 46 Z" fill={accent} opacity="0.85"/>
-      <ellipse cx="35" cy="38" rx="16" ry="18" fill={accent}/>
-      <ellipse cx="39" cy="42" rx="10" ry="12" fill="#F2D9A0"/>
-      <path d="M31 26 C21 30 19 44 27 52 C33 46 35 36 33 28 Z" fill={accent}/>
-      <path d="M31 27 C22 31 20 43 27 51" stroke={dark} strokeWidth="1.5" fill="none" opacity="0.4"/>
-      <circle cx="39" cy="20" r="13" fill={accent}/>
-      <path d="M41 8 C43 3 48 4 47 9 C46 12 43 12 40 12 Z" fill={accent}/>
-      <circle cx="41" cy="18" r="5" fill="#fff"/>
-      <circle cx="42" cy="18" r="2.4" fill="#1A1815"/>
-      <path d="M28 18 C20 18 18 24 24 26 C28 27 30 24 30 21 Z" fill="#E8A23D"/>
-      <path d="M24 26 C26 29 30 29 30 25" fill="#C9852B"/>
-      <path d="M31 56 l0 4 M40 56 l0 4" stroke="#E8A23D" strokeWidth="2" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 72 72" fill="none" aria-hidden="true"
+      style={{ display: "block", overflow: "visible" }}>
+      {/* tail — sways from its base */}
+      <g ref={tailRef}>
+        <path d="M28 44 C18 50 12 58 16 62 C20 60 26 56 32 50 Z" fill={accent}/>
+        <path d="M28 46 C20 51 15 57 17 60" stroke={shade} strokeWidth="1.4" fill="none" opacity="0.5"/>
+      </g>
+      {/* body */}
+      <ellipse cx="36" cy="40" rx="15" ry="17" fill={accent}/>
+      <ellipse cx="40" cy="44" rx="9.5" ry="12" fill={belly}/>
+      {/* feet (subtle; mostly read on the surfboard) */}
+      <path d="M33 56 l0 4 M41 56 l0 4" stroke="#E8A23D" strokeWidth="2" strokeLinecap="round"/>
+      {/* wing — separate, pivots at the shoulder so Pip actually flaps */}
+      <g ref={wingRef}>
+        <path d="M35 31 C24 33 20 46 28 55 C34 50 38 40 37 32 Z" fill={accent}/>
+        <path d="M35 32 C26 34 22 45 28 53" stroke={shade} strokeWidth="1.6" fill="none" opacity="0.45"/>
+        <path d="M33 38 C29 41 27 47 30 51" stroke={shade} strokeWidth="1.2" fill="none" opacity="0.35"/>
+      </g>
+      {/* head group — gentle nod */}
+      <g ref={headRef}>
+        <circle cx="41" cy="22" r="13" fill={accent}/>
+        {/* crest feathers */}
+        <path d="M43 9 C45 3 51 4 49 10 C48 13 45 13 42 12 Z" fill={accent}/>
+        <path d="M38 9 C39 4 44 4 43 9 C42 12 40 12 38 11 Z" fill={accent} opacity="0.85"/>
+        {/* beak (faces left) */}
+        <path d="M29 21 C20 21 18 28 25 30 C30 31 32 27 32 24 Z" fill="#E8A23D"/>
+        <path d="M25 30 C27 33 31 33 31 28" fill="#C9852B"/>
+        {/* eye — its own group so the blink can squash it shut */}
+        <g ref={eyeRef}>
+          <circle cx="44" cy={EYE_CY} r="5.2" fill="#fff"/>
+          <circle cx="45" cy={EYE_CY} r="2.5" fill="#1A1815"/>
+          <circle cx="46.4" cy={EYE_CY - 1.4} r="0.9" fill="#fff"/>
+        </g>
+      </g>
     </svg>
   );
 }
 
-// The surfboard Pip rides (Marés tab) — a classic side-on board: a slim lens
-// with pointed tips, a lighter deck panel and a centre stringer, so it clearly
-// reads as a board and not a flat blob. The accent gives it the app's colour;
-// the cream deck + white stringer add contrast on the dark Marés background.
-// PT: prancha de surf vista de lado, com bicos, deck mais claro e quilha
-// central — para se ler como prancha e não uma mancha.
-function SurfBoard({ accent, width = 64 }) {
+// The wave + surfboard Pip rides on the Marés tab. A clean, characterful
+// composition: layered sea-blue water with a curling barrel on the left, a
+// thick white foam crest and spray, and a classic shortboard (pointed nose,
+// rounded tail, cream deck, accent rails, centre stringer, a fin) for him to
+// stand on. Water is fixed blues (not the accent) so it always reads as a wave;
+// the board takes the live accent on its rails. Bright on the dark Marés bg.
+function SurfScene({ accent, width = 128 }) {
+  const deep = "#1F6E94";   // deepest water
+  const mid  = "#2E93BE";   // mid water
+  const sea  = "#46B4D8";   // surface water
   return (
-    <svg width={width} height={16} viewBox="0 0 64 16" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -6 }}>
-      {/* board body — pointed-nose/tail lozenge */}
-      <path d="M2 8 C2 4 16 2 32 2 C48 2 62 4 62 8 C62 12 48 14 32 14 C16 14 2 12 2 8 Z"
-        fill={accent}/>
-      {/* deck highlight */}
-      <path d="M8 8 C8 5.5 18 4.5 32 4.5 C46 4.5 56 5.5 56 8 C56 10.5 46 11.5 32 11.5 C18 11.5 8 10.5 8 8 Z"
-        fill="#FFF4DC" opacity="0.55"/>
-      {/* stringer line down the middle */}
-      <line x1="4" y1="8" x2="60" y2="8" stroke="#fff" strokeWidth="1" opacity="0.7"/>
+    <svg width={width} height={78} viewBox="0 0 128 78" fill="none" aria-hidden="true"
+      style={{ display: "block", marginTop: -10, overflow: "visible" }}>
+      {/* ── the board (drawn first; the bird stands on it, wave wraps behind) ── */}
+      {/* shadow under the board on the water */}
+      <ellipse cx="64" cy="30" rx="40" ry="7" fill="#0A2A3A" opacity="0.28"/>
+      {/* board body: pointed nose (left), rounded tail (right) */}
+      <path d="M22 27 C30 21 50 19 70 19 C92 19 104 22 106 26 C104 30 92 33 70 33 C50 33 30 32 22 27 Z" fill={accent}/>
+      {/* cream deck panel */}
+      <path d="M30 26.5 C40 22.5 54 21.5 70 21.5 C88 21.5 98 23.5 99 26 C98 28.5 88 30.5 70 30.5 C54 30.5 40 30 30 26.5 Z" fill="#FFF1CF"/>
+      {/* centre stringer */}
+      <line x1="25" y1="26.5" x2="104" y2="26.5" stroke={accent} strokeWidth="1.2" opacity="0.6"/>
+      {/* fin under the tail */}
+      <path d="M96 32 C99 37 101 39 104 39 C103 35 101 32 99 31 Z" fill={accent} opacity="0.9"/>
+
+      {/* ── the wave (wraps in front of the board's lower edge for depth) ── */}
+      <path d="M0 44 C20 34 36 50 58 42 C80 34 96 50 128 38 L128 78 L0 78 Z" fill={deep} opacity="0.95"/>
+      <path d="M0 49 C18 40 34 55 56 47 C80 39 98 54 128 43 L128 78 L0 78 Z" fill={mid}/>
+      <path d="M0 55 C16 47 34 60 58 53 C82 46 100 59 128 50 L128 78 L0 78 Z" fill={sea}/>
+      {/* curling barrel on the left where the board points */}
+      <path d="M6 47 C-1 37 10 28 24 31 C16 33 12 40 17 47 C13 49 9 49 6 47 Z" fill="#fff" opacity="0.95"/>
+      <path d="M11 44 C8 39 13 35 19 36 C14 38 13 42 16 45 Z" fill={sea} opacity="0.85"/>
+      {/* thick foam crest tracing the swell */}
+      <path d="M0 49 C18 40 34 55 56 47 C80 39 98 54 128 43"
+        stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.95"/>
+      {/* spray / foam flecks */}
+      <circle cx="40" cy="50" r="1.6" fill="#fff" opacity="0.9"/>
+      <circle cx="74" cy="46" r="1.3" fill="#fff" opacity="0.85"/>
+      <circle cx="100" cy="50" r="1.7" fill="#fff" opacity="0.9"/>
+      <circle cx="22" cy="40" r="1.2" fill="#fff" opacity="0.8"/>
     </svg>
   );
-}
-
-// The wave Pip surfs on. A real, readable swell: a layered body of water with a
-// curling lip on the left, a bright white foam crest tracing the whole top and
-// a couple of foam flecks. Water is a fixed sea-blue (not the accent) so it
-// always reads as a wave whatever the accent colour is. // PT: onda legível —
-// corpo de água em camadas, crista de espuma branca e uma curva que enrola.
-function SurfWave({ width = 92 }) {
-  const deep = "#2E7FA6";   // deeper water
-  const sea  = "#46A8CE";   // surface water
-  return (
-    <svg width={width} height={28} viewBox="0 0 92 28" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -9 }}>
-      {/* deeper water behind, for depth */}
-      <path d="M0 17 C18 9 30 22 48 15 C66 8 76 21 92 12 L92 28 L0 28 Z"
-        fill={deep} opacity="0.85"/>
-      {/* surface water */}
-      <path d="M0 15 C16 7 28 20 46 13 C64 6 74 19 92 10 L92 28 L0 28 Z"
-        fill={sea} opacity="0.9"/>
-      {/* curling lip on the left where the bird rides */}
-      <path d="M6 15 C2 9 10 4 18 7 C13 8 11 12 14 15 Z" fill="#fff" opacity="0.9"/>
-      {/* foam crest along the top */}
-      <path d="M0 15 C16 7 28 20 46 13 C64 6 74 19 92 10"
-        stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.95"/>
-      {/* foam flecks */}
-      <circle cx="34" cy="17" r="1.4" fill="#fff" opacity="0.85"/>
-      <circle cx="60" cy="14" r="1.2" fill="#fff" opacity="0.8"/>
-      <circle cx="80" cy="15" r="1.5" fill="#fff" opacity="0.85"/>
-    </svg>
-  );
-}
-
-// Screen x-position (%) of an anchor — used to tell which way Pip is travelling
-// when the tab changes, so he leans into the swipe.
-function anchorLeftPct(key) {
-  const a = PARROT_ANCHORS[key];
-  return a ? parseFloat(a.left) : 50;
 }
 
 function ParrotCompanion({ store, accentColor, tab }) {
   const enabled = store.state.prefs.parrot !== false;
   const [bubble, setBubble] = useState(null);   // { text, happy }
-  const [anchorKey, setAnchorKey] = useState(TAB_ANCHOR[tab] || "hoje");
-  // Flight state drives the entrance + the "swiped to the next tab" animation.
-  // `key` bumps on every flight so the CSS animation restarts; `dir` is the
-  // travel direction (null on first mount → the fly-in swoop).
-  const [flight, setFlight] = useState({ key: 0, dir: null });
-  const prevTabRef = useRef(tab);
   const hideTimer = useRef(null);
+
   // Refs that always hold the *current* tab/bubble, so the long-lived idle
-  // interval (created once, deps [enabled]) never reads a stale closure and
-  // always picks a line for the tab you're actually on. // PT: refs com o valor
-  // atual para o intervalo ocioso não usar um fecho desatualizado.
+  // interval and the rAF loop (created once) never read a stale closure and
+  // always act on the tab you're actually on. // PT: refs com o valor atual.
   const tabRef = useRef(tab);
   const bubbleRef = useRef(bubble);
   tabRef.current = tab;
   bubbleRef.current = bubble;
+
+  // The current resting anchor (drives only the bubble's open direction). The
+  // rAF loop reads this through a ref so it stays in sync without re-rendering.
+  const [anchorKey, setAnchorKey] = useState(TAB_ANCHOR[tab] || "hoje");
+  const anchorRef = useRef(anchorKey);
+  anchorRef.current = anchorKey;
 
   // Hide Pip while any bottom-sheet/modal is open. The Pauta-tab sheets render
   // inside the content wrapper (its own stacking context), so their z-index sits
@@ -267,14 +300,46 @@ function ParrotCompanion({ store, accentColor, tab }) {
     mo.observe(document.body, { childList: true, subtree: true });
     return () => mo.disconnect();
   }, []);
-  const recent = useRef(new Set());              // last few PT strings shown
 
+  const recent = useRef(new Set());              // last few PT strings shown
   const remember = (msg) => {
     recent.current.add(msg.pt);
     if (recent.current.size > 10) {
-      // drop the oldest (Sets keep insertion order).
-      recent.current.delete(recent.current.values().next().value);
+      recent.current.delete(recent.current.values().next().value);   // drop oldest
     }
+  };
+
+  // ── DOM refs the rAF loop writes transforms to (never React state per frame) ──
+  const fieldRef  = useRef(null);   // full-frame overlay (measures available space)
+  const moverRef  = useRef(null);   // screen position (fly-across)
+  const bobRef    = useRef(null);   // vertical bob + hop (bird + surf scene)
+  const tiltRef   = useRef(null);   // body lean / surf tilt
+  const wingRef   = useRef(null);   // flapping wing
+  const headRef   = useRef(null);   // head nod
+  const tailRef   = useRef(null);   // tail sway
+  const eyeRef    = useRef(null);   // blink
+  const bubbleRefEl = useRef(null); // speech bubble (a tiny JS pop-in)
+
+  // The whole motion model lives in one mutable object so the loop allocates
+  // nothing per frame and survives re-renders.
+  const m = useRef({
+    x: 0, y: 0,                 // current screen position (px, frame-relative)
+    flying: false, ft: 0,       // flight progress 0..1
+    fromX: 0, fromY: 0, toX: 0, toY: 0, arc: 0, dir: 0,
+    started: false,             // has the very first fly-in happened?
+    hopUntil: 0,                // celebratory hop end timestamp
+    nextBlink: 0,               // when to blink next
+    blinkUntil: 0,              // blink end timestamp
+    bubbleAt: 0,                // when the current bubble appeared (for the pop)
+  }).current;
+
+  // Frame size, refreshed on resize so anchors track rotation / window changes.
+  const size = useRef({ w: 360, h: 720 }).current;
+
+  // Anchor → pixel centre within the frame.
+  const anchorPx = (key) => {
+    const a = PARROT_ANCHORS[key] || PARROT_ANCHORS.hoje;
+    return { x: a.fx * size.w, y: a.fy * size.h };
   };
 
   // Show a line. `anchor` is where to fly; `happy` triggers the celebratory hop.
@@ -283,15 +348,17 @@ function ParrotCompanion({ store, accentColor, tab }) {
     remember(msg);
     if (anchor) setAnchorKey(anchor);
     setBubble({ text: pl(msg), happy: !!happy });
+    m.bubbleAt = performance.now();
+    if (happy) m.hopUntil = performance.now() + 760;
     hideTimer.current = setTimeout(() => setBubble(null), happy ? 7000 : 9000);
   };
 
   // An idle line, weighted toward the current tab's own pool, flying to the spot
-  // the line is about.
+  // the line is about. Reads the current tab through a ref (never stale).
   const sayIdle = () => {
     const av = recent.current;
     const r = Math.random();
-    const curTab = tabRef.current;            // current tab, never a stale closure
+    const curTab = tabRef.current;
     const here = TAB_ANCHOR[curTab] || "hoje";
     if (curTab === "hoje" && r < 0.5) return say(pickFresh(PARROT_HOJE, av), { anchor: here });
     if (curTab === "pauta" && r < 0.5) return say(pickFresh(PARROT_PAUTA, av), { anchor: here });
@@ -299,7 +366,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     const general = [PARROT_TIPS, PARROT_DYK, PARROT_APP, PARROT_JOKES, PARROT_PHILO, PARROT_CULTURE];
     return say(pickFresh(pickOne(general), av), { anchor: here });
   };
-  // Keep the latest sayIdle reachable from the long-lived timers below.
   const sayIdleRef = useRef(sayIdle);
   sayIdleRef.current = sayIdle;
 
@@ -313,31 +379,167 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
+  // ── The animation engine ── one rAF loop, all motion written to refs ──
+  // Parks when the tab is hidden, throttles to ~30fps while idle, runs full-rate
+  // during a flight or hop, and never runs while Pip is disabled or a sheet is
+  // open (the component returns null then, so this effect is torn down).
+  useEffect(() => {
+    if (!enabled || sheetOpen) return;
+
+    // Measure the frame and seed the position before the first paint so Pip
+    // doesn't flash at 0,0. The first fly-in launches from off the right edge.
+    const measure = () => {
+      const el = fieldRef.current;
+      if (el) { size.w = el.clientWidth || size.w; size.h = el.clientHeight || size.h; }
+    };
+    measure();
+    if (!m.started) {
+      const dest = anchorPx(anchorRef.current);
+      m.x = size.w + 120; m.y = dest.y - size.h * 0.18;
+      m.fromX = m.x; m.fromY = m.y; m.toX = dest.x; m.toY = dest.y;
+      m.arc = 70; m.dir = -1; m.flying = true; m.ft = 0; m.started = true;
+    }
+
+    const ro = ("ResizeObserver" in window) ? new ResizeObserver(measure) : null;
+    if (ro && fieldRef.current) ro.observe(fieldRef.current);
+
+    let raf = 0, running = true, lastWork = 0, prev = performance.now();
+    const FLIGHT_MS = 950;
+
+    const frame = (now) => {
+      raf = requestAnimationFrame(frame);
+      const surf = tabRef.current === "mares";
+      const busy = m.flying || now < m.hopUntil;
+      // Throttle to ~30fps while idle; full-rate when flying/hopping.
+      if (!busy && now - lastWork < 32) return;
+      const dt = Math.min(now - prev, 60); prev = now; lastWork = now;
+      const t = now / 1000;
+
+      // ── position: explicit interpolation while flying, soft easing at rest ──
+      let px, py, arcOff = 0, leanFly = 0;
+      if (m.flying) {
+        m.ft += dt / FLIGHT_MS;
+        if (m.ft >= 1) { m.ft = 1; m.flying = false; }
+        const e = easeInOutCubic(m.ft);
+        px = lerp(m.fromX, m.toX, e);
+        py = lerp(m.fromY, m.toY, e);
+        arcOff = -Math.sin(Math.PI * m.ft) * m.arc;          // parabolic hop up
+        leanFly = m.dir * 16 * Math.sin(Math.PI * m.ft);     // lean into travel
+        m.x = px; m.y = py;
+      } else {
+        const dest = anchorPx(anchorRef.current);
+        m.x = lerp(m.x, dest.x, 0.12);                        // ease + track resize
+        m.y = lerp(m.y, dest.y, 0.12);
+        px = m.x; py = m.y;
+      }
+
+      // ── bob + hop ──
+      let bob, hop = 0;
+      if (surf && !m.flying) bob = Math.sin(t * 2.1) * 4.5;   // ride the swell
+      else if (!m.flying)    bob = Math.sin(t * 2.0) * 3.2;   // gentle float
+      else                   bob = 0;
+      if (now < m.hopUntil) {
+        const hp = 1 - (m.hopUntil - now) / 760;
+        hop = -Math.sin(Math.PI * hp) * 16;
+      }
+
+      // ── lean / tilt ──
+      let lean;
+      if (m.flying)      lean = leanFly;
+      else if (now < m.hopUntil) lean = Math.sin((now - (m.hopUntil - 760)) / 60) * 8;
+      else if (surf)     lean = Math.sin(t * 1.7) * 7;        // carve on the wave
+      else               lean = Math.sin(t * 1.4) * 2.5;      // idle sway
+
+      // ── wing flap ── faster + wider while flying or hopping ──
+      let wing;
+      if (m.flying || now < m.hopUntil) wing = Math.sin(t * 22) * 34;
+      else if (surf)                     wing = -2 + Math.sin(t * 4.2) * 7;
+      else                               wing = 4 + Math.sin(t * 3.0) * 10;
+
+      // ── head nod + tail sway ──
+      const head = Math.sin(t * 1.6 + 0.5) * 2.4;
+      const tailA = Math.sin(t * 1.9) * 5;
+
+      // ── blink ── brief eye squash on a randomised cadence ──
+      if (!m.nextBlink) m.nextBlink = now + 2500 + Math.random() * 3000;
+      if (now > m.nextBlink && !m.blinkUntil) { m.blinkUntil = now + 130; }
+      let eyeSy = 1;
+      if (m.blinkUntil) {
+        if (now > m.blinkUntil) { m.blinkUntil = 0; m.nextBlink = now + 2500 + Math.random() * 3500; }
+        else { const bp = 1 - (m.blinkUntil - now) / 130; eyeSy = 1 - Math.sin(Math.PI * bp) * 0.9; }
+      }
+
+      // ── write transforms (HTML via style, SVG parts via the transform attr) ──
+      const mover = moverRef.current;
+      if (mover) {
+        mover.style.transform =
+          "translate(" + px + "px," + (py + arcOff) + "px) translate(-50%,-50%)";
+        // Reveal once positioned (it starts at opacity 0 to avoid a one-frame
+        // flash at the corner before the first transform is written).
+        if (mover.style.opacity !== "1") mover.style.opacity = "1";
+      }
+      if (bobRef.current)  bobRef.current.style.transform  = "translateY(" + (bob + hop) + "px)";
+      if (tiltRef.current) tiltRef.current.style.transform = "rotate(" + lean + "deg)";
+      if (wingRef.current) wingRef.current.setAttribute("transform",
+        "rotate(" + wing + " " + WING_PIVOT[0] + " " + WING_PIVOT[1] + ")");
+      if (headRef.current) headRef.current.setAttribute("transform",
+        "rotate(" + head + " " + HEAD_PIVOT[0] + " " + HEAD_PIVOT[1] + ")");
+      if (tailRef.current) tailRef.current.setAttribute("transform",
+        "rotate(" + tailA + " " + TAIL_PIVOT[0] + " " + TAIL_PIVOT[1] + ")");
+      if (eyeRef.current) eyeRef.current.setAttribute("transform",
+        "matrix(1 0 0 " + eyeSy.toFixed(3) + " 0 " + (EYE_CY * (1 - eyeSy)).toFixed(2) + ")");
+
+      // ── speech bubble: a tiny JS pop-in (no CSS, so it survives reduce-motion) ──
+      if (bubbleRefEl.current) {
+        const bp = Math.min(1, (now - m.bubbleAt) / 200);
+        const s = 0.85 + 0.15 * easeInOutCubic(bp);
+        bubbleRefEl.current.style.transform = "scale(" + s.toFixed(3) + ")";
+        bubbleRefEl.current.style.opacity = bp.toFixed(3);
+      }
+    };
+
+    raf = requestAnimationFrame(frame);
+
+    // Park entirely while the tab/app is hidden; resume cleanly when back.
+    const onVis = () => {
+      if (document.hidden) { running = false; cancelAnimationFrame(raf); }
+      else if (!running) { running = true; prev = performance.now(); lastWork = 0; raf = requestAnimationFrame(frame); }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVis);
+      if (ro) ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, sheetOpen]);
+
   // Fly to the tab's resting spot when the tab changes (and now and then drop a
   // tab-specific line so each tab feels different).
   const firstTab = useRef(true);
   useEffect(() => {
     if (!enabled) return;
-    const prev = prevTabRef.current;
-    prevTabRef.current = tab;
-    setAnchorKey(TAB_ANCHOR[tab] || "hoje");
+    const dest = TAB_ANCHOR[tab] || "hoje";
+    const prevAnchor = anchorRef.current;
+    setAnchorKey(dest);
     // Drop any lingering line the moment the tab changes, so a Marés line can't
-    // hang over onto Pauta (and vice-versa). A fresh tab-specific line, if any,
-    // is scheduled below. // PT: limpa o balão ao trocar de separador para a
-    // deixa não "escorrer" para o separador seguinte.
+    // hang over onto Pauta (and vice-versa). // PT: limpa o balão ao trocar.
     if (hideTimer.current) clearTimeout(hideTimer.current);
     setBubble(null);
     if (firstTab.current) { firstTab.current = false; return; }
-    // Launch him in the direction he's travelling across the screen so the move
-    // reads as "swiped along with the tab", ending in a bump at the new corner.
-    const dir = anchorLeftPct(TAB_ANCHOR[tab]) < anchorLeftPct(TAB_ANCHOR[prev]) ? "left" : "right";
-    setFlight(f => ({ key: f.key + 1, dir }));
+    // Launch a real flight: from where he is now to the new anchor, arcing up
+    // and leaning into the direction of travel. The loop interpolates it.
+    const to = anchorPx(dest);
+    m.fromX = m.x; m.fromY = m.y; m.toX = to.x; m.toY = to.y;
+    m.dir = (to.x >= m.fromX) ? 1 : -1;
+    m.arc = 80; m.ft = 0; m.flying = true;
     if (Math.random() < 0.4) {
       const map = { hoje: PARROT_HOJE, pauta: PARROT_PAUTA, mares: PARROT_MARES };
       const pool = map[tab];
       if (pool) {
-        const t = setTimeout(() => say(pickFresh(pool, recent.current), { anchor: TAB_ANCHOR[tab] }), 700);
-        return () => clearTimeout(t);
+        const tm = setTimeout(() => say(pickFresh(pool, recent.current), { anchor: dest }), 800);
+        return () => clearTimeout(tm);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -346,7 +548,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const todayKey = dayKeyOf(Date.now());
 
   // ── Completion reactions ── (each compares a live count to its previous value)
-  // Habit marked done today.
   const doneHabits = (store.state.habits || []).filter(h => h.log && h.log[todayKey]).length;
   const prevHabits = useRef(doneHabits);
   useEffect(() => {
@@ -355,7 +556,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneHabits]);
 
-  // New focus block started.
   const activeId = store.activeBlock ? store.activeBlock.id : null;
   const prevActive = useRef(activeId);
   useEffect(() => {
@@ -364,7 +564,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
-  // Focus block concluded today (a block went to "done" with a session today).
   const doneBlocks = (store.state.blocks || []).filter(b =>
     b.status === "done" && b.sessions && b.sessions.some(s => s.endedAt && dayKeyOf(s.endedAt) === todayKey)
   ).length;
@@ -375,7 +574,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneBlocks]);
 
-  // Intention completed today.
   const doneIntentions = ((store.state.today && store.state.today.intentions) || []).filter(i => i.done).length;
   const prevIntentions = useRef(doneIntentions);
   useEffect(() => {
@@ -384,7 +582,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneIntentions]);
 
-  // Nightly reflection first written.
   const hasReflection = !!(store.state.today && store.state.today.reflection && store.state.today.reflection.trim());
   const prevReflection = useRef(hasReflection);
   useEffect(() => {
@@ -393,7 +590,6 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasReflection]);
 
-  // Quarter goal ticked.
   const doneGoals = (store.state.goals || []).filter(g => g.done).length;
   const prevGoals = useRef(doneGoals);
   useEffect(() => {
@@ -405,24 +601,21 @@ function ParrotCompanion({ store, accentColor, tab }) {
   if (!enabled || sheetOpen) return null;   // stay out of the way of open sheets
 
   const a = PARROT_ANCHORS[anchorKey] || PARROT_ANCHORS.hoje;
+  const surf = !!a.surf;
+  const birdSize = surf ? 52 : 60;
 
-  // The bubble sits above or below the bird, and opens toward the side with room.
-  // NOTE: an absolutely-positioned bubble anchored only by `right`/`left` (no
-  // explicit width) shrinks-to-fit its containing block — here the ~54px bird
-  // wrapper — collapsing the text to one word per line. We give it a real width
-  // so the phrase wraps like a proper speech bubble. // PT: largura fixa para o
-  // balão embrulhar bem o texto (senão encolhia até caber só uma palavra).
+  // The bubble sits above the bird and opens toward the side with room. It needs
+  // an explicit width or it shrinks-to-fit the tiny bird wrapper, collapsing the
+  // text to one word per line. // PT: largura fixa para o balão embrulhar bem.
   const bubblePos = {
     position: "absolute",
     width: "min(15rem, 72vw)",
     ...(a.vert === "top" ? { top: "100%", marginTop: 10 } : { bottom: "100%", marginBottom: 10 }),
     ...(a.side === "left" ? { left: 0 }
-      : a.side === "center" ? { left: "50%", transform: "translateX(-50%)" }
+      : a.side === "center" ? { left: "50%", marginLeft: "calc(min(15rem,72vw) / -2)" }
       : { right: 0 }),
   };
-
-  // A little tail that points back at Pip: a rotated square tucked under the
-  // bubble's edge, on the side nearest the bird and the edge facing him.
+  // A little tail pointing back at Pip.
   const tailStyle = {
     position: "absolute", width: 12, height: 12, background: "var(--surface-dark)",
     transform: "rotate(45deg)", borderRadius: 2,
@@ -432,67 +625,47 @@ function ParrotCompanion({ store, accentColor, tab }) {
       : { right: 20 }),
   };
 
-  // The bird's own idle motion (class-based so it survives reduce-motion — see
-  // index.html): hops when happy, leans on the wave, floats otherwise.
-  const birdClass = bubble && bubble.happy ? "pip-hop" : a.surf ? "pip-tilt" : "pip-float";
-  const bird = (
-    <button onClick={sayIdle} className={"tap " + birdClass} aria-label={tr("papagaio")} style={{
-      pointerEvents: "auto", border: "none", background: "transparent", padding: 0, cursor: "pointer",
-      filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.25))",
-    }}>
-      <ParrotSvg accent={accentColor} size={a.surf ? 48 : 54}/>
-    </button>
-  );
-
-  // Which flight animation plays: the swoop-in on first mount, then a
-  // direction-aware "flung across" on each tab change.
-  const flightClass = flight.dir === "left" ? "pip-fly-l"
-    : flight.dir === "right" ? "pip-fly-r"
-    : "pip-in";
-
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 40, pointerEvents: "none" }}>
-      {/* Travel layer: `.pip-move` transitions top/left with an overshoot, so he
-          flies to the new tab's corner and bumps it. Keeps the surf centering
-          transform — which is why the fly-in/fly animations live one level in,
-          not here (a transform animation here would fight that centering). */}
-      <div className="pip-move" style={{
-        position: "absolute", top: a.top, left: a.left,
-        transform: a.surf ? "translateX(-50%)" : "none",
-      }}>
-        {/* Flight layer: re-keyed every flight so the CSS animation restarts. */}
-        <div key={flight.key} className={flightClass} style={{ transformOrigin: "center bottom" }}>
-          <div style={{ position: "relative" }}>
-            {bubble && (
-              <div style={bubblePos}>
-                <div className="pip-pop" style={{
-                  position: "relative", pointerEvents: "auto",
-                  background: "var(--surface-dark)", color: "var(--on-dark)",
-                  borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
-                  fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
-                  whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
-                }}>
-                  <span style={tailStyle} aria-hidden="true"/>
-                  {bubble.text}
-                  <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
-                    position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
-                    border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
-                    fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>×</button>
-                </div>
+    <div ref={fieldRef} style={{ position: "absolute", inset: 0, zIndex: 40, pointerEvents: "none" }}>
+      {/* Mover: the loop writes its translate (the fly-across). Starts at
+          opacity 0 so there's no one-frame flash at the corner before the first
+          transform lands; the loop flips it to 1 once positioned. */}
+      <div ref={moverRef} style={{ position: "absolute", left: 0, top: 0, opacity: 0, willChange: "transform" }}>
+        {/* Bob layer: vertical float + celebratory hop (bird and surf scene share
+            it so they rise and fall together). */}
+        <div ref={bobRef} style={{ position: "relative", willChange: "transform" }}>
+          {bubble && (
+            <div ref={bubbleRefEl} style={{ ...bubblePos, opacity: 0, transformOrigin: a.side === "left" ? "left bottom" : a.side === "center" ? "center bottom" : "right bottom" }}>
+              <div style={{
+                position: "relative", pointerEvents: "auto",
+                background: "var(--surface-dark)", color: "var(--on-dark)",
+                borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
+                fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
+                whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
+              }}>
+                <span style={tailStyle} aria-hidden="true"/>
+                {bubble.text}
+                <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
+                  position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
+                  border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
+                  fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                }}>×</button>
               </div>
-            )}
-            {a.surf ? (
-              // Drift sideways (the surfing run), and bob the bird, board and wave
-              // together so they rise and fall as one — Pip rides the crest.
-              <div className="pip-drift">
-                <div className="pip-surf" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  {bird}
-                  <SurfBoard accent={accentColor}/>
-                  <SurfWave/>
-                </div>
+            </div>
+          )}
+
+          {/* The bird itself (tappable) over the optional surf scene. */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <button onClick={sayIdle} className="tap" aria-label={tr("papagaio")} style={{
+              pointerEvents: "auto", border: "none", background: "transparent", padding: 0, cursor: "pointer",
+              filter: "drop-shadow(0 5px 9px rgba(0,0,0,0.28))", lineHeight: 0,
+            }}>
+              <div ref={tiltRef} style={{ willChange: "transform" }}>
+                <ParrotSvg accent={accentColor} size={birdSize}
+                  wingRef={wingRef} headRef={headRef} tailRef={tailRef} eyeRef={eyeRef}/>
               </div>
-            ) : bird}
+            </button>
+            {surf && <SurfScene accent={accentColor}/>}
           </div>
         </div>
       </div>
