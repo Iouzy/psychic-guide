@@ -6,13 +6,26 @@
 
   function noopHandle() { return { remove: function () {} }; }
 
-  var cap = typeof Capacitor !== "undefined" ? Capacitor : null;
+  var cap = (typeof Capacitor !== "undefined") ? Capacitor
+          : (typeof window !== "undefined" ? window.Capacitor : null);
   var native = null;
 
-  if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
-    var available = cap.isPluginAvailable ? cap.isPluginAvailable("FocusActivity") : !!(cap.Plugins && cap.Plugins.FocusActivity);
-    if (available) native = cap.Plugins.FocusActivity;
-  }
+  // Capacitor 6: a native-only custom plugin (registered via registerPlugin()
+  // in MainActivity) must be obtained from JS with Capacitor.registerPlugin().
+  // The previous code used the legacy `Capacitor.Plugins.FocusActivity` global
+  // gated by isPluginAvailable() — but that global is NOT populated for custom
+  // plugins without a bundler-side registration, so `native` was always null
+  // and every call silently no-opped (no notification ever, the in-app toggle
+  // stuck "off"). registerPlugin() returns a working proxy regardless.
+  try {
+    if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+      if (typeof cap.registerPlugin === "function") {
+        native = cap.registerPlugin("FocusActivity");
+      } else if (cap.Plugins && cap.Plugins.FocusActivity) {
+        native = cap.Plugins.FocusActivity;
+      }
+    }
+  } catch (e) { native = null; }
 
   // FocusActivity.start({ title, startedAt, elapsedMs })
   //   Launches the foreground service and shows the ongoing notification.

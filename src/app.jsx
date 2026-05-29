@@ -53,7 +53,7 @@ function PrefToggle({ label, sub, value, onChange, accentColor }) {
 // newer APK is available the user can tap to download it via the system
 // browser, which fixes the "package conflicts with an existing package" loop
 // some users hit when sideloading APKs through Firefox on MIUI.
-function UpdateChecker({ accentColor }) {
+function UpdateChecker({ accentColor, store }) {
   const build = window.PAUTA_BUILD || { ts: 0, run: 0 };
   const repo  = window.PAUTA_REPO  || "Iouzy/psychic-guide";
   const [state, setState] = useState({ kind: "idle" });
@@ -142,7 +142,20 @@ function UpdateChecker({ accentColor }) {
         <Icon.Chevron size={14}/>
       </button>
       {state.kind === "available" && (
-        <button onClick={() => window.open(state.url, "_blank")} className="tap"
+        <button onClick={async () => {
+            const url = state.url;
+            // Offer a safety backup before the user leaves to install the update.
+            const backup = await window.pautaConfirm({
+              message: tr("Guardar uma cópia de segurança antes de atualizar?"),
+              okLabel: tr("Cópia e atualizar"),
+              cancelLabel: tr("Só atualizar"),
+            });
+            if (backup && store) {
+              try { window.writeAutoBackup(store.serializeBackup()); } catch (e) {}
+              store.exportData();
+            }
+            setTimeout(() => window.open(url, "_blank"), backup ? 500 : 0);
+          }} className="tap"
           style={{
             background: accentColor, color: "var(--on-dark)", border: "none",
             borderRadius: 12, padding: "12px 14px", cursor: "pointer",
@@ -214,8 +227,9 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
     e.target.value = ""; // allow re-picking the same file
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      if (!confirm(tr("Importar este backup substitui todos os dados atuais. Continuar?"))) return;
+    reader.onload = async () => {
+      const ok = await window.pautaConfirm({ message: tr("Importar este backup substitui todos os dados atuais. Continuar?"), danger: true });
+      if (!ok) return;
       const res = store.importData(String(reader.result || ""));
       if (res.ok) setMsg({ kind: "ok", text: tr("Backup importado com sucesso.") });
       else setMsg({ kind: "err", text: res.error });
@@ -351,13 +365,20 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             title={tr("Importar dados")}
             subtitle={tr("Restaura a partir de um ficheiro .json.")}
             onClick={onPickFile}/>
+          <DataAction icon={<Icon.Upload size={16}/>} accentColor={accentColor}
+            title={tr("Enviar para a nuvem")}
+            subtitle={tr("Partilha a cópia para o Drive, Dropbox, Ficheiros…")}
+            onClick={async () => {
+              const res = await window.shareBackupFile(store.serializeBackup());
+              if (res && res.ok && !res.shared) setMsg({ kind: "ok", text: tr("Cópia transferida.") });
+            }}/>
           <input ref={fileRef} type="file" accept="application/json,.json"
             onChange={onFileChosen} style={{ display: "none" }}/>
         </DataGroup>
 
         {isNative && (
           <DataGroup label={tr("Aplicação")} icon={<Icon.Download size={13}/>}>
-            <UpdateChecker accentColor={accentColor}/>
+            <UpdateChecker accentColor={accentColor} store={store}/>
           </DataGroup>
         )}
 
@@ -389,12 +410,12 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
           <DataAction accentColor={accentColor}
             title={tr("Recarregar exemplo")}
             subtitle={tr("Substitui tudo por dados de demonstração.")}
-            onClick={() => { store.reseed(); }}/>
+            onClick={() => window.pautaConfirm({ message: tr("Recarregar dados de exemplo? Isto apaga o que tem agora."), danger: true }).then(ok => { if (ok) store.reseed(); })}/>
           <DataAction accentColor={accentColor} danger={true}
             icon={<Icon.Trash size={16}/>}
             title={tr("Apagar tudo")}
             subtitle={tr("Remove permanentemente todos os dados.")}
-            onClick={() => { store.resetAll(); }}/>
+            onClick={() => window.pautaConfirm({ message: tr("Apagar tudo e recomeçar? Isto não pode ser desfeito."), danger: true }).then(ok => { if (ok) store.resetAll(); })}/>
         </DataGroup>
 
         {msg && (
@@ -521,10 +542,11 @@ function AutoBackupControl({ store, accentColor }) {
     const d = Math.floor(h / 24); return trf("há {n} dias", { n: d });
   };
 
-  const restore = () => {
+  const restore = async () => {
     const s = window.readAutoBackup();
     if (!s || !s.backup) return;
-    if (!confirm(tr("Restaurar a última cópia automática substitui todos os dados atuais. Continuar?"))) return;
+    const ok = await window.pautaConfirm({ message: tr("Restaurar a última cópia automática substitui todos os dados atuais. Continuar?"), danger: true });
+    if (!ok) return;
     const res = store.importData(JSON.stringify(s.backup));
     setNote(res.ok ? tr("Cópia restaurada.") : (res.error || tr("Falhou.")));
   };
@@ -811,6 +833,8 @@ function App() {
             setTab("hoje");
           }}/>
       )}
+
+      <ConfirmHost/>
 
       <TweaksPanel title={tr("Tweaks")}>
         <TweakSection label={tr("Cor de destaque")}/>

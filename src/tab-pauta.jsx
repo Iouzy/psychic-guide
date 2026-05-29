@@ -161,9 +161,9 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
                 if (id) { concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }
               }}
             onCancel={() => {
-              if (confirm(tr("Descartar este bloco? Não fica guardado."))) {
-                deleteBlock(activeBlock.id);
-              }
+              const id = activeBlock.id;
+              window.pautaConfirm({ message: tr("Descartar este bloco? Não fica guardado."), danger: true })
+                .then(ok => { if (ok) deleteBlock(id); });
             }}
             onZen={() => setZen(true)}
           />

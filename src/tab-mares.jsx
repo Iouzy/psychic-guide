@@ -136,7 +136,7 @@ function TabMares({ store, accentColor }) {
               onLongPressEmpty={(dayKey, anchorRect) => setRespiroAt({ habitId: h.id, dayKey, anchorRect })}
               onUnmarkRespiro={(dayKey) => unmarkRespiro(h.id, dayKey)}
               onOpenDetail={() => setDetailHabitId(h.id)}
-              onRemove={() => { if (confirm(tr("Remover esta maré? Todo o histórico será perdido."))) removeHabit(h.id); }}
+              onRemove={() => { window.pautaConfirm({ message: tr("Remover esta maré? Todo o histórico será perdido."), danger: true }).then(ok => { if (ok) removeHabit(h.id); }); }}
               onUpdate={(patch) => updateHabit(h.id, patch)}
             />
           ))}
@@ -213,10 +213,10 @@ function TabMares({ store, accentColor }) {
         onUnmarkRespiro={(k) => detailHabitId && unmarkRespiro(detailHabitId, k)}
         onUpdate={(patch) => detailHabitId && updateHabit(detailHabitId, patch)}
         onRemove={() => {
-          if (detailHabitId && confirm(tr("Remover esta maré? Todo o histórico será perdido."))) {
-            removeHabit(detailHabitId);
-            setDetailHabitId(null);
-          }
+          if (!detailHabitId) return;
+          const id = detailHabitId;
+          window.pautaConfirm({ message: tr("Remover esta maré? Todo o histórico será perdido."), danger: true })
+            .then(ok => { if (ok) { removeHabit(id); setDetailHabitId(null); } });
         }}
       />
       <RespiroPopover
@@ -614,7 +614,7 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
 
       {/* Month strip — pulse of days */}
       <div style={{ position: "relative" }}>
-        <div ref={stripRef} style={{ display: "flex", gap: 3, alignItems: "center", padding: "4px 0", overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div ref={stripRef} data-noswipe="true" style={{ display: "flex", gap: 3, alignItems: "center", padding: "4px 0", overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {days.map((day) => (
             <DayCell
               key={day.key}
