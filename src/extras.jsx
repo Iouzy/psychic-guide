@@ -587,6 +587,71 @@ function GoalsSection({ store, accentColor }) {
   );
 }
 
+// ─── Notificações (capacidade + disparo, multi-plataforma) ───
+// O problema do "este dispositivo não suporta notificações": dentro da WebView
+// nativa do Android (o APK), `window.Notification` NÃO existe — logo a app dizia
+// que o telemóvel não suportava, quando o que falta é a API web, não o sistema.
+// Resolvemos detectando e disparando pelo melhor canal disponível:
+//   1) o plugin nativo FocusActivity (quando corre dentro da app),
+//   2) o service worker numa PWA instalada (mais fiável no Android que `new
+//      Notification`),
+//   3) `new Notification` como último recurso (browser de secretária).
+
+// A correr dentro do APK nativo (Capacitor)?
+function isNativeApp() {
+  return !!(window.FocusActivity && window.FocusActivity.isNative);
+}
+// O service worker consegue mostrar notificações? (PWA instalada)
+function swNotifyAvailable() {
+  return !!(navigator.serviceWorker && window.ServiceWorkerRegistration &&
+    "showNotification" in window.ServiceWorkerRegistration.prototype);
+}
+// Há ALGUM canal de notificações neste dispositivo?
+function notifySupported() {
+  return isNativeApp() || (typeof Notification !== "undefined") || swNotifyAvailable();
+}
+// Pede a permissão pelo canal certo. Devolve { ok, reason? }.
+async function enableNotifications() {
+  if (isNativeApp()) {
+    // Android: POST_NOTIFICATIONS através do plugin nativo.
+    try {
+      const r = await window.FocusActivity.requestPermission();
+      return (r && r.granted) ? { ok: true } : { ok: false, reason: "denied" };
+    } catch (e) { return { ok: false, reason: "denied" }; }
+  }
+  if (typeof Notification === "undefined" && !swNotifyAvailable()) {
+    return { ok: false, reason: "unsupported" };
+  }
+  let perm = (typeof Notification !== "undefined") ? Notification.permission : "default";
+  if (perm === "default" && typeof Notification !== "undefined") {
+    try { perm = await Notification.requestPermission(); } catch (e) {}
+  }
+  return perm === "granted" ? { ok: true } : { ok: false, reason: "denied" };
+}
+// Dispara uma notificação pelo melhor canal. Devolve true se foi mostrada.
+async function fireReminder(title, body, tag) {
+  // 1) Nativo (funciona na WebView, onde as notificações web não funcionam).
+  if (isNativeApp() && typeof window.FocusActivity.notify === "function") {
+    try { await window.FocusActivity.notify({ title, body, tag }); return true; } catch (e) {}
+  }
+  // 2) PWA instalada: pelo service worker.
+  if (swNotifyAvailable()) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body, tag, renotify: true,
+        icon: "./icons/icon-192.png", badge: "./icons/icon-192.png",
+      });
+      return true;
+    } catch (e) {}
+  }
+  // 3) Último recurso: notificação simples da página.
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    try { new Notification(title, { body, tag }); return true; } catch (e) {}
+  }
+  return false;
+}
+
 // ─── Lembretes locais (sem servidor; só com a app aberta) ───
 // Dispara notificações enquanto a página está aberta: nudge de hábitos
 // pendentes e da reflexão noturna, uma vez por dia, à hora preferida.
@@ -596,10 +661,10 @@ function useReminders(store) {
   const rem = prefs.reminders || {};
   useEffect(() => {
     if (!rem.enabled) return;
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!notifySupported()) return;
 
     const firedKey = (kind, dayKey) => "pauta.reminded." + kind + "." + dayKey;
-    const tryFire = () => {
+    const tryFire = async () => {
       const now = new Date();
       const dayKey = dayKeyOf(now.getTime());
       const hhmm = pad(now.getHours()) + ":" + pad(now.getMinutes());
@@ -610,28 +675,26 @@ function useReminders(store) {
           habitIsActiveOn(h, dayKey) && !(h.log && h.log[dayKey]) && !(h.respiros && h.respiros[dayKey])
         );
         if (pending.length > 0 && !localStorage.getItem(firedKey("habits", dayKey))) {
-          try {
-            new Notification(tr("Pauta · marés de hoje"), {
-              body: pending.length === 1
-                ? trf('Falta "{name}".', { name: pending[0].name })
-                : trf("Faltam {n} hábitos hoje.", { n: pending.length }),
-              tag: "pauta-habits",
-            });
-            localStorage.setItem(firedKey("habits", dayKey), "1");
-          } catch (e) {}
+          const ok = await fireReminder(
+            tr("Pauta · marés de hoje"),
+            pending.length === 1
+              ? trf('Falta "{name}".', { name: pending[0].name })
+              : trf("Faltam {n} hábitos hoje.", { n: pending.length }),
+            "pauta-habits"
+          );
+          if (ok) localStorage.setItem(firedKey("habits", dayKey), "1");
         }
       }
       // Evening reflection nudge
       if (rem.reflectionTime && hhmm >= rem.reflectionTime) {
         const noReflection = !(state.today && state.today.dayKey === dayKey && state.today.reflection && state.today.reflection.trim());
         if (noReflection && !localStorage.getItem(firedKey("reflection", dayKey))) {
-          try {
-            new Notification(tr("Pauta · reflexão da noite"), {
-              body: tr("O que valeu hoje? Escreva uma linha."),
-              tag: "pauta-reflection",
-            });
-            localStorage.setItem(firedKey("reflection", dayKey), "1");
-          } catch (e) {}
+          const ok = await fireReminder(
+            tr("Pauta · reflexão da noite"),
+            tr("O que valeu hoje? Escreva uma linha."),
+            "pauta-reflection"
+          );
+          if (ok) localStorage.setItem(firedKey("reflection", dayKey), "1");
         }
       }
     };
@@ -883,4 +946,5 @@ Object.assign(window, {
   BestHourChart, CorrelationList, FocusCalendar, WeekReview, InsightsSheet,
   GoalsSection, useReminders, useFocusActivity,
   useAutoBackup, useWakeLock, playChime, shareDayCard, shareBackupFile,
+  notifySupported, enableNotifications, fireReminder,
 });

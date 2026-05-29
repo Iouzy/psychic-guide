@@ -180,17 +180,17 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
   const timeRow = { display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-2)" };
   const timeInput = { border: "1px solid var(--rule)", background: "var(--paper-2)", borderRadius: 8, padding: "6px 10px", fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink)" };
 
-  // Enabling reminders requests notification permission first.
+  // Enabling reminders requests notification permission through the right
+  // channel (native plugin inside the app, web API in the browser/PWA) — so it
+  // no longer wrongly claims "this device doesn't support notifications" on
+  // phones whose WebView simply lacks the web Notification API.
   const onToggleReminders = async (next) => {
     if (next) {
-      if (typeof Notification === "undefined") {
-        setMsg({ kind: "err", text: tr("Este dispositivo não suporta notificações.") });
-        return;
-      }
-      let perm = Notification.permission;
-      if (perm === "default") { try { perm = await Notification.requestPermission(); } catch (e) {} }
-      if (perm !== "granted") {
-        setMsg({ kind: "err", text: tr("Permissão de notificações negada.") });
+      const res = await window.enableNotifications();
+      if (!res.ok) {
+        setMsg({ kind: "err", text: res.reason === "unsupported"
+          ? tr("Este dispositivo não suporta notificações.")
+          : tr("Permissão de notificações negada.") });
         store.setReminderPref("enabled", false);
         return;
       }
@@ -838,7 +838,7 @@ function App() {
           }}/>
       )}
 
-      {prefs.onboardingSeen && <ParrotCompanion store={store} accentColor={accentColor}/>}
+      {prefs.onboardingSeen && <ParrotCompanion store={store} accentColor={accentColor} tab={tab}/>}
       <ConfirmHost/>
 
       <TweaksPanel title={tr("Tweaks")}>
