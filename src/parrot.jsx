@@ -155,14 +155,16 @@ const PARROT_REACT_GOAL = [
 ];
 
 // Where Pip rests/flies, as fractions of the frame so they scale with size.
-// He lives in the lower, usually-empty half so he never sits on the header or
-// the cards, and each tab has a distinct spot so switching tabs sends him on a
-// visible flight across the screen. `surf` rides a wave at the bottom-centre.
-// `side`/`vert` only steer which way the speech bubble opens.
+// He lives LOW in each screen — the genuinely empty band above the tab bar — so
+// neither the bird nor his (upward-opening) speech bubble ever covers the
+// starter chips, "adicionar" buttons or the reflection card up in the content.
+// Each tab has a distinct spot so switching tabs sends him on a visible flight
+// across the screen. `surf` rides a wave at the bottom-centre (a touch higher so
+// the wave clears the tab bar). `side`/`vert` only steer the bubble's direction.
 const PARROT_ANCHORS = {
-  hoje:  { fx: 0.68, fy: 0.60, side: "right",  vert: "bottom" },
-  pauta: { fx: 0.16, fy: 0.60, side: "left",   vert: "bottom" },
-  surf:  { fx: 0.50, fy: 0.72, side: "center", vert: "bottom", surf: true },
+  hoje:  { fx: 0.74, fy: 0.80, side: "right",  vert: "bottom" },
+  pauta: { fx: 0.18, fy: 0.80, side: "left",   vert: "bottom" },
+  surf:  { fx: 0.50, fy: 0.75, side: "center", vert: "bottom", surf: true },
 };
 // Resting anchor for each tab.
 const TAB_ANCHOR = { hoje: "hoje", pauta: "pauta", mares: "surf" };
@@ -171,99 +173,126 @@ const TAB_ANCHOR = { hoje: "hoje", pauta: "pauta", mares: "surf" };
 // parts about. They MUST match where those parts are drawn in ParrotSvg.
 const WING_PIVOT = [35, 33];   // shoulder
 const HEAD_PIVOT = [40, 30];   // neck
-const TAIL_PIVOT = [25, 46];   // tail base
+const TAIL_PIVOT = [34, 46];   // tail base
 const EYE_CY     = 21;         // eye centre Y, for the blink squash
 
 // ── Easing ──
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 
-// Articulated parrot, facing left. The body uses the live accent colour. Each
-// movable part is its own <g> with a ref so the rAF loop can rotate it about a
-// fixed pivot (via the SVG `transform` attribute — robust across browsers and
-// immune to reduce-motion). Drawn in a 72×72 viewBox.
+// Articulated parrot, facing left — a two-tone tropical bird: terracotta body in
+// the live accent, a teal/blue wing + tail flash, a yellow hooked beak and a
+// swept-back crest. Each movable part is its own <g> with a ref so the rAF loop
+// can rotate it about a fixed pivot (via the SVG `transform` attribute — robust
+// across browsers and immune to reduce-motion). Drawn in a 72×72 viewBox.
 function ParrotSvg({ accent, size, wingRef, headRef, tailRef, eyeRef }) {
-  const shade = "rgba(0,0,0,0.20)";    // soft shading on the wing
-  const belly = "#F4E4C1";             // warm cream chest
+  const shade   = "rgba(0,0,0,0.18)";  // soft shading
+  const belly   = "#F4E4C1";           // warm cream chest/cheek
+  const teal    = "#2BA6C9";           // teal/blue wing + tail flash
+  const tealDk  = "#1B7F9E";           // darker teal feather edges
+  const tealLt  = "#8FD8E8";           // light leading edge
+  const beak    = "#FFC83D";           // yellow hooked beak
+  const beakDk  = "#E3A22A";           // beak shading / lower mandible
+  const foot    = "#E8A23D";           // legs + toes
   return (
     <svg width={size} height={size} viewBox="0 0 72 72" fill="none" aria-hidden="true"
       style={{ display: "block", overflow: "visible" }}>
-      {/* tail — sways from its base */}
+      {/* long parrot tail — accent body with blue tips; sways from its base */}
       <g ref={tailRef}>
-        <path d="M28 44 C18 50 12 58 16 62 C20 60 26 56 32 50 Z" fill={accent}/>
-        <path d="M28 46 C20 51 15 57 17 60" stroke={shade} strokeWidth="1.4" fill="none" opacity="0.5"/>
+        <path d="M30 44 C28 54 29 63 33 71 C37 63 40 54 42 46 C38 44 33 43 30 44 Z" fill={accent}/>
+        <path d="M34 49 C34 57 34 64 34 70" stroke={shade} strokeWidth="0.9" fill="none" opacity="0.4"/>
+        <path d="M38 49 C38 56 37 62 36 67" stroke={shade} strokeWidth="0.8" fill="none" opacity="0.3"/>
+        <path d="M33 71 C31 66 31 61 32 57 C34 61 34 66 35 70 Z" fill={teal}/>
+        <path d="M36 67 C35 63 36 59 37 56 C38 60 38 64 37 66 Z" fill={teal} opacity="0.92"/>
       </g>
       {/* body */}
-      <ellipse cx="36" cy="40" rx="15" ry="17" fill={accent}/>
-      <ellipse cx="40" cy="44" rx="9.5" ry="12" fill={belly}/>
-      {/* feet (subtle; mostly read on the surfboard) */}
-      <path d="M33 56 l0 4 M41 56 l0 4" stroke="#E8A23D" strokeWidth="2" strokeLinecap="round"/>
-      {/* wing — separate, pivots at the shoulder so Pip actually flaps */}
-      <g ref={wingRef}>
-        <path d="M35 31 C24 33 20 46 28 55 C34 50 38 40 37 32 Z" fill={accent}/>
-        <path d="M35 32 C26 34 22 45 28 53" stroke={shade} strokeWidth="1.6" fill="none" opacity="0.45"/>
-        <path d="M33 38 C29 41 27 47 30 51" stroke={shade} strokeWidth="1.2" fill="none" opacity="0.35"/>
+      <ellipse cx="36" cy="41" rx="14.5" ry="17" fill={accent}/>
+      <ellipse cx="39" cy="45" rx="9" ry="12" fill={belly}/>
+      {/* feet — little legs + gripping toes (read standing on the surfboard) */}
+      <g stroke={foot} strokeWidth="2.1" strokeLinecap="round" fill="none">
+        <path d="M33 54 L33 59"/>
+        <path d="M40 54 L40 59"/>
+        <path d="M33 59 l-2.6 1.8 M33 59 l0 2.3 M33 59 l2.6 1.8"/>
+        <path d="M40 59 l-2.6 1.8 M40 59 l0 2.3 M40 59 l2.6 1.8"/>
       </g>
-      {/* head group — gentle nod */}
+      {/* wing — teal flash, separate <g> pivoting at the shoulder so Pip flaps */}
+      <g ref={wingRef}>
+        <path d="M35 30 C23 32 19 46 27 56 C33 51 37 41 37 31 Z" fill={teal}/>
+        <path d="M35 31 C26 34 22 45 27 54" stroke={tealDk} strokeWidth="1.5" fill="none" opacity="0.75"/>
+        <path d="M33 37 C29 40 27 47 30 52" stroke={tealDk} strokeWidth="1.2" fill="none" opacity="0.6"/>
+        <path d="M35 30 C30 31 26 35 24 40" stroke={tealLt} strokeWidth="1.3" fill="none" opacity="0.65"/>
+      </g>
+      {/* head group — gentle nod (crest, beak and eye move with it) */}
       <g ref={headRef}>
-        <circle cx="41" cy="22" r="13" fill={accent}/>
-        {/* crest feathers */}
-        <path d="M43 9 C45 3 51 4 49 10 C48 13 45 13 42 12 Z" fill={accent}/>
-        <path d="M38 9 C39 4 44 4 43 9 C42 12 40 12 38 11 Z" fill={accent} opacity="0.85"/>
-        {/* beak (faces left) */}
-        <path d="M29 21 C20 21 18 28 25 30 C30 31 32 27 32 24 Z" fill="#E8A23D"/>
-        <path d="M25 30 C27 33 31 33 31 28" fill="#C9852B"/>
+        {/* swept-back crest */}
+        <path d="M42 12 C47 4 53 3 52 9 C50 13 46 14 42 13 Z" fill={accent}/>
+        <path d="M39 11 C43 3 49 3 47 9 C46 13 42 13 39 12 Z" fill={accent} opacity="0.92"/>
+        <path d="M37 12 C39 5 44 5 44 10 C43 13 40 13 37 13 Z" fill={accent} opacity="0.84"/>
+        <circle cx="41" cy="21" r="12.5" fill={accent}/>
+        {/* subtle cream cheek patch */}
+        <ellipse cx="36" cy="24.5" rx="4.5" ry="3.2" fill={belly} opacity="0.7"/>
+        {/* yellow hooked beak (faces left) */}
+        <path d="M34 15 C28 13 22 16 19 20 C18 22.5 20 26 23 25.5 C23 23.5 25 21.5 29 21 C31 20.5 33 17 34 15 Z" fill={beak}/>
+        <path d="M23 25.5 C25 27.5 30 27 31 23.5 C29 24.8 26 24.8 23.6 24.2 Z" fill={beakDk}/>
+        <path d="M34 15 C28 13 22 16 19 20" stroke={beakDk} strokeWidth="0.7" fill="none" opacity="0.5"/>
         {/* eye — its own group so the blink can squash it shut */}
         <g ref={eyeRef}>
-          <circle cx="44" cy={EYE_CY} r="5.2" fill="#fff"/>
-          <circle cx="45" cy={EYE_CY} r="2.5" fill="#1A1815"/>
-          <circle cx="46.4" cy={EYE_CY - 1.4} r="0.9" fill="#fff"/>
+          <circle cx="44" cy={EYE_CY} r="5" fill="#fff"/>
+          <circle cx="45" cy={EYE_CY} r="2.4" fill="#1A1815"/>
+          <circle cx="46.3" cy={EYE_CY - 1.3} r="0.9" fill="#fff"/>
         </g>
       </g>
     </svg>
   );
 }
 
-// The wave + surfboard Pip rides on the Marés tab. A clean, characterful
-// composition: layered sea-blue water with a curling barrel on the left, a
-// thick white foam crest and spray, and a classic shortboard (pointed nose,
-// rounded tail, cream deck, accent rails, centre stringer, a fin) for him to
-// stand on. Water is fixed blues (not the accent) so it always reads as a wave;
-// the board takes the live accent on its rails. Bright on the dark Marés bg.
-function SurfScene({ accent, width = 128 }) {
-  const deep = "#1F6E94";   // deepest water
+// The wave + surfboard Pip rides on the Marés tab, stacked so it reads cleanly:
+// bird ON the board, board ON the wave. The wave is one gradient swell (light
+// surface → deep, fading to transparent at the bottom) with soft, curved sides
+// and a thick foam crest + curl, so it NEVER shows the SVG's rectangular box.
+// The board is a classic shortboard (pointed nose, rounded tail, cream deck,
+// accent rails, centre stringer, a fin); its top edge meets Pip's feet — the
+// negative marginTop tucks the deck right under them. Water stays fixed blues so
+// it always reads as a wave; the board takes the live accent. Bright on dark.
+function SurfScene({ accent, width = 132 }) {
+  const deep = "#1F6E94";   // deep water
   const mid  = "#2E93BE";   // mid water
   const sea  = "#46B4D8";   // surface water
+  const deck = "#FFF1CF";   // cream deck
   return (
-    <svg width={width} height={78} viewBox="0 0 128 78" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -10, overflow: "visible" }}>
-      {/* ── the board (drawn first; the bird stands on it, wave wraps behind) ── */}
-      {/* shadow under the board on the water */}
-      <ellipse cx="64" cy="30" rx="40" ry="7" fill="#0A2A3A" opacity="0.28"/>
-      {/* board body: pointed nose (left), rounded tail (right) */}
-      <path d="M22 27 C30 21 50 19 70 19 C92 19 104 22 106 26 C104 30 92 33 70 33 C50 33 30 32 22 27 Z" fill={accent}/>
-      {/* cream deck panel */}
-      <path d="M30 26.5 C40 22.5 54 21.5 70 21.5 C88 21.5 98 23.5 99 26 C98 28.5 88 30.5 70 30.5 C54 30.5 40 30 30 26.5 Z" fill="#FFF1CF"/>
-      {/* centre stringer */}
-      <line x1="25" y1="26.5" x2="104" y2="26.5" stroke={accent} strokeWidth="1.2" opacity="0.6"/>
+    <svg width={width} height={90} viewBox="0 0 132 90" fill="none" aria-hidden="true"
+      style={{ display: "block", marginTop: -18, overflow: "visible" }}>
+      <defs>
+        {/* vertical fade: bright at the crest, deep below, transparent at the
+            very bottom so the water dissolves instead of ending in a hard edge */}
+        <linearGradient id="pipSea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={sea}/>
+          <stop offset="0.45" stopColor={mid}/>
+          <stop offset="0.78" stopColor={deep}/>
+          <stop offset="1" stopColor={deep} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {/* ── wave: one gradient swell, soft points + faded bottom (no rectangle) ── */}
+      <path d="M8 40 C24 31 44 28 66 28 C88 28 108 31 124 40 C122 64 98 80 66 80 C34 80 10 64 8 40 Z" fill="url(#pipSea)"/>
+      {/* faint water texture (short arcs, never full rings) */}
+      <path d="M30 50 C44 47 58 46 72 47" stroke="#fff" strokeWidth="1" fill="none" opacity="0.32"/>
+      <path d="M54 60 C68 57 82 57 98 60" stroke="#fff" strokeWidth="1" fill="none" opacity="0.24"/>
+      {/* thick foam crest just under the board */}
+      <path d="M8 40 C24 31 44 28 66 28 C88 28 108 31 124 40" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.96"/>
+      {/* curling lip on the left, where the nose points */}
+      <path d="M8 40 C1 33 7 26 15 29 C10 31 10 36 15 40 C12 41 10 41 8 40 Z" fill="#fff" opacity="0.96"/>
+      {/* spray flecks */}
+      <circle cx="36" cy="31" r="1.5" fill="#fff" opacity="0.9"/>
+      <circle cx="66" cy="27" r="1.4" fill="#fff" opacity="0.9"/>
+      <circle cx="98" cy="31" r="1.5" fill="#fff" opacity="0.85"/>
+      {/* shadow the board casts on the water */}
+      <ellipse cx="66" cy="25" rx="44" ry="4.4" fill="#06283a" opacity="0.22"/>
+      {/* ── surfboard: pointed nose (left), rounded tail (right); Pip stands here ── */}
+      <path d="M8 17 C34 10 56 9 78 10 C100 11 116 13 124 18 C116 22 100 24 78 25 C56 25 34 24 8 17 Z" fill={accent}/>
+      <path d="M20 16 C42 11.5 58 12 78 12.5 C98 13 110 14.5 117 17.5 C110 20.5 98 22 78 22.5 C58 23 42 21.5 20 16 Z" fill={deck}/>
+      <line x1="13" y1="16.6" x2="119" y2="17.8" stroke={accent} strokeWidth="1" opacity="0.5"/>
       {/* fin under the tail */}
-      <path d="M96 32 C99 37 101 39 104 39 C103 35 101 32 99 31 Z" fill={accent} opacity="0.9"/>
-
-      {/* ── the wave (wraps in front of the board's lower edge for depth) ── */}
-      <path d="M0 44 C20 34 36 50 58 42 C80 34 96 50 128 38 L128 78 L0 78 Z" fill={deep} opacity="0.95"/>
-      <path d="M0 49 C18 40 34 55 56 47 C80 39 98 54 128 43 L128 78 L0 78 Z" fill={mid}/>
-      <path d="M0 55 C16 47 34 60 58 53 C82 46 100 59 128 50 L128 78 L0 78 Z" fill={sea}/>
-      {/* curling barrel on the left where the board points */}
-      <path d="M6 47 C-1 37 10 28 24 31 C16 33 12 40 17 47 C13 49 9 49 6 47 Z" fill="#fff" opacity="0.95"/>
-      <path d="M11 44 C8 39 13 35 19 36 C14 38 13 42 16 45 Z" fill={sea} opacity="0.85"/>
-      {/* thick foam crest tracing the swell */}
-      <path d="M0 49 C18 40 34 55 56 47 C80 39 98 54 128 43"
-        stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.95"/>
-      {/* spray / foam flecks */}
-      <circle cx="40" cy="50" r="1.6" fill="#fff" opacity="0.9"/>
-      <circle cx="74" cy="46" r="1.3" fill="#fff" opacity="0.85"/>
-      <circle cx="100" cy="50" r="1.7" fill="#fff" opacity="0.9"/>
-      <circle cx="22" cy="40" r="1.2" fill="#fff" opacity="0.8"/>
+      <path d="M111 24 C113 30 116 32 119 31 C118 27 115 24 113 23 Z" fill={accent} opacity="0.9"/>
     </svg>
   );
 }
@@ -626,39 +655,51 @@ function ParrotCompanion({ store, accentColor, tab }) {
   };
 
   return (
-    <div ref={fieldRef} style={{ position: "absolute", inset: 0, zIndex: 40, pointerEvents: "none" }}>
+    <div ref={fieldRef} style={{
+      position: "absolute", inset: 0, zIndex: 40, pointerEvents: "none",
+      WebkitUserSelect: "none", userSelect: "none",
+      WebkitTouchCallout: "none", WebkitTapHighlightColor: "transparent",
+    }}>
       {/* Mover: the loop writes its translate (the fly-across). Starts at
           opacity 0 so there's no one-frame flash at the corner before the first
           transform lands; the loop flips it to 1 once positioned. */}
       <div ref={moverRef} style={{ position: "absolute", left: 0, top: 0, opacity: 0, willChange: "transform" }}>
-        {/* Bob layer: vertical float + celebratory hop (bird and surf scene share
-            it so they rise and fall together). */}
-        <div ref={bobRef} style={{ position: "relative", willChange: "transform" }}>
-          {bubble && (
-            <div ref={bubbleRefEl} style={{ ...bubblePos, opacity: 0, transformOrigin: a.side === "left" ? "left bottom" : a.side === "center" ? "center bottom" : "right bottom" }}>
-              <div style={{
-                position: "relative", pointerEvents: "auto",
-                background: "var(--surface-dark)", color: "var(--on-dark)",
-                borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
-                fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
-                whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
-              }}>
-                <span style={tailStyle} aria-hidden="true"/>
-                {bubble.text}
-                <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
-                  position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
-                  border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
-                  fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                }}>×</button>
-              </div>
+        {/* Speech bubble — deliberately OUTSIDE the bob layer: only the bird
+            should bob. If the bubble bobbed too, the text translated every frame
+            and read as jitter. It still rides the fly-across (it's inside
+            moverRef) and pops in once via the loop; at rest it holds still. */}
+        {bubble && (
+          <div ref={bubbleRefEl} style={{ ...bubblePos, opacity: 0, transformOrigin: a.side === "left" ? "left bottom" : a.side === "center" ? "center bottom" : "right bottom" }}>
+            <div style={{
+              position: "relative", pointerEvents: "auto",
+              background: "var(--surface-dark)", color: "var(--on-dark)",
+              borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
+              fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
+              whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
+            }}>
+              <span style={tailStyle} aria-hidden="true"/>
+              {bubble.text}
+              <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
+                position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
+                border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
+                fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              }}>×</button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* The bird itself (tappable) over the optional surf scene. */}
+        {/* Bob layer: vertical float + celebratory hop — ONLY the bird and the
+            surf scene live here, so they rise and fall together. */}
+        <div ref={bobRef} style={{ position: "relative", willChange: "transform" }}>
+          {/* The bird itself (tappable) over the optional surf scene. The webkit
+              resets kill the Android WebView tap-highlight / selection box that
+              otherwise flashed a blue square when you tapped Pip. */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <button onClick={sayIdle} className="tap" aria-label={tr("papagaio")} style={{
               pointerEvents: "auto", border: "none", background: "transparent", padding: 0, cursor: "pointer",
-              filter: "drop-shadow(0 5px 9px rgba(0,0,0,0.28))", lineHeight: 0,
+              filter: "drop-shadow(0 5px 9px rgba(0,0,0,0.28))", lineHeight: 0, touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent", WebkitTouchCallout: "none",
+              WebkitUserSelect: "none", userSelect: "none",
             }}>
               <div ref={tiltRef} style={{ willChange: "transform" }}>
                 <ParrotSvg accent={accentColor} size={birdSize}
