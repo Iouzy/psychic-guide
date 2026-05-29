@@ -101,8 +101,9 @@ class FocusActivityPlugin : Plugin() {
     // has permanently denied (checked "never ask again" or denied twice on Android 13+).
     @PluginMethod
     fun shouldShowRationale(call: PluginCall) {
-        val show = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
+        val act = activity
+        val show = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && act != null) {
+            ActivityCompat.shouldShowRequestPermissionRationale(act, Manifest.permission.POST_NOTIFICATIONS)
         } else false
         call.resolve(JSObject().put("show", show))
     }
