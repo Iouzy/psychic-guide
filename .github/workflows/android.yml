@@ -72,7 +72,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: Pauta (latest build)
-          body: Automatically built Android APK. Download pauta.apk below and install it on your phone.
+          # The build number is advertised here so the in-app update checker can
+          # compare exactly — GitHub freezes a rolling release's published_at, so
+          # timestamps are unreliable. Keep the literal "build <n>" format:
+          # UpdateChecker parses it from the release name/body.
+          name: Pauta · build ${{ github.run_number }}
+          body: |
+            Automatically built Android APK (build ${{ github.run_number }}).
+            Download pauta.apk below and install it on your phone.
           files: pauta.apk
           fail_on_unmatched_files: true

@@ -123,6 +123,51 @@ const I18N_EN = {
   "Exercício": "Exercise",
   "Dormir cedo": "Sleep early",
   "Começar um bloco de foco": "Start a focus block",
+
+  // ─── Focus prefs / focus mode / presets ───
+  "Foco": "Focus",
+  "Manter ecrã ligado": "Keep screen on",
+  "Não deixa o telemóvel adormecer durante um bloco.": "Stops the phone sleeping during a block.",
+  "Som ao concluir": "Sound on finish",
+  "Um sino suave ao terminar um bloco ou atingir a meta.": "A soft chime when a block ends or a target is hit.",
+  "duração (opcional)": "duration (optional)",
+  "Sem limite": "No limit",
+  "meta {n} min": "{n} min target",
+  "meta cumprida": "target reached",
+  "modo foco": "focus mode",
+  "toque para sair": "tap to exit",
+
+  // ─── Carry-over ───
+  "Trazer 1 intenção de ontem": "Bring 1 intention from yesterday",
+  "Trazer {n} intenções de ontem": "Bring {n} intentions from yesterday",
+
+  // ─── Auto-backup ───
+  "Cópia automática": "Auto-backup",
+  "Guarda uma cópia local que pode restaurar com um toque.": "Keeps a local copy you can restore in one tap.",
+  "Nunca": "Never",
+  "Dia": "Day",
+  "Semana": "Week",
+  "Última cópia: {t}": "Last copy: {t}",
+  "Ainda sem cópia.": "No copy yet.",
+  "agora mesmo": "just now",
+  "há {n} min": "{n} min ago",
+  "há {n} h": "{n} h ago",
+  "há {n} dias": "{n} days ago",
+  "Restaurar a última cópia automática substitui todos os dados atuais. Continuar?": "Restoring the last auto-backup replaces all current data. Continue?",
+  "Cópia restaurada.": "Copy restored.",
+  "Falhou.": "Failed.",
+  "Restaurar": "Restore",
+  "Transferir": "Download",
+
+  // ─── Share day card ───
+  "partilhar o dia": "share the day",
+  "partilhar": "share",
+  "em foco hoje": "in focus today",
+  "intenções concluídas": "intentions completed",
+  "escrito à mão, todos os dias": "written by hand, every day",
+
+  // ─── Update checker ───
+  "Atualização disponível: build {n}": "Update available: build {n}",
 };
 
 // === I18N_EN_BULK_BEGIN === (entries collected from the rest of the app)

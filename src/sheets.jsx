@@ -5,10 +5,12 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
   const [title, setTitle] = useState("");
   const [selectedIntention, setSelectedIntention] = useState(null);
   const [project, setProject] = useState("");
+  const [targetMin, setTargetMin] = useState(0); // 0 = no target; else a soft goal
 
   useEffect(() => {
     if (open) {
       setProject("");
+      setTargetMin(0);
       if (prefilledIntention) {
         setTitle(prefilledIntention.text);
         setSelectedIntention(prefilledIntention.id);
@@ -26,7 +28,7 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
 
   const submit = () => {
     if (!title.trim()) return;
-    onStart(title.trim(), selectedIntention, project.trim() || null);
+    onStart(title.trim(), selectedIntention, project.trim() || null, targetMin);
   };
 
   return (
@@ -109,6 +111,28 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
               ))}
             </div>
           )}
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
+            {tr("duração (opcional)")}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[{ m: 0, l: tr("Sem limite") }, { m: 25, l: "25 min" }, { m: 50, l: "50 min" }, { m: 90, l: "90 min" }].map(o => {
+              const sel = targetMin === o.m;
+              return (
+                <button key={o.m} onClick={() => setTargetMin(o.m)} className="tap" type="button"
+                  aria-pressed={sel}
+                  style={{
+                    border: "1px solid " + (sel ? accentColor : "var(--rule)"),
+                    background: sel ? `${accentColor}11` : "transparent",
+                    color: sel ? accentColor : "var(--ink-2)",
+                    borderRadius: 999, padding: "7px 14px", fontSize: 13, cursor: "pointer",
+                    fontFamily: "var(--sans)",
+                  }}>{o.l}</button>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ marginTop: 22, display: "flex", gap: 10 }}>

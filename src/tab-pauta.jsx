@@ -12,6 +12,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
   const [sheetEdit, setSheetEdit] = useState(null); // blockId
   const [sheetHistory, setSheetHistory] = useState(false);
   const [filter, setFilter] = useState(null); // { kind:"block"|"intention", id, label }
+  const [zen, setZen] = useState(false); // full-screen distraction-free timer
 
   // Open start sheet from Hoje
   useEffect(() => {
@@ -60,25 +61,30 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
     [blocks, dayK]);
 
   // ─ Handlers ─
-  const handleStart = (title, linkedToId, project) => {
+  const handleStart = (title, linkedToId, project, targetMin) => {
+    const opts = { project, targetMin };
     if (activeBlock) {
       // auto-pause current then start new
       pauseActive("");
-      setTimeout(() => startBlock(title, linkedToId, { project }), 50);
+      setTimeout(() => startBlock(title, linkedToId, opts), 50);
     } else {
-      startBlock(title, linkedToId, { project });
+      startBlock(title, linkedToId, opts);
     }
     setSheetStart(null);
   };
 
+  const concludeChime = () => { if (state.prefs.sound && window.playChime) window.playChime(); };
+
   const handleConcludeActive = (reflection, markDone) => {
     concludeActive(reflection, { markIntentionDone: markDone });
     setSheetConclude(null);
+    concludeChime();
   };
 
   const handleConcludeBlock = (blockId, reflection, markDone) => {
     concludeBlock(blockId, reflection, { markIntentionDone: markDone });
     setSheetConclude(null);
+    concludeChime();
   };
 
   // Optimistic pause: timer already stopped when this is called.
@@ -139,6 +145,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             intention={activeBlock.linkedToId && intentionById[activeBlock.linkedToId]}
             accentColor={accentColor}
             showElapsed={showElapsed}
+            soundOn={state.prefs.sound}
             onPause={() => {
                 // Pause immediately so the timer stops on first tap.
                 // PauseSheet then lets the user optionally add a note;
@@ -158,6 +165,7 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
                 deleteBlock(activeBlock.id);
               }
             }}
+            onZen={() => setZen(true)}
           />
         )}
 
@@ -307,6 +315,57 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
         blocks={blocks}
         accentColor={accentColor}
       />
+
+      {zen && activeBlock && (
+        <ZenFocus
+          block={activeBlock}
+          accentColor={accentColor}
+          onExit={() => setZen(false)}
+          onPause={() => { const id = activeBlock.id; setZen(false); pauseActive(""); setSheetPause(id); }}
+          onConclude={() => { const id = activeBlock.id; setZen(false); concludeActive(""); setSheetConclude({ blockId: id, wasActive: true }); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Zen focus mode ──────────────────────────────────────────
+// Full-screen, distraction-free timer for the running block. Tap anywhere to
+// leave; explicit Pause/Conclude buttons mirror the card's actions. position:
+// fixed so it covers the whole screen (on mobile the app frame is the screen).
+function ZenFocus({ block, accentColor, onExit, onPause, onConclude }) {
+  const now = useNow(1000, true);
+  const totalElapsed = block.sessions.reduce((acc, seg) => acc + ((seg.endedAt || now) - seg.startedAt), 0);
+  const zenBtn = {
+    border: "1px solid rgba(245,241,234,0.25)", background: "transparent",
+    color: "var(--on-dark)", borderRadius: 10, padding: "11px 20px",
+    fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "var(--sans)",
+  };
+  return (
+    <div role="dialog" aria-label={tr("modo foco")} onClick={onExit}
+      style={{
+        position: "fixed", inset: 0, zIndex: 120,
+        background: "var(--surface-dark)", color: "var(--on-dark)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        gap: 20, padding: 28, animation: "fadeIn 0.3s ease",
+      }}>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.24em", textTransform: "uppercase", color: "var(--on-dark-2)" }}>
+        {tr("em foco")}
+      </div>
+      <div style={{ fontFamily: "var(--serif)", fontSize: 22, textAlign: "center", lineHeight: 1.2, maxWidth: 320 }}>
+        {block.title}
+      </div>
+      <div style={{ fontFamily: "var(--mono)", fontSize: "clamp(48px, 18vw, 76px)", fontWeight: 500, letterSpacing: "0.02em", color: accentColor, lineHeight: 1 }}>
+        {fmtDuration(totalElapsed, { timer: true })}
+      </div>
+      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 12, marginTop: 8 }}>
+        <button className="tap" onClick={onPause} style={zenBtn}>{tr("Pausar")}</button>
+        <button className="tap" onClick={onConclude}
+          style={{ ...zenBtn, background: accentColor, border: "none", color: "#fff" }}>{tr("Concluir")}</button>
+      </div>
+      <div style={{ position: "absolute", bottom: 28, fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13, color: "var(--on-dark-2)" }}>
+        {tr("toque para sair")}
+      </div>
     </div>
   );
 }

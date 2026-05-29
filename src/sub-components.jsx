@@ -2,12 +2,26 @@
 // Timeline, StartSheet, PauseSheet, ConcludeSheet, SwitchSheet
 
 // ─── ACTIVE BLOCK CARD ───────────────────────────────────────
-function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, onSwitch, onConclude, onCancel }) {
+function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, onSwitch, onConclude, onCancel, onZen, soundOn }) {
   const now = useNow(1000, true);
   const currentSeg = block.sessions[block.sessions.length - 1];
   const elapsed = now - currentSeg.startedAt;
   const totalElapsed = block.sessions.reduce((acc, seg) => acc + ((seg.endedAt || now) - seg.startedAt), 0);
   const hasResumed = block.sessions.length > 1;
+
+  // Optional soft target (Pomodoro). Chime + haptic once when first reached;
+  // the block keeps running so the user can stop when they choose.
+  const target = block.targetMs || 0;
+  const reached = target > 0 && totalElapsed >= target;
+  const targetMin = target > 0 ? Math.round(target / 60000) : 0;
+  const chimedRef = useRef(false);
+  useEffect(() => {
+    if (reached && !chimedRef.current) {
+      chimedRef.current = true;
+      if (soundOn && window.playChime) window.playChime();
+      if (window.haptic) window.haptic(18);
+    }
+  }, [reached, soundOn]);
 
   return (
     <div style={{
@@ -32,6 +46,19 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
           <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
             {trf("início {t}", { t: fmtClock(currentSeg.startedAt) })}
           </div>
+          {onZen && (
+            <button onClick={onZen} className="tap" title={tr("modo foco")} aria-label={tr("modo foco")}
+              style={{
+                width: 22, height: 22, borderRadius: "50%",
+                background: "rgba(245,241,234,0.08)", border: "none",
+                color: "var(--on-dark-2)", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </button>
+          )}
           {onCancel && (
             <button onClick={onCancel} className="tap" title={tr("descartar este bloco")}
               style={{
@@ -67,6 +94,11 @@ function ActiveBlockCard({ block, intention, accentColor, showElapsed, onPause, 
             {hasResumed && (
               <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--on-dark-2)", letterSpacing: "0.06em" }}>
                 {trf("{d} no total", { d: fmtDuration(totalElapsed) })}
+              </div>
+            )}
+            {targetMin > 0 && (
+              <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.08em", color: reached ? accentColor : "var(--on-dark-2)" }}>
+                {reached ? "✓ " + tr("meta cumprida") : trf("meta {n} min", { n: targetMin })}
               </div>
             )}
           </div>
