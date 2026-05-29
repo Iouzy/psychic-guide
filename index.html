@@ -152,6 +152,38 @@
     50% { opacity: 0.4; }
   }
 
+  /* Tab content settle — a quiet "page turn" when switching tabs. */
+  @keyframes tabIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Habit cell completion: the tide "fills in" with a short ripple + scale. */
+  @keyframes tideFill {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes tideRipple {
+    from { transform: scale(0.4); opacity: 0.5; }
+    to   { transform: scale(2.4); opacity: 0; }
+  }
+  /* Empty-state starters drift in gently. */
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Honour the user's (or OS's) reduce-motion preference: kill all animation.
+     The attribute is set on <html> by app.jsx from prefs.reducedMotion, which
+     itself defaults from prefers-reduced-motion. */
+  html[data-reduced-motion="true"] *,
+  html[data-reduced-motion="true"] *::before,
+  html[data-reduced-motion="true"] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
   /* text-edit affordance for direct manipulation friendliness */
   input:focus, textarea:focus { outline: none; }
 </style>

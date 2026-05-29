@@ -872,6 +872,24 @@ function useFocusActivity(store) {
     return () => { try { h.remove(); } catch (_) {} };
   }, []);
 
+  // Start the foreground service AND make sure the notification can actually be
+  // shown. On Android 13+ the service runs without POST_NOTIFICATIONS but its
+  // notification is suppressed — so we ask for the permission right here (the
+  // first time the user starts a block) and, if it's only just been granted,
+  // re-post so the timer notification appears immediately.
+  const startNative = (opts) => {
+    window.FocusActivity.start(opts);
+    if (!window.FocusActivity.isNative) return;
+    try {
+      window.FocusActivity.checkPermission().then((r) => {
+        if (r && r.granted) return;
+        window.FocusActivity.requestPermission().then((res) => {
+          if (res && res.granted) window.FocusActivity.start(opts);
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch (_) {}
+  };
+
   // Sync native service state with activeBlock changes.
   // Deps: block id changes on start/switch; sessions.length changes on resume.
   useEffect(() => {
@@ -883,7 +901,7 @@ function useFocusActivity(store) {
       );
       // start() handles both "new block" and "resumed block": it resets the
       // chronometer base to now − elapsedMs so the total accumulated time shows.
-      window.FocusActivity.start({ title: activeBlock.title, startedAt: lastSeg.startedAt, elapsedMs });
+      startNative({ title: activeBlock.title, startedAt: lastSeg.startedAt, elapsedMs });
     } else {
       const blockId = lastIdRef.current;
       if (!blockId) return;

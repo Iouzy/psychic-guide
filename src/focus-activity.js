@@ -29,11 +29,22 @@
   // FocusActivity.addListener("action", ({ kind }) => ...)
   //   kind: "pause" | "resume" | "conclude"
   //   Fires when the user taps a notification action button.
+  //
+  // FocusActivity.checkPermission() → Promise<{ granted }>
+  //   Whether POST_NOTIFICATIONS is currently granted (always true pre-Android 13).
+  //
+  // FocusActivity.requestPermission() → Promise<{ granted }>
+  //   Prompts for POST_NOTIFICATIONS. No-ops if already granted; on Android the
+  //   system only shows the dialog once — after a hard denial the user must
+  //   enable it in system Settings, so callers should guide there if still false.
 
   window.FocusActivity = {
+    isNative:    !!native,
     start:       function (o) { if (native) native.start(o); },
     update:      function (o) { if (native) native.update(o); },
     stop:        function ()  { if (native) native.stop(); },
     addListener: function (ev, cb) { return native ? native.addListener(ev, cb) : noopHandle(); },
+    checkPermission:   function () { return native ? native.checkPermission()   : Promise.resolve({ granted: false }); },
+    requestPermission: function () { return native ? native.requestPermission() : Promise.resolve({ granted: false }); },
   };
 })();

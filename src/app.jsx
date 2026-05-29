@@ -274,11 +274,18 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
                 { value: "dark", label: tr("Escuro") },
               ]}/>
           </div>
+          <div style={prefBlock}>
+            <div style={prefLabel}>{tr("Cor de destaque")}</div>
+            <AccentPicker value={accentColor} onChange={v => { store.setPref("accent", v); haptic(8); }}/>
+          </div>
           <PrefToggle label={tr("Vibração")} sub={tr("Pequeno toque ao concluir.")} accentColor={accentColor}
             value={prefs.haptics} onChange={v => store.setPref("haptics", v)}/>
+          <PrefToggle label={tr("Reduzir movimento")} sub={tr("Desliga animações. Segue o sistema por omissão.")} accentColor={accentColor}
+            value={prefs.reducedMotion} onChange={v => store.setPref("reducedMotion", v)}/>
         </DataGroup>
 
         <DataGroup label={tr("Lembretes")} icon={<Icon.Bell size={13}/>}>
+          {isNative && <FocusNotifControl accentColor={accentColor}/>}
           <PrefToggle label={tr("Notificações")} sub={tr("Avisos locais enquanto a app está aberta.")} accentColor={accentColor}
             value={prefs.reminders.enabled} onChange={onToggleReminders}/>
           {prefs.reminders.enabled && (
@@ -392,6 +399,107 @@ const prefLabel = {
   textTransform: "uppercase", color: "var(--ink-3)",
 };
 
+// Curated accent palette. The first entry (#B8533A) is the build default.
+const ACCENT_OPTIONS = [
+  { hex: "#B8533A", name: "Terracota" },
+  { hex: "#5A6B3E", name: "Salva" },
+  { hex: "#3D5A80", name: "Índigo" },
+  { hex: "#2E6E6A", name: "Oceano" },
+  { hex: "#8E5A8E", name: "Ameixa" },
+  { hex: "#A6792E", name: "Âmbar" },
+  { hex: "#1A1815", name: "Tinta" },
+];
+
+// Native-only control for the focus-timer notification permission. On Android
+// 13+ the timer notification is invisible without POST_NOTIFICATIONS, so this
+// surfaces the state and lets the user grant it (or learn they must enable it
+// in system Settings, since Android stops showing the dialog after a denial).
+function FocusNotifControl({ accentColor }) {
+  const [granted, setGranted] = useState(null);   // null = still checking
+  const [asked, setAsked] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    window.FocusActivity.checkPermission()
+      .then(r => { if (alive) setGranted(!!(r && r.granted)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const request = async () => {
+    setAsked(true);
+    try {
+      const r = await window.FocusActivity.requestPermission();
+      setGranted(!!(r && r.granted));
+    } catch (_) {}
+  };
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 10,
+      padding: "12px 14px", background: "var(--paper-2)",
+      border: "1px solid var(--rule)", borderRadius: 12,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{tr("Notificação de foco")}</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>
+            {tr("Mostra o cronómetro do bloco ativo na barra de notificações.")}
+          </div>
+        </div>
+        <span style={{
+          flexShrink: 0, fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.08em",
+          textTransform: "uppercase", padding: "3px 8px", borderRadius: 6,
+          color: granted ? "var(--good)" : "var(--ink-3)",
+          background: granted ? "color-mix(in srgb, var(--good) 16%, transparent)" : "var(--paper-3)",
+        }}>
+          {granted === null ? "…" : granted ? tr("ativa") : tr("desligada")}
+        </span>
+      </div>
+      {granted === false && (
+        <button onClick={request} className="tap"
+          style={{
+            border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer",
+            background: accentColor, color: "#fff", fontSize: 13, fontWeight: 500,
+          }}>
+          {tr("Permitir notificações")}
+        </button>
+      )}
+      {granted === false && asked && (
+        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
+          {tr("Se nada acontecer, ative as notificações do Pauta nas definições do sistema.")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// A row of accent swatches. The selected one gets a ring; tapping sets it.
+function AccentPicker({ value, onChange }) {
+  const norm = (h) => (h || "").toLowerCase();
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+      {ACCENT_OPTIONS.map(({ hex, name }) => {
+        const selected = norm(value) === norm(hex);
+        return (
+          <button key={hex} type="button" className="tap" title={name}
+            aria-label={name} aria-pressed={selected}
+            onClick={() => onChange(hex)}
+            style={{
+              width: 30, height: 30, borderRadius: "50%", cursor: "pointer",
+              background: hex, padding: 0,
+              border: selected ? "2px solid var(--paper)" : "2px solid transparent",
+              boxShadow: selected
+                ? `0 0 0 2px ${hex}, 0 1px 4px rgba(0,0,0,0.2)`
+                : "0 1px 3px rgba(0,0,0,0.15)",
+              transition: "transform 0.12s ease, box-shadow 0.12s ease",
+            }}/>
+        );
+      })}
+    </div>
+  );
+}
+
 function DataGroup({ label, icon, children }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -468,7 +576,9 @@ function App() {
     setTab("pauta");
   };
 
-  const accentColor = t.accent;
+  // A user-chosen accent (Settings) wins; otherwise fall back to the build-time
+  // default exposed via the Tweaks panel / PAUTA_TWEAK_DEFAULTS.
+  const accentColor = prefs.accent || t.accent;
 
   // Update CSS var so design system follows accent
   useEffect(() => {
@@ -480,6 +590,18 @@ function App() {
     if (window.PAUTA_APPLY_THEME) window.PAUTA_APPLY_THEME(prefs.theme);
   }, [prefs.theme]);
   useEffect(() => { window.PAUTA_HAPTICS = !!prefs.haptics; }, [prefs.haptics]);
+
+  // Reduce motion: explicit opt-in via Settings, or implicitly when the OS
+  // asks for it. Mirrored to a <html> attribute that the CSS in index.html
+  // uses to neutralise every animation/transition.
+  useEffect(() => {
+    const osReduced = window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = prefs.reducedMotion || osReduced;
+    const root = document.documentElement;
+    if (reduce) root.setAttribute("data-reduced-motion", "true");
+    else root.removeAttribute("data-reduced-motion");
+  }, [prefs.reducedMotion]);
 
   // Local reminders (only while the app is open).
   useReminders(store);
@@ -529,19 +651,26 @@ function App() {
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
         style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 1 }}>
-        {tab === "hoje" && (
-          <TabHoje store={store} accentColor={accentColor}
-            onJumpToPauta={jumpToPauta}/>
-        )}
-        {tab === "pauta" && (
-          <TabPauta store={store} accentColor={accentColor}
-            showElapsed={t.showElapsed}
-            pendingIntention={pendingIntention}
-            clearPending={() => setPendingIntention(null)}/>
-        )}
-        {tab === "mares" && (
-          <TabMares store={store} accentColor={accentColor}/>
-        )}
+        {/* key={tab} replays the settle animation on each switch. Tabs already
+            unmount when hidden, so the remount changes nothing but the entrance. */}
+        <div key={tab} style={{
+          flex: 1, display: "flex", flexDirection: "column", minHeight: 0,
+          animation: "tabIn 0.28s ease both",
+        }}>
+          {tab === "hoje" && (
+            <TabHoje store={store} accentColor={accentColor}
+              onJumpToPauta={jumpToPauta}/>
+          )}
+          {tab === "pauta" && (
+            <TabPauta store={store} accentColor={accentColor}
+              showElapsed={t.showElapsed}
+              pendingIntention={pendingIntention}
+              clearPending={() => setPendingIntention(null)}/>
+          )}
+          {tab === "mares" && (
+            <TabMares store={store} accentColor={accentColor}/>
+          )}
+        </div>
       </div>
 
       <TabBar tab={tab} onTab={setTab} accentColor={accentColor}/>

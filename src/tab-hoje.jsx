@@ -67,13 +67,20 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
 
       {/* Intentions */}
       {today.intentions.length === 0 && !adding && (
-        <div style={{
-          padding: "24px 0", textAlign: "left",
-          fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 18,
-          color: "var(--ink-3)", lineHeight: 1.4,
-        }}>
-          {tr("Comece por listar 1 a 4 coisas que importam hoje.")}<br/>
-          {tr("Não tarefas de rotina — coisas que")} <em>{tr("movem")}</em> {tr("o seu dia.")}
+        <div style={{ padding: "24px 0", textAlign: "left" }}>
+          <div style={{
+            fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 18,
+            color: "var(--ink-3)", lineHeight: 1.4,
+          }}>
+            {tr("Comece por listar 1 a 4 coisas que importam hoje.")}<br/>
+            {tr("Não tarefas de rotina — coisas que")} <em>{tr("movem")}</em> {tr("o seu dia.")}
+          </div>
+          <StarterChips
+            label={tr("Para começar")}
+            accentColor={accentColor}
+            items={["Ler 20 minutos", "Caminhar 30 min", "Escrever 3 ideias", "Uma conversa importante"]}
+            onPick={(text) => addIntention(text)}
+          />
         </div>
       )}
 

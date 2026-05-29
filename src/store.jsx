@@ -137,6 +137,8 @@ function defaultPrefs() {
   return {
     lang: (typeof window !== "undefined" && window.PAUTA_LANG) || "pt", // "pt" | "en"
     theme: "auto",          // "auto" | "light" | "dark"
+    accent: null,           // null = use the build-time default; else a hex chosen in Settings
+    reducedMotion: false,   // user opt-out for animations (OS preference is the implicit default)
     haptics: true,
     onboardingSeen: false,
     reminders: {

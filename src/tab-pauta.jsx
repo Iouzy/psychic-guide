@@ -223,8 +223,17 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
             {filter ? tr("Filtrado") : tr("Hoje")}
           </div>
           {events.length === 0 ? (
-            <div style={{ padding: "20px 0", fontFamily: "var(--serif)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 15 }}>
-              {filter ? tr("Nada por aqui ainda.") : tr("Ainda nenhum bloco hoje. Comece quando quiser.")}
+            <div style={{ padding: "20px 0" }}>
+              <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", color: "var(--ink-3)", fontSize: 15 }}>
+                {filter ? tr("Nada por aqui ainda.") : tr("Ainda nenhum bloco hoje. Comece quando quiser.")}
+              </div>
+              {!filter && (
+                <StarterChips
+                  accentColor={accentColor}
+                  items={["Começar um bloco de foco"]}
+                  onPick={() => setSheetStart({})}
+                />
+              )}
             </div>
           ) : (
             <Timeline events={events} accentColor={accentColor}

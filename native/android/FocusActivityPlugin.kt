@@ -4,13 +4,14 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.getcapacitor.annotation.Permission
+import com.getcapacitor.annotation.PermissionCallback
 
 /**
  * Capacitor plugin that bridges JS → native focus-timer service.
@@ -19,6 +20,8 @@ import com.getcapacitor.annotation.CapacitorPlugin
  *   FocusActivity.start({ title, startedAt, elapsedMs })
  *   FocusActivity.update({ elapsedMs, paused })
  *   FocusActivity.stop()
+ *   FocusActivity.checkPermission()    → { granted }
+ *   FocusActivity.requestPermission()  → { granted }
  *   FocusActivity.addListener("action", ({ kind }) => …)
  *     kind: "pause" | "resume" | "conclude"
  *
@@ -26,31 +29,61 @@ import com.getcapacitor.annotation.CapacitorPlugin
  * AndroidManifest). It calls onAction() on the singleton instance held here so
  * the Capacitor event can be emitted back to JS even after the user has
  * backgrounded the WebView.
+ *
+ * Notification permission: on Android 13+ the foreground service still RUNS
+ * without POST_NOTIFICATIONS, but its notification is silently suppressed — so
+ * the timer would be invisible. We no longer fire a single eager request at
+ * load() (easy to dismiss, never re-asked). Instead JS asks contextually right
+ * when a block starts (and from Settings), via requestPermission() below, which
+ * resolves with the resulting grant state so the UI can guide the user to
+ * system Settings if Android has stopped showing the dialog.
  */
-@CapacitorPlugin(name = "FocusActivity")
+@CapacitorPlugin(
+    name = "FocusActivity",
+    permissions = [
+        Permission(alias = "notifications", strings = [Manifest.permission.POST_NOTIFICATIONS])
+    ]
+)
 class FocusActivityPlugin : Plugin() {
 
     // ── Lifecycle ────────────────────────────────────────────────
 
     override fun load() {
         instance = this
-        // Android 13+ requires POST_NOTIFICATIONS at runtime. Request it eagerly
-        // on plugin load (i.e. app start) so the user sees the permission dialog
-        // before they ever try to start a timer, not mid-session.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    activity,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    NOTIF_PERM_REQUEST
-                )
-            }
-        }
     }
 
     override fun handleOnDestroy() {
         if (instance === this) instance = null
+    }
+
+    // ── Permissions ──────────────────────────────────────────────
+
+    private fun hasNotifPermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun resolveGranted(call: PluginCall, granted: Boolean) {
+        call.resolve(JSObject().put("granted", granted))
+    }
+
+    @PluginMethod
+    fun checkPermission(call: PluginCall) {
+        resolveGranted(call, hasNotifPermission())
+    }
+
+    @PluginMethod
+    fun requestPermission(call: PluginCall) {
+        if (hasNotifPermission()) {
+            resolveGranted(call, true)
+            return
+        }
+        requestPermissionForAlias("notifications", call, "notifPermCallback")
+    }
+
+    @PermissionCallback
+    fun notifPermCallback(call: PluginCall) {
+        resolveGranted(call, hasNotifPermission())
     }
 
     // ── Plugin methods ───────────────────────────────────────────
@@ -128,7 +161,5 @@ class FocusActivityPlugin : Plugin() {
         fun onAction(kind: String) {
             instance?.emitAction(kind)
         }
-
-        private const val NOTIF_PERM_REQUEST = 1001
     }
 }
