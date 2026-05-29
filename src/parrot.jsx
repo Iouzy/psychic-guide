@@ -189,10 +189,35 @@ function SurfWave({ accent, width = 78 }) {
   );
 }
 
+// The board Pip rides on the Marés tab — a little surfboard tucked under his
+// feet so he's clearly riding *something*, not floating in the air.
+function SurfBoard({ accent, width = 60 }) {
+  return (
+    <svg width={width} height={13} viewBox="0 0 60 13" fill="none" aria-hidden="true"
+      style={{ display: "block", marginTop: -7 }}>
+      <ellipse cx="30" cy="6.5" rx="28" ry="5.5" fill={accent}/>
+      <ellipse cx="30" cy="5.5" rx="26" ry="4" fill="#F2D9A0" opacity="0.55"/>
+      <line x1="30" y1="2" x2="30" y2="11" stroke={accent} strokeWidth="1" opacity="0.5"/>
+    </svg>
+  );
+}
+
+// Screen x-position (%) of an anchor — used to tell which way Pip is travelling
+// when the tab changes, so he leans into the swipe.
+function anchorLeftPct(key) {
+  const a = PARROT_ANCHORS[key];
+  return a ? parseFloat(a.left) : 50;
+}
+
 function ParrotCompanion({ store, accentColor, tab }) {
   const enabled = store.state.prefs.parrot !== false;
   const [bubble, setBubble] = useState(null);   // { text, happy }
   const [anchorKey, setAnchorKey] = useState(TAB_ANCHOR[tab] || "hoje");
+  // Flight state drives the entrance + the "swiped to the next tab" animation.
+  // `key` bumps on every flight so the CSS animation restarts; `dir` is the
+  // travel direction (null on first mount → the fly-in swoop).
+  const [flight, setFlight] = useState({ key: 0, dir: null });
+  const prevTabRef = useRef(tab);
   const hideTimer = useRef(null);
   const recent = useRef(new Set());              // last few PT strings shown
 
@@ -240,8 +265,14 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const firstTab = useRef(true);
   useEffect(() => {
     if (!enabled) return;
+    const prev = prevTabRef.current;
+    prevTabRef.current = tab;
     setAnchorKey(TAB_ANCHOR[tab] || "hoje");
     if (firstTab.current) { firstTab.current = false; return; }
+    // Launch him in the direction he's travelling across the screen so the move
+    // reads as "swiped along with the tab", ending in a bump at the new corner.
+    const dir = anchorLeftPct(TAB_ANCHOR[tab]) < anchorLeftPct(TAB_ANCHOR[prev]) ? "left" : "right";
+    setFlight(f => ({ key: f.key + 1, dir }));
     if (Math.random() < 0.4) {
       const map = { hoje: PARROT_HOJE, pauta: PARROT_PAUTA, mares: PARROT_MARES };
       const pool = map[tab];
@@ -342,64 +373,68 @@ function ParrotCompanion({ store, accentColor, tab }) {
       : { right: 20 }),
   };
 
-  // The bird's own motion. When happy he hops; on the wave he leans side to side
-  // (a rotate only — the vertical bob is done by the surf wrapper so he stays *on*
-  // the wave instead of hovering above it); otherwise he floats gently in place.
-  const birdAnim = bubble && bubble.happy ? "parrotHop 0.7s ease"
-    : a.surf ? "parrotTilt 3s ease-in-out infinite"
-    : "parrotFloat 4.5s ease-in-out infinite";
+  // The bird's own idle motion (class-based so it survives reduce-motion — see
+  // index.html): hops when happy, leans on the wave, floats otherwise.
+  const birdClass = bubble && bubble.happy ? "pip-hop" : a.surf ? "pip-tilt" : "pip-float";
   const bird = (
-    <button onClick={sayIdle} className="tap" aria-label={tr("papagaio")} style={{
+    <button onClick={sayIdle} className={"tap " + birdClass} aria-label={tr("papagaio")} style={{
       pointerEvents: "auto", border: "none", background: "transparent", padding: 0, cursor: "pointer",
-      animation: birdAnim,
       filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.25))",
     }}>
       <ParrotSvg accent={accentColor} size={a.surf ? 48 : 54}/>
     </button>
   );
 
+  // Which flight animation plays: the swoop-in on first mount, then a
+  // direction-aware "flung across" on each tab change.
+  const flightClass = flight.dir === "left" ? "pip-fly-l"
+    : flight.dir === "right" ? "pip-fly-r"
+    : "pip-in";
+
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 40, pointerEvents: "none" }}>
-      <div style={{
+      {/* Travel layer: `.pip-move` transitions top/left with an overshoot, so he
+          flies to the new tab's corner and bumps it. Keeps the surf centering
+          transform — which is why the fly-in/fly animations live one level in,
+          not here (a transform animation here would fight that centering). */}
+      <div className="pip-move" style={{
         position: "absolute", top: a.top, left: a.left,
         transform: a.surf ? "translateX(-50%)" : "none",
-        transition: "top 1.1s cubic-bezier(0.22,1,0.36,1), left 1.1s cubic-bezier(0.22,1,0.36,1)",
-        animation: "parrotIn 0.6s ease both",
       }}>
-        <div style={{ position: "relative" }}>
-          {bubble && (
-            // Outer div holds the position (incl. translateX(-50%) when centered);
-            // the inner div runs the pop animation so its transform can't fight
-            // the centering.
-            <div style={bubblePos}>
-              <div style={{
-                position: "relative", pointerEvents: "auto",
-                background: "var(--surface-dark)", color: "var(--on-dark)",
-                borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
-                fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
-                whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
-                animation: "bubblePop 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
-              }}>
-                <span style={tailStyle} aria-hidden="true"/>
-                {bubble.text}
-                <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
-                  position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
-                  border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
-                  fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                }}>×</button>
+        {/* Flight layer: re-keyed every flight so the CSS animation restarts. */}
+        <div key={flight.key} className={flightClass} style={{ transformOrigin: "center bottom" }}>
+          <div style={{ position: "relative" }}>
+            {bubble && (
+              <div style={bubblePos}>
+                <div className="pip-pop" style={{
+                  position: "relative", pointerEvents: "auto",
+                  background: "var(--surface-dark)", color: "var(--on-dark)",
+                  borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
+                  fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
+                  whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
+                }}>
+                  <span style={tailStyle} aria-hidden="true"/>
+                  {bubble.text}
+                  <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
+                    position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
+                    border: "none", background: "transparent", color: "var(--on-dark-2)", cursor: "pointer",
+                    fontSize: 15, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>×</button>
+                </div>
               </div>
-            </div>
-          )}
-          {a.surf ? (
-            // Drift sideways (the surfing run), and bob the bird *and* the wave
-            // together so they rise and fall as one — Pip rides the crest.
-            <div style={{ animation: "parrotDrift 6s ease-in-out infinite" }}>
-              <div style={{ animation: "parrotSurf 2.8s ease-in-out infinite", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                {bird}
-                <SurfWave accent={accentColor}/>
+            )}
+            {a.surf ? (
+              // Drift sideways (the surfing run), and bob the bird, board and wave
+              // together so they rise and fall as one — Pip rides the crest.
+              <div className="pip-drift">
+                <div className="pip-surf" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  {bird}
+                  <SurfBoard accent={accentColor}/>
+                  <SurfWave accent={accentColor}/>
+                </div>
               </div>
-            </div>
-          ) : bird}
+            ) : bird}
+          </div>
         </div>
       </div>
     </div>
