@@ -177,6 +177,12 @@ const I18N_EN = {
   "Partilha a cópia para o Drive, Dropbox, Ficheiros…": "Share the copy to Drive, Dropbox, Files…",
   "Cópia transferida.": "Copy downloaded.",
 
+  // ─── Parrot companion (Pip) ───
+  "Papagaio ajudante": "Parrot helper",
+  "O Pip aparece com dicas e piadas. Toca-lhe para mais.": "Pip drops by with tips and jokes. Tap him for more.",
+  "papagaio": "parrot",
+  "fechar": "close",
+
   // ─── Onboarding (welcome carousel) ───
   "Seguir": "Next",
   "Começar em branco": "Start blank",

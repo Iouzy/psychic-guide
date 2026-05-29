@@ -143,6 +143,7 @@ function defaultPrefs() {
     sound: false,           // gentle chime when a focus block is concluded / a target is hit
     keepAwake: true,        // hold a screen wake lock while a block is running
     autoBackup: "off",      // "off" | "30m" | "hourly" | "daily" | "weekly" — rolling local snapshot
+    parrot: true,           // Pip the parrot companion (tips / jokes / reactions)
     onboardingSeen: false,
     reminders: {
       enabled: false,

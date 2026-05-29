@@ -181,6 +181,12 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  /* Pip the parrot flies in from the right and settles. */
+  @keyframes parrotIn {
+    0%   { opacity: 0; transform: translateX(120px) translateY(8px) rotate(10deg); }
+    70%  { opacity: 1; transform: translateX(-6px) translateY(0) rotate(-4deg); }
+    100% { opacity: 1; transform: translateX(0) rotate(0); }
+  }
 
   /* Honour the user's (or OS's) reduce-motion preference: kill all animation.
      The attribute is set on <html> by app.jsx from prefs.reducedMotion, which
@@ -263,6 +269,7 @@
 <script type="text/babel" src="src/tab-mares.jsx"></script>
 <script type="text/babel" src="src/mares-sheets.jsx"></script>
 <script type="text/babel" src="src/extras.jsx"></script>
+<script type="text/babel" src="src/parrot.jsx"></script>
 <script type="text/babel" src="src/app.jsx"></script>
 
 <!-- PWA: register service worker + capture Android install prompt -->
