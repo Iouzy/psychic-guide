@@ -56,6 +56,12 @@ const I18N_EN = {
     "No server: alerts only arrive with the app open on your phone or browser.",
   "Este dispositivo não suporta notificações.": "This device does not support notifications.",
   "Permissão de notificações negada.": "Notification permission denied.",
+  "Permissão de notificações negada. Ativa-a nas definições do sistema.":
+    "Notification permission denied. Enable it in your system settings.",
+  "Notificações ativadas": "Notifications on",
+  "Notificações ativadas.": "Notifications on.",
+  "Vou avisar-te dos hábitos e da reflexão às horas marcadas.":
+    "I'll nudge you about habits and reflection at the times you set.",
   "Revisão semanal": "Weekly review",
   "Foco, hábitos e padrões dos últimos 7 dias.": "Focus, habits and patterns from the last 7 days.",
   "Como funcionam as marés": "How the tides work",

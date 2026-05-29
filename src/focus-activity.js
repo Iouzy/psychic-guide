@@ -50,12 +50,21 @@
   //   Prompts for POST_NOTIFICATIONS. No-ops if already granted; on Android the
   //   system only shows the dialog once — after a hard denial the user must
   //   enable it in system Settings, so callers should guide there if still false.
+  //
+  // FocusActivity.notify({ title, body, tag }) → Promise<{ shown }>
+  //   Posts a one-shot local reminder notification on its own channel (separate
+  //   from the ongoing focus-timer one). This is the ONLY notification channel
+  //   that works inside the Capacitor WebView — the web Notification API and
+  //   service-worker notifications are unavailable there, so without this the
+  //   reminder toggle did nothing on the native app. `tag` dedupes/replaces
+  //   (habits vs reflection get stable, distinct notifications).
 
   window.FocusActivity = {
     isNative:    !!native,
     start:       function (o) { if (native) native.start(o); },
     update:      function (o) { if (native) native.update(o); },
     stop:        function ()  { if (native) native.stop(); },
+    notify:      function (o) { return native ? native.notify(o) : Promise.resolve({ shown: false }); },
     addListener: function (ev, cb) { return native ? native.addListener(ev, cb) : noopHandle(); },
     checkPermission:   function () { return native ? native.checkPermission()   : Promise.resolve({ granted: false }); },
     requestPermission: function () { return native ? native.requestPermission() : Promise.resolve({ granted: false }); },

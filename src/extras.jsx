@@ -632,7 +632,10 @@ async function enableNotifications() {
 async function fireReminder(title, body, tag) {
   // 1) Nativo (funciona na WebView, onde as notificações web não funcionam).
   if (isNativeApp() && typeof window.FocusActivity.notify === "function") {
-    try { await window.FocusActivity.notify({ title, body, tag }); return true; } catch (e) {}
+    try {
+      const r = await window.FocusActivity.notify({ title, body, tag });
+      if (r && r.shown) return true;   // só damos por mostrado se o nativo confirmou
+    } catch (e) {}
   }
   // 2) PWA instalada: pelo service worker.
   if (swNotifyAvailable()) {

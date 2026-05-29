@@ -244,10 +244,23 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
       if (!res.ok) {
         setMsg({ kind: "err", text: res.reason === "unsupported"
           ? tr("Este dispositivo não suporta notificações.")
-          : tr("Permissão de notificações negada.") });
+          : tr("Permissão de notificações negada. Ativa-a nas definições do sistema.") });
         store.setReminderPref("enabled", false);
         return;
       }
+      // Confirm it actually works with one notification right now — otherwise
+      // the user has no way to tell the channel fired (reminders only nudge at
+      // the set times, and only while the app is open).
+      store.setReminderPref("enabled", true);
+      const shown = await window.fireReminder(
+        tr("Notificações ativadas"),
+        tr("Vou avisar-te dos hábitos e da reflexão às horas marcadas."),
+        "pauta-test"
+      );
+      setMsg(shown
+        ? { kind: "ok", text: tr("Notificações ativadas.") }
+        : { kind: "err", text: tr("Permissão de notificações negada. Ativa-a nas definições do sistema.") });
+      return;
     }
     store.setReminderPref("enabled", next);
   };
