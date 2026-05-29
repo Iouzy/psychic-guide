@@ -62,6 +62,8 @@ const I18N_EN = {
   "Notificações ativadas.": "Notifications on.",
   "Vou avisar-te dos hábitos e da reflexão às horas marcadas.":
     "I'll nudge you about habits and reflection at the times you set.",
+  "Se a instalação falhar com «conflito com um pacote existente»: exporta uma cópia de segurança, desinstala a app e instala de novo. Só é preciso uma vez — daí em diante as atualizações mantêm os teus dados.":
+    "If the install fails with “conflicts with an existing package”: export a backup, uninstall the app, and install again. You only need to do this once — after that, updates keep your data.",
   "Revisão semanal": "Weekly review",
   "Foco, hábitos e padrões dos últimos 7 dias.": "Focus, habits and patterns from the last 7 days.",
   "Como funcionam as marés": "How the tides work",

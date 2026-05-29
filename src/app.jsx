@@ -219,6 +219,19 @@ function UpdateChecker({ accentColor, store }) {
           {state.kind === "downloading" ? tr("A transferir…") : tr("Transferir nova versão")}
         </button>
       )}
+      {state.kind === "available" && !state.needsPerm && (
+        // One-time gotcha: builds from before the project settled on a fixed
+        // signing key were each signed with a throwaway key, so Android blocks
+        // installing a newer (consistently-signed) build over them with "package
+        // conflicts with an existing package". Can't be fixed from inside the
+        // app — the user has to back up, uninstall once, and reinstall.
+        <span style={{
+          fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12,
+          color: "var(--ink-3)", lineHeight: 1.4, padding: "2px 2px 0",
+        }}>
+          {tr("Se a instalação falhar com «conflito com um pacote existente»: exporta uma cópia de segurança, desinstala a app e instala de novo. Só é preciso uma vez — daí em diante as atualizações mantêm os teus dados.")}
+        </span>
+      )}
     </div>
   );
 }
