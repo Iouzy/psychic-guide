@@ -16,338 +16,125 @@ function haptic(ms = 10) {
 // regista a mudança. No fim pode optar por manter o que criou ou começar do
 // zero (isto também limpa a seed de demonstração).
 
-// Cor do escurecimento. Mais opaco que o ghost antigo: queremos que o foco
-// caia mesmo no buraco e não na app por trás.
-const ONBOARDING_SCRIM = "rgba(8,6,4,0.62)";
-
-// Cantos ligeiramente arredondados à volta do buraco do holofote, mais largos
-// que o controlo para o anel respirar. Os 4 rects ficam justos a estas margens.
-const SPOTLIGHT_PADDING = 6;
-const SPOTLIGHT_RADIUS = 14;
-
-function OnboardingOverlay({ onDone, accentColor, onTab, store }) {
-  const [stepIdx, setStepIdx] = useState(0);
+// ─── Onboarding (welcome carousel) ──────────────────────────
+// A calm, self-contained intro: a few swipeable cards covering the three tabs,
+// then a choice to start blank or load an example. Deliberately NOT a live
+// spotlight tour over the real UI — that approach was janky (rAF rect
+// measuring, pointer-events juggling, slow keyboard) and could "lock" things.
+// This is a plain overlay the user simply swipes through and dismisses.
+function OnboardingOverlay({ onDone, accentColor, store }) {
+  const [idx, setIdx] = useState(0);
   const [leaving, setLeaving] = useState(false);
-  // rect do controlo destacado, em coordenadas locais do overlay.
-  const [rect, setRect] = useState(null);
-  // engaged: o utilizador tocou no controlo. O escurecimento desaparece quase
-  // todo para libertar a interação (sheet centrado, formulário inline, etc.).
-  const [engaged, setEngaged] = useState(false);
-  const overlayRef = useRef(null);
-  // baseline guardada à entrada de cada passo, para detetar "fez a ação agora"
-  // em vez de "já havia coisas no seed".
-  const baselineRef = useRef({ intentions: 0, blocks: 0, habits: 0, activeId: null });
+  const touchX = useRef(null);
 
-  const steps = [
-    {
-      kind: "intro", tag: tr("bem-vindo"),
+  const cards = [
+    { tag: tr("bem-vindo"), icon: "spark",
       title: <>{tr("Esta é a sua")} <em style={{ color: accentColor }}>{tr("pauta")}</em>.</>,
-      body: tr("Um lugar calmo para o que importa. Vamos conhecer as três tabs em três toques — na app a sério, sem exemplos."),
-    },
-    {
-      kind: "tour", tab: "hoje", selector: '[data-tour="add-intention"]',
-      tag: tr("hoje"),
+      body: tr("Um lugar calmo, privado e offline para o que importa. Sem conta, sem servidor — tudo fica no seu telemóvel.") },
+    { tag: tr("hoje"), icon: "hoje",
       title: tr("Comece pelo que importa."),
-      body: tr("Toque para juntar uma intenção ao seu dia."),
-      detect: (s, b) => s.today.intentions.length > b.intentions,
-    },
-    {
-      kind: "tour", tab: "pauta", selector: '[data-tour="start-block"]',
-      tag: tr("foco"),
+      body: tr("Na tab Hoje, liste 1 a 4 intenções — as coisas que movem o seu dia — e reflita à noite.") },
+    { tag: tr("pauta"), icon: "pauta",
       title: tr("Trabalhe em blocos."),
-      body: tr("Toque para começar um bloco de foco. O tempo conta-se por si."),
-      detect: (s, b) => s.activeId !== null || s.blocks.length > b.blocks,
-    },
-    {
-      kind: "tour", tab: "mares", selector: '[data-tour="add-habit"]',
-      tag: tr("marés"),
-      title: tr("Cultive hábitos."),
-      body: tr("Toque para criar a sua primeira maré."),
-      detect: (s, b) => s.habits.length > b.habits,
-    },
-    {
-      kind: "outro", tag: tr("pronto"),
+      body: tr("Na Pauta, inicie um bloco de foco e o tempo conta-se sozinho. Pause, retome e conclua quando quiser.") },
+    { tag: tr("marés"), icon: "mares",
+      title: tr("Cultive hábitos como marés."),
+      body: tr("Nas Marés, marque hábitos dia a dia. A constância faz a maré subir — e os dias de descanso são honestos.") },
+    { tag: tr("pronto"), icon: "check",
       title: <>{tr("Tudo")} <em style={{ color: accentColor }}>{tr("seu")}</em>.</>,
-      body: tr("Quer manter o que criou agora ou começar com uma pauta em branco?"),
-    },
+      body: tr("Comece com uma pauta em branco, ou explore com um exemplo. Muda tudo depois nas Definições.") },
   ];
-  const s = steps[stepIdx];
-  const last = stepIdx === steps.length - 1;
-  const isTour = s.kind === "tour";
+  const last = idx === cards.length - 1;
+  const card = cards[idx];
 
-  // Conduz a tab real por trás do overlay e captura a baseline do store ao
-  // entrar num passo de tour, para distinguir o que o utilizador faz agora do
-  // que já lá estava (seed). Também reseta `engaged` para que o escurecimento
-  // volte a aparecer no novo controlo.
-  useEffect(() => {
-    if (s.tab && onTab) onTab(s.tab);
-    if (isTour) {
-      const cur = store.state;
-      baselineRef.current = {
-        intentions: cur.today.intentions.length,
-        blocks: cur.blocks.length,
-        habits: cur.habits.length,
-        activeId: cur.activeId,
-      };
-      setEngaged(false);
-      setRect(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stepIdx]);
-
-  // Conclusão: avalia-se em cada render. Como o overlay recebe um `store` novo
-  // sempre que o estado muda (App re-renderiza), este boolean atualiza-se
-  // automaticamente sem precisar de subscrição.
-  const completed = isTour && s.detect && s.detect(store.state, baselineRef.current);
-
-  // Mede o controlo destacado num loop de requestAnimationFrame — o conteúdo
-  // pode estar a fazer scroll/animar e o holofote tem de seguir. Só atualiza
-  // o state se algum dos números mudou (evita re-renders inúteis).
-  useEffect(() => {
-    if (!isTour) { setRect(null); return; }
-    let raf;
-    const tick = () => {
-      const el = document.querySelector(s.selector);
-      const container = overlayRef.current;
-      if (el && container) {
-        const r = el.getBoundingClientRect();
-        const cr = container.getBoundingClientRect();
-        const next = {
-          x: Math.round(r.left - cr.left),
-          y: Math.round(r.top - cr.top),
-          w: Math.round(r.width),
-          h: Math.round(r.height),
-        };
-        setRect(prev => {
-          if (prev && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h) return prev;
-          return next;
-        });
-      } else {
-        setRect(prev => prev == null ? prev : null);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [stepIdx, isTour, s.selector]);
-
-  // Aproxima o controlo do centro ecrã ao entrar no passo.
-  useEffect(() => {
-    if (!isTour) return;
-    const t = setTimeout(() => {
-      const el = document.querySelector(s.selector);
-      if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 80);
-    return () => clearTimeout(t);
-  }, [stepIdx, isTour, s.selector]);
-
-  // Quando o utilizador toca no controlo destacado, ativamos `engaged` para
-  // libertar toda a interação (o sheet do bloco está em zIndex 100, e o
-  // formulário inline da maré fica no sítio do botão). Usamos captura para
-  // apanhar o toque antes de qualquer outro handler — mas NÃO chamamos
-  // stopPropagation: o clique tem mesmo de chegar ao botão real.
-  useEffect(() => {
-    if (!isTour) return;
-    const onDown = (e) => {
-      const el = document.querySelector(s.selector);
-      if (el && e.target && el.contains(e.target)) setEngaged(true);
-    };
-    document.addEventListener("pointerdown", onDown, true);
-    return () => document.removeEventListener("pointerdown", onDown, true);
-  }, [stepIdx, isTour, s.selector]);
-
-  const goNext = () => { haptic(8); setStepIdx(i => i + 1); };
-  const finish = (reset) => {
+  const finish = (reset, seedExample) => {
+    if (leaving) return;
     setLeaving(true);
-    setTimeout(() => onDone && onDone(reset), 300);
+    if (seedExample && store && store.reseed) store.reseed();
+    setTimeout(() => onDone && onDone(reset), 280);
+  };
+  const next = () => { if (!last) { haptic(8); setIdx(i => Math.min(i + 1, cards.length - 1)); } };
+  const prev = () => { if (idx > 0) setIdx(i => i - 1); };
+
+  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (dx < -45) next(); else if (dx > 45) prev();
   };
 
-  // Durante o tour ficamos abaixo do Sheet (zIndex 100). No intro/outro
-  // subimos para 400 para cobrir os tabs e os sheets eventualmente abertos.
-  const overlayZ = isTour ? 90 : 400;
-
-  // Card de explicação (tag + título + corpo). É a "lapela" que aparece
-  // perto do buraco do holofote — escolhe-se em cima ou em baixo do controlo
-  // consoante haja mais espaço. Não recebe pointer events para não bloquear o
-  // controlo destacado mesmo que se sobreponha por engano.
-  const renderTourCard = () => {
-    if (!isTour || !rect) return null;
-    const containerH = overlayRef.current ? overlayRef.current.getBoundingClientRect().height : 600;
-    const above = rect.y > containerH - (rect.y + rect.h);
-    const cardStyle = above
-      ? { bottom: containerH - rect.y + 18 }
-      : { top: rect.y + rect.h + 18 };
+  const iconFor = (k) => {
+    const map = { hoje: Icon.Hoje, pauta: Icon.Pauta, mares: Icon.Mares, check: Icon.Check };
+    const Ic = map[k];
     return (
       <div style={{
-        position: "absolute", left: 20, right: 20, ...cardStyle,
-        background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: 14,
-        padding: "14px 16px", boxShadow: "0 14px 38px rgba(0,0,0,0.32)",
-        opacity: engaged ? 0 : 1, transition: "opacity 0.18s ease",
-        pointerEvents: "none",
+        width: 64, height: 64, borderRadius: 18, marginBottom: 26,
+        background: accentColor + "14", border: "1px solid " + accentColor + "33",
+        color: accentColor, display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
-          textTransform: "uppercase", color: accentColor, marginBottom: 6,
-        }}>{s.tag}</div>
-        <div style={{
-          fontFamily: "var(--serif)", fontSize: 21, lineHeight: 1.15,
-          color: "var(--ink)", fontWeight: 400, letterSpacing: "-0.01em",
-        }}>{s.title}</div>
-        <div style={{
-          fontFamily: "var(--serif)", fontSize: 14, lineHeight: 1.45,
-          color: "var(--ink-2)", marginTop: 8,
-        }}>{s.body}</div>
+        {Ic ? <Ic size={30}/> : <span style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 36, lineHeight: 1 }}>✦</span>}
       </div>
     );
   };
-
-  // O escurecimento é desenhado com quatro rectângulos à volta do buraco. Cada
-  // um vai a 0 de pointer-events quando `engaged` é true: o utilizador está
-  // dentro do sheet/formulário e o cenário só serve para mostrar o caminho.
-  const renderScrim = () => {
-    if (!isTour) return null;
-    const dim = engaged ? 0.12 : 1;
-    const pe = engaged ? "none" : "auto";
-    const base = {
-      position: "absolute", background: ONBOARDING_SCRIM, pointerEvents: pe,
-      opacity: dim, transition: "opacity 0.2s ease",
-    };
-    if (!rect) {
-      // Sem alvo ainda: cobre tudo (o passo acabou de começar, evita ver a app
-      // a piscar antes do botão aparecer).
-      return <div style={{ ...base, inset: 0 }}/>;
-    }
-    return (
-      <>
-        <div style={{ ...base, left: 0, top: 0, right: 0, height: Math.max(0, rect.y - SPOTLIGHT_PADDING) }}/>
-        <div style={{ ...base, left: 0, top: rect.y + rect.h + SPOTLIGHT_PADDING, right: 0, bottom: 0 }}/>
-        <div style={{ ...base, left: 0, top: rect.y - SPOTLIGHT_PADDING, width: Math.max(0, rect.x - SPOTLIGHT_PADDING), height: rect.h + 2 * SPOTLIGHT_PADDING }}/>
-        <div style={{ ...base, left: rect.x + rect.w + SPOTLIGHT_PADDING, top: rect.y - SPOTLIGHT_PADDING, right: 0, height: rect.h + 2 * SPOTLIGHT_PADDING }}/>
-        {/* Anel à volta do buraco (não-interativo, não bloqueia toques) */}
-        <div style={{
-          position: "absolute",
-          left: rect.x - SPOTLIGHT_PADDING, top: rect.y - SPOTLIGHT_PADDING,
-          width: rect.w + 2 * SPOTLIGHT_PADDING, height: rect.h + 2 * SPOTLIGHT_PADDING,
-          borderRadius: SPOTLIGHT_RADIUS,
-          boxShadow: `0 0 0 2px ${accentColor}, 0 0 0 6px ${accentColor}33`,
-          pointerEvents: "none",
-          opacity: engaged ? 0 : 1,
-          transition: "opacity 0.2s ease",
-        }}/>
-      </>
-    );
-  };
-
-  // Seta à direita, centrada verticalmente, que aparece quando o passo está
-  // concluído. Avança para o próximo passo da lista.
-  const renderArrow = () => {
-    if (!isTour || !completed) return null;
-    return (
-      <button onClick={goNext} className="tap" style={{
-        position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-        width: 56, height: 56, borderRadius: "50%", border: "none",
-        background: accentColor, color: "var(--on-dark)", cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: "0 10px 24px rgba(0,0,0,0.38)",
-        animation: "fadeIn 0.3s ease",
-        // O container-pai tem pointerEvents:none durante o tour (para o buraco
-        // ficar transparente). Os filhos que precisam de receber cliques têm de
-        // repor explicitamente auto.
-        pointerEvents: "auto",
-        zIndex: 6,
-      }} aria-label={tr("Próximo")}>
-        <Icon.Chevron size={22}/>
-      </button>
-    );
-  };
-
-  // Ecrã de boas-vindas e ecrã final partilham este layout cheio (papel sólido).
-  const renderFullScreen = () => (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 32px" }}>
-      <div style={{
-        fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.2em",
-        textTransform: "uppercase", color: accentColor, marginBottom: 14,
-      }}>{s.tag}</div>
-      <h1 style={{
-        fontFamily: "var(--serif)", fontSize: 40, lineHeight: 1.05,
-        margin: 0, fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
-      }}>{s.title}</h1>
-      <p style={{
-        fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
-        color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
-      }}>{s.body}</p>
-    </div>
-  );
-
-  // Footer comum: pontinhos de progresso + ações.
-  // - Intro: botão "Começar" (e ainda "saltar" do lado, como hoje).
-  // - Outro: duas escolhas — "Manter tudo" / "Começar do zero".
-  // - Tour: barra invisível (footer está vazio; a seta vive sobre o ecrã).
-  const renderFooter = () => (
-    <div style={{ padding: "0 32px 40px", flexShrink: 0 }}>
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-        {steps.map((_, i) => (
-          <div key={i} style={{
-            height: 3, flex: 1, borderRadius: 2,
-            background: i <= stepIdx ? accentColor : (isTour ? "rgba(255,255,255,0.35)" : "var(--rule)"),
-            transition: "background 0.2s",
-          }}/>
-        ))}
-      </div>
-      {s.kind === "intro" && (
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => finish(false)} className="tap" style={{
-            background: "transparent", border: "none", padding: "12px 0",
-            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "var(--ink-3)", cursor: "pointer",
-          }}>{tr("saltar")}</button>
-          <Button onClick={goNext} accentColor={accentColor} style={{ flex: 1 }}>
-            {tr("Começar")}
-          </Button>
-        </div>
-      )}
-      {s.kind === "outro" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Button onClick={() => finish(false)} accentColor={accentColor}>
-            {tr("Manter tudo")}
-          </Button>
-          <button onClick={() => finish(true)} className="tap" style={{
-            background: "transparent", border: "1px solid var(--rule)",
-            borderRadius: 10, padding: "12px 14px", cursor: "pointer",
-            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "var(--ink-2)",
-          }}>{tr("Começar do zero")}</button>
-        </div>
-      )}
-    </div>
-  );
 
   return (
-    <div ref={overlayRef} data-noswipe="true" style={{
-      position: "absolute", inset: 0, zIndex: overlayZ,
-      display: "flex", flexDirection: "column",
-      // Intro/outro: papel sólido (ecrã cheio). Tour: transparente — quem dá
-      // cor são os 4 rects do escurecimento, que escapam ao buraco.
-      background: isTour ? "transparent" : "var(--paper)",
-      // Durante o tour o container raiz NUNCA captura cliques — os quatro
-      // rects do scrim tratam disso nas zonas escuras, e o buraco fica
-      // literalmente transparente às interações. Sem isto o próprio <div>
-      // bloqueia os toques no controlo destacado mesmo que não haja nenhum
-      // rect por cima dele.
-      pointerEvents: isTour ? "none" : "auto",
-      animation: leaving ? "fadeOut 0.3s ease forwards" : "fadeIn 0.3s ease",
+    <div data-noswipe="true" style={{
+      position: "absolute", inset: 0, zIndex: 500, background: "var(--paper)",
+      display: "flex", flexDirection: "column", overflow: "hidden",
+      animation: (leaving ? "fadeOut 0.28s ease forwards" : "fadeIn 0.3s ease"),
     }}>
-      {isTour ? (
-        <>
-          {renderScrim()}
-          {renderTourCard()}
-          {renderArrow()}
-        </>
-      ) : (
-        renderFullScreen()
-      )}
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "calc(14px + env(safe-area-inset-top)) 22px 0", minHeight: 44 }}>
+        {!last && (
+          <button onClick={() => finish(false)} className="tap" style={{
+            background: "transparent", border: "none", padding: "8px 4px", cursor: "pointer",
+            fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.12em",
+            textTransform: "uppercase", color: "var(--ink-3)",
+          }}>{tr("saltar")}</button>
+        )}
+      </div>
 
-      {!isTour && renderFooter()}
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+        style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 34px" }}>
+        <div key={idx} style={{ animation: "riseIn 0.35s ease both" }}>
+          {iconFor(card.icon)}
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.22em",
+            textTransform: "uppercase", color: accentColor, marginBottom: 14,
+          }}>{card.tag}</div>
+          <h1 style={{
+            fontFamily: "var(--serif)", fontSize: 38, lineHeight: 1.06, margin: 0,
+            fontWeight: 400, letterSpacing: "-0.015em", color: "var(--ink)",
+          }}>{card.title}</h1>
+          <p style={{
+            fontFamily: "var(--serif)", fontSize: 17, lineHeight: 1.5,
+            color: "var(--ink-2)", marginTop: 18, maxWidth: 360,
+          }}>{card.body}</p>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 34px calc(40px + env(safe-area-inset-bottom))", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 7, marginBottom: 22, justifyContent: "center", alignItems: "center" }}>
+          {cards.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)} aria-label={trf("passo {n}", { n: i + 1 })} style={{
+              width: i === idx ? 22 : 7, height: 7, borderRadius: 99, padding: 0, border: "none",
+              background: i === idx ? accentColor : "var(--rule)", cursor: "pointer", transition: "width 0.25s, background 0.25s",
+            }}/>
+          ))}
+        </div>
+        {!last ? (
+          <Button onClick={next} accentColor={accentColor} style={{ width: "100%" }}>{tr("Seguir")}</Button>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Button onClick={() => finish(true)} accentColor={accentColor}>{tr("Começar em branco")}</Button>
+            <button onClick={() => finish(false, true)} className="tap" style={{
+              background: "transparent", border: "1px solid var(--rule)", borderRadius: 10,
+              padding: "12px 14px", cursor: "pointer", fontFamily: "var(--mono)",
+              fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-2)",
+            }}>{tr("Explorar com um exemplo")}</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

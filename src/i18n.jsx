@@ -176,6 +176,18 @@ const I18N_EN = {
   "Enviar para a nuvem": "Send to the cloud",
   "Partilha a cópia para o Drive, Dropbox, Ficheiros…": "Share the copy to Drive, Dropbox, Files…",
   "Cópia transferida.": "Copy downloaded.",
+
+  // ─── Onboarding (welcome carousel) ───
+  "Seguir": "Next",
+  "Começar em branco": "Start blank",
+  "Explorar com um exemplo": "Explore with an example",
+  "passo {n}": "step {n}",
+  "Cultive hábitos como marés.": "Cultivate habits like tides.",
+  "Um lugar calmo, privado e offline para o que importa. Sem conta, sem servidor — tudo fica no seu telemóvel.": "A calm, private, offline place for what matters. No account, no server — everything stays on your phone.",
+  "Na tab Hoje, liste 1 a 4 intenções — as coisas que movem o seu dia — e reflita à noite.": "On the Hoje tab, list 1–4 intentions — the things that move your day — and reflect at night.",
+  "Na Pauta, inicie um bloco de foco e o tempo conta-se sozinho. Pause, retome e conclua quando quiser.": "On Pauta, start a focus block and time counts itself. Pause, resume and finish whenever you like.",
+  "Nas Marés, marque hábitos dia a dia. A constância faz a maré subir — e os dias de descanso são honestos.": "On Marés, mark habits day by day. Consistency makes the tide rise — and rest days are honest.",
+  "Comece com uma pauta em branco, ou explore com um exemplo. Muda tudo depois nas Definições.": "Start with a blank pauta, or explore with an example. Change everything later in Settings.",
 };
 
 // === I18N_EN_BULK_BEGIN === (entries collected from the rest of the app)
