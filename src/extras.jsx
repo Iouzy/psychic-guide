@@ -655,10 +655,32 @@ async function fireReminder(title, body, tag) {
 // ─── Lembretes locais (sem servidor; só com a app aberta) ───
 // Dispara notificações enquanto a página está aberta: nudge de hábitos
 // pendentes e da reflexão noturna, uma vez por dia, à hora preferida.
+// Drop "pauta.reminded.<kind>.<dayKey>" flags older than a couple of days.
+// These are written once per fired reminder and were never cleaned up, so they
+// accumulated forever — a slow localStorage leak. dayKeys are zero-padded
+// YYYY-MM-DD, so a lexicographic compare against a cutoff is safe.
+// Apagar marcas "pauta.reminded.…" antigas para não acumularem indefinidamente.
+function pruneStaleReminderFlags() {
+  try {
+    const cutoff = addDaysToKey(dayKeyOf(Date.now()), -2);
+    const stale = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf("pauta.reminded.") !== 0) continue;
+      const dayKey = k.slice(k.lastIndexOf(".") + 1);
+      if (dayKey < cutoff) stale.push(k);
+    }
+    stale.forEach((k) => localStorage.removeItem(k));
+  } catch (_) {}
+}
+
 function useReminders(store) {
   const { state } = store;
   const prefs = state.prefs || {};
   const rem = prefs.reminders || {};
+  // Sweep accumulated reminder flags once on mount (runs regardless of whether
+  // reminders are currently enabled, so leftover keys still get cleaned up).
+  useEffect(() => { pruneStaleReminderFlags(); }, []);
   useEffect(() => {
     if (!rem.enabled) return;
     if (!notifySupported()) return;

@@ -14,11 +14,6 @@ rationale. Ordered roughly by value.
 - **Drop/relax the "Third-party CDN deps" branch in `service-worker.js`** once
   fonts are vendored — it would then only ever serve Google Fonts.
 
-## Data / storage hygiene
-- **Prune stale reminder flags.** `useReminders` writes `pauta.reminded.<kind>.<dayKey>`
-  keys to `localStorage` and never deletes them, so they accumulate one-per-day
-  forever. A tiny sweep (drop keys older than ~2 days) would stop the slow leak.
-
 ## Accessibility
 - **Focus-trap the onboarding overlay.** `OnboardingOverlay` is a full-screen
   overlay that doesn't use the shared `Sheet`, so it doesn't get the new
@@ -61,6 +56,15 @@ rationale. Ordered roughly by value.
   `habitPeriodStats`. *Left out:* a correct fix must reconcile a rolling 7-day
   window with Monday-anchored habit periods; subtle enough to deserve its own PR
   + cadence tests rather than riding along a build-script fix.
+
+## CI
+- **Gate CI on `npm run check`.** `.github/workflows/android.yml` builds and
+  publishes the APK on every push with no lint/test step, so broken JSX or a
+  failing Vitest suite still ships to the rolling `latest` release. Adding a
+  `npm run check` step before the build would catch it. (Flagged in PR #39.)
+- **Migration regression tests.** `schema.test.mjs` covers `migrateHabit`;
+  `loadState`'s day-archival + prefs-merge paths could use explicit coverage.
+  (Flagged in PR #39.)
 
 ## Misc
 - **Update checker is the only outbound request in the web app** (`app.jsx`
