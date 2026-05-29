@@ -6,7 +6,12 @@
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
     "inject:native": "node scripts/inject-native.mjs",
-    "sync": "npm run build:web && npx cap sync android"
+    "sync": "npm run build:web && npx cap sync android",
+    "check:jsx": "node tools/check-jsx.mjs",
+    "check:i18n": "node tools/check-i18n.mjs",
+    "test": "vitest run",
+    "test:cadence": "node tools/test-cadence.mjs",
+    "check": "node tools/check-jsx.mjs && node tools/check-i18n.mjs && node tools/test-cadence.mjs && vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
@@ -14,6 +19,7 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.2.0"
+    "@capacitor/cli": "^6.2.0",
+    "vitest": "^4.1.7"
   }
 }
