@@ -867,6 +867,116 @@ function useReminders(store) {
   }, [rem.enabled, rem.habitsTime, rem.reflectionTime, state.habits, state.today]);
 }
 
+// ─── Startup notification opt-in ─────────────────────────────
+// The reminder toggle used to be buried in Settings, so most users never saw
+// it and never granted permission — the app simply never asked. This shows a
+// single, gentle, dismissible card shortly after onboarding finishes, offering
+// to turn reminders on (which is what actually triggers the OS permission
+// prompt). Shown at most once: a localStorage flag remembers the choice, and it
+// never appears if reminders are already on or the device has no channel.
+const NOTIF_PROMPT_KEY = "pauta.notifPrompt.dismissed";
+
+function NotifPrompt({ store, accentColor }) {
+  const prefs = store.state.prefs || {};
+  const rem = prefs.reminders || {};
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState(null); // { kind:"ok"|"err", text } after a choice
+
+  useEffect(() => {
+    // Only ask once onboarding is done, reminders are still off, the device can
+    // actually deliver them, and we haven't asked before.
+    let dismissed = false;
+    try { dismissed = !!localStorage.getItem(NOTIF_PROMPT_KEY); } catch (_) {}
+    if (!prefs.onboardingSeen || rem.enabled || dismissed) return;
+    if (!window.notifySupported || !window.notifySupported()) return;
+    // A short beat so it doesn't slam in on top of the first paint.
+    const id = setTimeout(() => setVisible(true), 1400);
+    return () => clearTimeout(id);
+  }, [prefs.onboardingSeen, rem.enabled]);
+
+  const remember = () => { try { localStorage.setItem(NOTIF_PROMPT_KEY, "1"); } catch (_) {} };
+
+  const dismiss = () => { remember(); setVisible(false); };
+
+  const enable = async () => {
+    setBusy(true);
+    const res = await window.enableNotifications();
+    remember();
+    if (!res.ok) {
+      // Permission denied / unavailable — tell the user where to fix it, then
+      // close. We don't flip the toggle on if the OS said no.
+      setNote({ kind: "err", text: res.reason === "unsupported"
+        ? tr("Este dispositivo não suporta notificações.")
+        : tr("Permissão negada. Pode ativá-la nas definições do sistema.") });
+      setBusy(false);
+      setTimeout(() => setVisible(false), 2600);
+      return;
+    }
+    store.setReminderPref("enabled", true);
+    await window.fireReminder(
+      tr("Notificações ativadas"),
+      tr("Vou avisar-te dos hábitos e da reflexão às horas marcadas."),
+      "pauta-test"
+    );
+    setNote({ kind: "ok", text: tr("Lembretes ativados.") });
+    setBusy(false);
+    setTimeout(() => setVisible(false), 1600);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div role="dialog" aria-modal="true"
+      style={{
+        position: "absolute", inset: 0, zIndex: 110,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        background: "rgba(0,0,0,0.32)", animation: "fadeIn 0.25s ease both",
+        padding: "0 16px calc(20px + env(safe-area-inset-bottom))",
+      }}
+      onClick={dismiss}>
+      <div onClick={e => e.stopPropagation()}
+        style={{
+          width: "100%", maxWidth: 380, background: "var(--paper)",
+          border: "1px solid var(--rule)", borderRadius: 18,
+          padding: "22px 22px 18px", boxShadow: "0 20px 60px rgba(0,0,0,0.28)",
+          animation: "riseIn 0.32s ease both",
+        }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, marginBottom: 14,
+          background: `${accentColor}14`, border: `1px solid ${accentColor}33`,
+          color: accentColor, display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Icon.Bell size={20}/>
+        </div>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 22, lineHeight: 1.15, color: "var(--ink)", letterSpacing: "-0.01em" }}>
+          {tr("Quer um lembrete suave?")}
+        </div>
+        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 14, color: "var(--ink-3)", lineHeight: 1.45, marginTop: 8 }}>
+          {tr("Um aviso para as marés do dia e para a reflexão da noite. Sem servidor, sem rastreio — só um toque às horas que escolher.")}
+        </div>
+
+        {note && (
+          <div style={{
+            marginTop: 14, padding: "9px 12px", borderRadius: 9,
+            background: "var(--paper-2)", fontFamily: "var(--sans)", fontSize: 13,
+            color: note.kind === "ok" ? "var(--good)" : "var(--accent)", lineHeight: 1.4,
+          }}>{note.text}</div>
+        )}
+
+        {!note && (
+          <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
+            <Button variant="ghost" onClick={dismiss} style={{ flex: 1 }}>{tr("Agora não")}</Button>
+            <Button onClick={enable} disabled={busy} accentColor={accentColor} style={{ flex: 2 }}>
+              {busy ? tr("A ativar…") : tr("Ativar lembretes")}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Native focus timer notification (Android island) ────────
 // Drives the FocusActivity Capacitor plugin while a block is running, mirroring
 // the Pauta tab's active card in the notification drawer: the live timer (a
@@ -1114,7 +1224,7 @@ async function shareBackupFile(backupObj) {
 }
 
 Object.assign(window, {
-  haptic, OnboardingOverlay, TierGuideSheet,
+  haptic, OnboardingOverlay, TierGuideSheet, NotifPrompt,
   BestHourChart, CorrelationList, FocusCalendar, WeekReview, InsightsSheet,
   GoalsSection, useReminders, useFocusActivity,
   useAutoBackup, useWakeLock, playChime, shareDayCard, shareBackupFile,

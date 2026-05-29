@@ -690,6 +690,16 @@ const I18N_EN_BULK = {
 
   // ─── Block templates (StartSheet) ───
   "retomar de antes": "resume from before",
+
+  // ─── Startup notification opt-in (NotifPrompt) ───
+  "Quer um lembrete suave?": "Want a gentle reminder?",
+  "Um aviso para as marés do dia e para a reflexão da noite. Sem servidor, sem rastreio — só um toque às horas que escolher.":
+    "A nudge for the day's tides and the evening reflection. No server, no tracking — just a tap at the times you choose.",
+  "Agora não": "Not now",
+  "Ativar lembretes": "Turn on reminders",
+  "A ativar…": "Turning on…",
+  "Lembretes ativados.": "Reminders on.",
+  "Permissão negada. Pode ativá-la nas definições do sistema.": "Permission denied. You can enable it in your system settings.",
 };
 // === I18N_EN_BULK_END ===
 

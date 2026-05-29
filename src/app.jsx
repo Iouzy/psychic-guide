@@ -936,6 +936,7 @@ function App() {
       )}
 
       {prefs.onboardingSeen && <ParrotCompanion store={store} accentColor={accentColor} tab={tab}/>}
+      {prefs.onboardingSeen && <NotifPrompt store={store} accentColor={accentColor}/>}
       <ConfirmHost/>
 
       <TweaksPanel title={tr("Tweaks")}>
