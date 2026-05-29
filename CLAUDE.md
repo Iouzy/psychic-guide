@@ -125,10 +125,25 @@ fetches.
 ## CI / releases
 
 `.github/workflows/android.yml` runs on every push: builds the web bundle, adds
-the Android platform, injects the native plugin, builds a debug APK (signed with
-the committed `debug.keystore` so updates preserve user data), and publishes it
-to a rolling `latest` GitHub Release. The in-app update checker (`app.jsx`)
-compares the build stamp injected by `build-web.mjs` against that release.
+the Android platform, injects the native plugin, and builds a debug APK (signed
+with the committed `debug.keystore` so updates preserve user data). The in-app
+update checker (`app.jsx`) compares the build stamp injected by `build-web.mjs`
+against the rolling `latest` GitHub Release.
+
+**Only `main` publishes that release.** The publish step is gated on
+`github.ref == 'refs/heads/main'`, so feature-branch pushes still run the
+`check` gate and build/upload the APK *artifact* (handy for validation) but
+never overwrite the `latest` release the app updates from. This matters because
+the `versionCode` is a reset-proof epoch value: without the gate, a push to any
+branch would look "newer" and could silently downgrade installed users to a
+build missing other branches' work. **Work on a branch, open a PR, and merge to
+`main` to actually ship to devices** — pushing to a branch alone never reaches
+the release.
+
+> Before adding commits toward an existing PR, confirm it's still open (e.g.
+> `pull_request_read`). A merged PR's branch still accepts pushes and CI still
+> builds from it, but those commits land in no open PR — branch off fresh `main`
+> and open a new PR instead.
 
 ## Pointers
 
