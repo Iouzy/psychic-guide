@@ -176,28 +176,54 @@ function ParrotSvg({ accent, size = 56 }) {
   );
 }
 
-// A little stylised wave Pip surfs on (Marés tab). Decorative only.
-function SurfWave({ accent, width = 78 }) {
+// The surfboard Pip rides (Marés tab) — a classic side-on board: a slim lens
+// with pointed tips, a lighter deck panel and a centre stringer, so it clearly
+// reads as a board and not a flat blob. The accent gives it the app's colour;
+// the cream deck + white stringer add contrast on the dark Marés background.
+// PT: prancha de surf vista de lado, com bicos, deck mais claro e quilha
+// central — para se ler como prancha e não uma mancha.
+function SurfBoard({ accent, width = 64 }) {
   return (
-    <svg width={width} height={20} viewBox="0 0 78 20" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -12 }}>
-      <path d="M2 12 C14 4 22 18 34 12 C46 6 54 18 76 8 L76 20 L2 20 Z"
-        fill={accent} opacity="0.28"/>
-      <path d="M2 12 C14 4 22 18 34 12 C46 6 54 18 76 8"
-        stroke={accent} strokeWidth="2" fill="none" opacity="0.7" strokeLinecap="round"/>
+    <svg width={width} height={16} viewBox="0 0 64 16" fill="none" aria-hidden="true"
+      style={{ display: "block", marginTop: -6 }}>
+      {/* board body — pointed-nose/tail lozenge */}
+      <path d="M2 8 C2 4 16 2 32 2 C48 2 62 4 62 8 C62 12 48 14 32 14 C16 14 2 12 2 8 Z"
+        fill={accent}/>
+      {/* deck highlight */}
+      <path d="M8 8 C8 5.5 18 4.5 32 4.5 C46 4.5 56 5.5 56 8 C56 10.5 46 11.5 32 11.5 C18 11.5 8 10.5 8 8 Z"
+        fill="#FFF4DC" opacity="0.55"/>
+      {/* stringer line down the middle */}
+      <line x1="4" y1="8" x2="60" y2="8" stroke="#fff" strokeWidth="1" opacity="0.7"/>
     </svg>
   );
 }
 
-// The board Pip rides on the Marés tab — a little surfboard tucked under his
-// feet so he's clearly riding *something*, not floating in the air.
-function SurfBoard({ accent, width = 60 }) {
+// The wave Pip surfs on. A real, readable swell: a layered body of water with a
+// curling lip on the left, a bright white foam crest tracing the whole top and
+// a couple of foam flecks. Water is a fixed sea-blue (not the accent) so it
+// always reads as a wave whatever the accent colour is. // PT: onda legível —
+// corpo de água em camadas, crista de espuma branca e uma curva que enrola.
+function SurfWave({ width = 92 }) {
+  const deep = "#2E7FA6";   // deeper water
+  const sea  = "#46A8CE";   // surface water
   return (
-    <svg width={width} height={13} viewBox="0 0 60 13" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -7 }}>
-      <ellipse cx="30" cy="6.5" rx="28" ry="5.5" fill={accent}/>
-      <ellipse cx="30" cy="5.5" rx="26" ry="4" fill="#F2D9A0" opacity="0.55"/>
-      <line x1="30" y1="2" x2="30" y2="11" stroke={accent} strokeWidth="1" opacity="0.5"/>
+    <svg width={width} height={28} viewBox="0 0 92 28" fill="none" aria-hidden="true"
+      style={{ display: "block", marginTop: -9 }}>
+      {/* deeper water behind, for depth */}
+      <path d="M0 17 C18 9 30 22 48 15 C66 8 76 21 92 12 L92 28 L0 28 Z"
+        fill={deep} opacity="0.85"/>
+      {/* surface water */}
+      <path d="M0 15 C16 7 28 20 46 13 C64 6 74 19 92 10 L92 28 L0 28 Z"
+        fill={sea} opacity="0.9"/>
+      {/* curling lip on the left where the bird rides */}
+      <path d="M6 15 C2 9 10 4 18 7 C13 8 11 12 14 15 Z" fill="#fff" opacity="0.9"/>
+      {/* foam crest along the top */}
+      <path d="M0 15 C16 7 28 20 46 13 C64 6 74 19 92 10"
+        stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.95"/>
+      {/* foam flecks */}
+      <circle cx="34" cy="17" r="1.4" fill="#fff" opacity="0.85"/>
+      <circle cx="60" cy="14" r="1.2" fill="#fff" opacity="0.8"/>
+      <circle cx="80" cy="15" r="1.5" fill="#fff" opacity="0.85"/>
     </svg>
   );
 }
@@ -219,6 +245,14 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const [flight, setFlight] = useState({ key: 0, dir: null });
   const prevTabRef = useRef(tab);
   const hideTimer = useRef(null);
+  // Refs that always hold the *current* tab/bubble, so the long-lived idle
+  // interval (created once, deps [enabled]) never reads a stale closure and
+  // always picks a line for the tab you're actually on. // PT: refs com o valor
+  // atual para o intervalo ocioso não usar um fecho desatualizado.
+  const tabRef = useRef(tab);
+  const bubbleRef = useRef(bubble);
+  tabRef.current = tab;
+  bubbleRef.current = bubble;
 
   // Hide Pip while any bottom-sheet/modal is open. The Pauta-tab sheets render
   // inside the content wrapper (its own stacking context), so their z-index sits
@@ -257,19 +291,24 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const sayIdle = () => {
     const av = recent.current;
     const r = Math.random();
-    const here = TAB_ANCHOR[tab] || "hoje";
-    if (tab === "hoje" && r < 0.5) return say(pickFresh(PARROT_HOJE, av), { anchor: here });
-    if (tab === "pauta" && r < 0.5) return say(pickFresh(PARROT_PAUTA, av), { anchor: here });
-    if (tab === "mares" && r < 0.5) return say(pickFresh(PARROT_MARES, av), { anchor: here });
+    const curTab = tabRef.current;            // current tab, never a stale closure
+    const here = TAB_ANCHOR[curTab] || "hoje";
+    if (curTab === "hoje" && r < 0.5) return say(pickFresh(PARROT_HOJE, av), { anchor: here });
+    if (curTab === "pauta" && r < 0.5) return say(pickFresh(PARROT_PAUTA, av), { anchor: here });
+    if (curTab === "mares" && r < 0.5) return say(pickFresh(PARROT_MARES, av), { anchor: here });
     const general = [PARROT_TIPS, PARROT_DYK, PARROT_APP, PARROT_JOKES, PARROT_PHILO, PARROT_CULTURE];
     return say(pickFresh(pickOne(general), av), { anchor: here });
   };
+  // Keep the latest sayIdle reachable from the long-lived timers below.
+  const sayIdleRef = useRef(sayIdle);
+  sayIdleRef.current = sayIdle;
 
-  // First hello shortly after load, then an occasional idle line.
+  // First hello shortly after load, then an occasional idle line. The timers
+  // call through refs so they always use the current tab/bubble.
   useEffect(() => {
     if (!enabled) return;
-    const first = setTimeout(sayIdle, 11000);
-    const iv = setInterval(() => { if (!bubble) sayIdle(); }, 3.5 * 60000);
+    const first = setTimeout(() => sayIdleRef.current(), 11000);
+    const iv = setInterval(() => { if (!bubbleRef.current) sayIdleRef.current(); }, 3.5 * 60000);
     return () => { clearTimeout(first); clearInterval(iv); if (hideTimer.current) clearTimeout(hideTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
@@ -282,6 +321,12 @@ function ParrotCompanion({ store, accentColor, tab }) {
     const prev = prevTabRef.current;
     prevTabRef.current = tab;
     setAnchorKey(TAB_ANCHOR[tab] || "hoje");
+    // Drop any lingering line the moment the tab changes, so a Marés line can't
+    // hang over onto Pauta (and vice-versa). A fresh tab-specific line, if any,
+    // is scheduled below. // PT: limpa o balão ao trocar de separador para a
+    // deixa não "escorrer" para o separador seguinte.
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setBubble(null);
     if (firstTab.current) { firstTab.current = false; return; }
     // Launch him in the direction he's travelling across the screen so the move
     // reads as "swiped along with the tab", ending in a bump at the new corner.
@@ -444,7 +489,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
                 <div className="pip-surf" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   {bird}
                   <SurfBoard accent={accentColor}/>
-                  <SurfWave accent={accentColor}/>
+                  <SurfWave/>
                 </div>
               </div>
             ) : bird}

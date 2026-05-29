@@ -506,7 +506,7 @@ function ConfirmHost() {
       <div ref={cardRef} onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" style={{
         width: "100%", maxWidth: 340, background: "var(--paper)",
         border: "1px solid var(--rule)", borderRadius: 16, padding: "22px 22px 16px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: "sheetCenterIn 0.22s ease",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: "cardCenterIn 0.22s ease",
       }}>
         <div style={{ fontFamily: "var(--serif)", fontSize: 19, lineHeight: 1.3, color: "var(--ink)", marginBottom: 20 }}>
           {req.message}
