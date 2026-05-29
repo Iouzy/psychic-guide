@@ -140,6 +140,20 @@ build missing other branches' work. **Work on a branch, open a PR, and merge to
 `main` to actually ship to devices** — pushing to a branch alone never reaches
 the release.
 
+### In-app updater — no manual APK needed
+
+Once a PR is merged to `main`, CI builds the APK and publishes a new `latest`
+GitHub Release automatically. **The app detects this on its own and offers an
+in-app update prompt** — users tap once to install, no browser/Google/download
+required. The `AppUpdaterPlugin` (native Kotlin) handles the download and
+launches the system installer in-place, preserving all user data because the
+signing key (`debug.keystore`) never changes.
+
+**Implication for AI sessions:** After implementing and verifying a feature,
+open a PR targeting `main` and merge it (or ask the user to merge it) so the
+change actually ships. Leaving a PR open indefinitely as a draft means the fix
+never reaches the device.
+
 > Before adding commits toward an existing PR, confirm it's still open (e.g.
 > `pull_request_read`). A merged PR's branch still accepts pushes and CI still
 > builds from it, but those commits land in no open PR — branch off fresh `main`
