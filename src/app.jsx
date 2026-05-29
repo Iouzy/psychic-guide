@@ -690,10 +690,14 @@ function NotifDiagnostics() {
   const [tested, setTested] = useState(null);
   useEffect(() => {
     let alive = true;
-    window.FocusActivity.checkPermission()
+    const check = () => window.FocusActivity.checkPermission()
       .then(r => { if (alive) setPerm(!!(r && r.granted)); })
       .catch(() => { if (alive) setPerm(false); });
-    return () => { alive = false; };
+    check();
+    // Re-check when returning from system Settings, so a grant shows live here.
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
   const cap = window.Capacitor;
