@@ -9,6 +9,7 @@ import com.getcapacitor.BridgeActivity
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         registerPlugin(FocusActivityPlugin::class.java)
+        registerPlugin(AppUpdaterPlugin::class.java)
         super.onCreate(savedInstanceState)
 
         // Draw edge-to-edge with transparent system bars so the app's own (themed)

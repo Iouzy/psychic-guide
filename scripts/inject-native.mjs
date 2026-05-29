@@ -8,26 +8,31 @@ const ROOT    = new URL("..", import.meta.url).pathname;
 const SRC     = join(ROOT, "native/android");
 const JAVA    = join(ROOT, "android/app/src/main/java/com/pauta/app");
 const DRAWABLE = join(ROOT, "android/app/src/main/res/drawable");
+const XML      = join(ROOT, "android/app/src/main/res/xml");
 const MANIFEST = join(ROOT, "android/app/src/main/AndroidManifest.xml");
 const GRADLE   = join(ROOT, "android/app/build.gradle");
 
 // ── 1. Copy Kotlin source files ───────────────────────────────
 mkdirSync(JAVA,     { recursive: true });
 mkdirSync(DRAWABLE, { recursive: true });
+mkdirSync(XML,      { recursive: true });
 
 for (const file of [
   "FocusActivityPlugin.kt",
   "FocusActionReceiver.kt",
   "FocusService.kt",
+  "AppUpdaterPlugin.kt",
   "MainActivity.kt",
 ]) {
   cpSync(join(SRC, file), join(JAVA, file));
   console.log(`Copied ${file}`);
 }
 
-// ── 2. Copy notification icon ─────────────────────────────────
+// ── 2. Copy resources (notification icon + updater FileProvider paths) ──
 cpSync(join(SRC, "ic_stat_focus.xml"), join(DRAWABLE, "ic_stat_focus.xml"));
 console.log("Copied ic_stat_focus.xml");
+cpSync(join(SRC, "update_file_paths.xml"), join(XML, "update_file_paths.xml"));
+console.log("Copied update_file_paths.xml");
 
 // ── 3. Patch AndroidManifest.xml ─────────────────────────────
 let manifest = readFileSync(MANIFEST, "utf8");
@@ -35,7 +40,8 @@ let manifest = readFileSync(MANIFEST, "utf8");
 const PERMISSIONS = `
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>`;
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>`;
 
 const COMPONENTS = `
         <service
@@ -50,7 +56,16 @@ const COMPONENTS = `
                 <action android:name="com.pauta.app.FOCUS_RESUME"/>
                 <action android:name="com.pauta.app.FOCUS_CONCLUDE"/>
             </intent-filter>
-        </receiver>`;
+        </receiver>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.pauta.app.updateprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths"/>
+        </provider>`;
 
 // Guard: don't double-inject on repeated runs
 if (!manifest.includes("FocusService")) {
