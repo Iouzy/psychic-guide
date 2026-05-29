@@ -5,6 +5,14 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 const STORAGE_KEY = "pauta.v4";
 
+// Limite defensivo do backup / defensive backup cap. Todo o estado vive em
+// localStorage (~5–10 MB por origem), por isso um ficheiro muito maior é um
+// engano (ficheiro errado/corrompido), não um backup real — rejeita-se antes
+// de o parsear para a memória. / All state lives in localStorage (~5–10 MB per
+// origin), so a far larger file is a mistake, not a real backup; reject it
+// before parsing it into memory.
+const MAX_BACKUP_CHARS = 25 * 1024 * 1024; // ~25M chars
+
 // ─── HELPERS ───────────────────────────────────────────────
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 function fmtClock(ts) { const d = new Date(ts); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
@@ -612,6 +620,11 @@ function normalizeImported(s) {
 
 // Parse + validate backup text. Returns the normalized state or throws.
 function parseBackup(text) {
+  // Guarda de tamanho antes do parse / size guard before parsing: um backup
+  // real cabe em localStorage; um ficheiro muito maior é um engano.
+  if (typeof text !== "string" || text.length > MAX_BACKUP_CHARS) {
+    throw new Error(tr("Ficheiro vazio ou inválido."));
+  }
   let parsed;
   try {
     parsed = JSON.parse(text);
@@ -1504,5 +1517,5 @@ Object.assign(window, {
   readAutoBackup, writeAutoBackup, autoBackupIntervalMs,
   // schema / import (exposed for tests + reuse)
   STORAGE_KEY, EXPORT_VERSION, emptyState, seed, loadState, saveState,
-  migrateHabit, normalizeImported, parseBackup,
+  migrateHabit, normalizeImported, parseBackup, MAX_BACKUP_CHARS,
 });
