@@ -140,6 +140,9 @@ function defaultPrefs() {
     accent: null,           // null = use the build-time default; else a hex chosen in Settings
     reducedMotion: false,   // user opt-out for animations (OS preference is the implicit default)
     haptics: true,
+    sound: false,           // gentle chime when a focus block is concluded / a target is hit
+    keepAwake: true,        // hold a screen wake lock while a block is running
+    autoBackup: "off",      // "off" | "30m" | "hourly" | "daily" | "weekly" — rolling local snapshot
     onboardingSeen: false,
     reminders: {
       enabled: false,
@@ -425,6 +428,27 @@ function saveState(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s
 // ─── EXPORT / IMPORT ───────────────────────────────────────
 // Backup file shape: { app:"pauta", version, exportedAt, data:<state> }.
 const EXPORT_VERSION = 4;
+
+// ─── AUTO-BACKUP (rolling local snapshot) ──────────────────
+// No server exists, and browsers can't silently write files without a user
+// gesture, so the reliable cross-platform "auto-backup" is a timestamped copy
+// of the latest backup object kept under its own localStorage key. It protects
+// against in-app mistakes (a stray reset/edit) and is one tap to restore or
+// download. The cadence is chosen in Settings; the writing loop lives in
+// useAutoBackup() (extras.jsx).
+const AUTOBACKUP_KEY = "pauta.autobackup";
+function readAutoBackup() {
+  try { const raw = localStorage.getItem(AUTOBACKUP_KEY); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function writeAutoBackup(backupObj) {
+  try { localStorage.setItem(AUTOBACKUP_KEY, JSON.stringify({ ts: Date.now(), backup: backupObj })); return true; }
+  catch (e) { return false; }
+}
+// Cadence label → milliseconds (0 = disabled).
+function autoBackupIntervalMs(freq) {
+  return ({ "30m": 30 * 60000, "hourly": 3600000, "daily": 86400000, "weekly": 7 * 86400000 })[freq] || 0;
+}
 
 function downloadJSON(filename, obj) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
@@ -980,11 +1004,13 @@ function useStore() {
     const t = (title || "").trim(); if (!t) return null;
     const id = uid("b_");
     const project = (opts.project || "").trim() || null;
+    // Optional soft target (Pomodoro-style). Stored in ms; null = open-ended.
+    const targetMs = opts.targetMin > 0 ? Math.round(opts.targetMin) * 60000 : null;
     setState(s => ({
       ...s,
       activeId: id,
       blocks: [...s.blocks, {
-        id, title: t, linkedToId, project,
+        id, title: t, linkedToId, project, targetMs,
         sessions: [{ startedAt: Date.now(), endedAt: null, note: "" }],
         status: "active",
         reflection: "",
@@ -1260,15 +1286,33 @@ function useStore() {
   }));
 
   // ─ Backup ─
+  // The wrapped backup object — shared by manual export and the auto-backup
+  // snapshot so both produce an identical, importable file shape.
+  const serializeBackup = () => ({
+    app: "pauta",
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: state,
+  });
   const exportData = () => {
-    const stamp = dayKeyOf(Date.now());
-    downloadJSON(`pauta-backup-${stamp}.json`, {
-      app: "pauta",
-      version: EXPORT_VERSION,
-      exportedAt: new Date().toISOString(),
-      data: state,
-    });
+    downloadJSON(`pauta-backup-${dayKeyOf(Date.now())}.json`, serializeBackup());
   };
+
+  // Append a batch of intentions (used by "carry over yesterday's unfinished").
+  // Preserves priority; fresh ids/timestamps so they belong to today.
+  const carryOverIntentions = (items) => setState(s => ({
+    ...s,
+    today: {
+      ...s.today,
+      intentions: [
+        ...s.today.intentions,
+        ...items.map(it => ({
+          id: uid("i_"), text: (it.text || "").trim(),
+          done: false, priority: it.priority, createdAt: Date.now(),
+        })).filter(it => it.text),
+      ],
+    },
+  }));
   // Returns { ok } or { ok:false, error }. Caller confirms the overwrite.
   const importData = (text) => {
     try {
@@ -1284,6 +1328,7 @@ function useStore() {
     state, activeBlock,
     // hoje
     addIntention, updateIntention, removeIntention, toggleIntention, reorderIntentions, setReflection,
+    carryOverIntentions,
     // pauta
     startBlock, pauseActive, resumeBlock, concludeActive, concludeBlock,
     updateBlock, updateSessionNote, deleteBlock,
@@ -1297,7 +1342,7 @@ function useStore() {
     // misc
     resetAll, reseed, clearForOnboarding,
     // backup
-    exportData, importData,
+    exportData, importData, serializeBackup,
   };
 }
 
@@ -1329,4 +1374,6 @@ Object.assign(window, {
   // cadence (weekly / monthly tides)
   habitCadence, habitIsAnchorDay, habitPeriodMark, periodRange, habitPeriodStats,
   habitMaturityUnits, cadenceUnitShort, weekStartKey, weekEndKey,
+  // auto-backup
+  readAutoBackup, writeAutoBackup, autoBackupIntervalMs,
 });

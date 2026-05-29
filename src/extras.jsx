@@ -921,8 +921,151 @@ function useFocusActivity(store) {
   }, [activeBlock?.id, activeBlock?.sessions?.length]);
 }
 
+// ─── Auto-backup loop ────────────────────────────────────────
+// Writes a timestamped snapshot of the latest backup object on the cadence the
+// user picked, plus opportunistically when the tab is hidden / closing (the
+// moments most likely to precede data loss). The actual storage lives in
+// readAutoBackup/writeAutoBackup (store.jsx); this only schedules the writes.
+function useAutoBackup(store) {
+  const freq = store.state.prefs.autoBackup || "off";
+  // Keep a live reference to the latest serializer so the interval always
+  // captures current state without re-subscribing on every keystroke.
+  const serializeRef = useRef(store.serializeBackup);
+  serializeRef.current = store.serializeBackup;
+
+  useEffect(() => {
+    if (freq === "off") return;
+    const ms = window.autoBackupIntervalMs(freq);
+    if (!ms) return;
+    const tick = () => {
+      const last = window.readAutoBackup();
+      if (!last || (Date.now() - last.ts) >= ms) {
+        window.writeAutoBackup(serializeRef.current());
+      }
+    };
+    // Check on a coarse timer (between 1 and 5 min) rather than exactly every
+    // `ms`, so a daily/weekly cadence doesn't keep a multi-hour timer alive.
+    const checkEvery = Math.min(Math.max(ms, 60000), 5 * 60000);
+    const id = setInterval(tick, checkEvery);
+    const onVis = () => { if (document.visibilityState === "hidden") tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("beforeunload", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("beforeunload", tick);
+    };
+  }, [freq]);
+}
+
+// ─── Screen wake lock ────────────────────────────────────────
+// Holds a screen wake lock while `active` so the phone doesn't sleep mid-block.
+// The lock is auto-dropped by the browser when the tab hides; re-acquire on
+// return. No-ops where the API is unavailable (e.g. iOS Safari < 16.4).
+function useWakeLock(active) {
+  useEffect(() => {
+    if (!active || !navigator.wakeLock) return;
+    let lock = null, cancelled = false;
+    const request = async () => {
+      try {
+        lock = await navigator.wakeLock.request("screen");
+        lock.addEventListener && lock.addEventListener("release", () => { lock = null; });
+      } catch (e) {}
+    };
+    request();
+    const onVis = () => {
+      if (document.visibilityState === "visible" && !lock && !cancelled) request();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+      try { if (lock) lock.release(); } catch (e) {}
+    };
+  }, [active]);
+}
+
+// ─── Completion chime ────────────────────────────────────────
+// A short, soft three-note arpeggio via Web Audio (no asset to ship). Callers
+// gate on prefs.sound. Wrapped in try/catch so it never blocks the action.
+function playChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const t0 = ctx.currentTime;
+    [523.25, 659.25, 783.99].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.11;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.16, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.55);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + 0.56);
+    });
+    setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1300);
+  } catch (e) {}
+}
+
+// ─── Shareable "day card" ────────────────────────────────────
+// Renders today's summary to a 1080² PNG (on-brand: paper, ink, accent, serif
+// wordmark) and offers it via the Web Share API, falling back to a download.
+// Fully local — no upload. Caller passes already-translated label strings.
+async function shareDayCard({ dateLabel, focusValue, focusCaption, ratioValue, ratioCaption, tagline, accent }) {
+  try {
+    const W = 1080, H = 1080;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name, fb) => (cs.getPropertyValue(name).trim() || fb);
+    const paper = v("--paper", "#F5F1EA"), ink = v("--ink", "#1A1815"), ink3 = v("--ink-3", "#8A8275");
+    const accentCol = accent || v("--accent", "#B8533A");
+
+    ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = accentCol; ctx.fillRect(0, 0, W, 18);
+    ctx.textBaseline = "top";
+
+    ctx.fillStyle = ink3; ctx.font = "500 34px Geist, system-ui, sans-serif";
+    ctx.fillText((dateLabel || "").toUpperCase(), 96, 150);
+    ctx.fillStyle = ink; ctx.font = "italic 100px 'Instrument Serif', Georgia, serif";
+    ctx.fillText("Pauta", 92, 196);
+
+    ctx.fillStyle = accentCol; ctx.font = "600 150px Geist, system-ui, sans-serif";
+    ctx.fillText(focusValue || "", 96, 400);
+    ctx.fillStyle = ink3; ctx.font = "400 42px Geist, system-ui, sans-serif";
+    ctx.fillText(focusCaption || "", 100, 580);
+
+    ctx.fillStyle = ink; ctx.font = "600 96px Geist, system-ui, sans-serif";
+    ctx.fillText(ratioValue || "", 96, 700);
+    ctx.fillStyle = ink3; ctx.font = "400 42px Geist, system-ui, sans-serif";
+    ctx.fillText(ratioCaption || "", 100, 824);
+
+    ctx.fillStyle = ink3; ctx.font = "italic 38px 'Instrument Serif', Georgia, serif";
+    ctx.fillText(tagline || "", 96, H - 130);
+
+    const blob = await new Promise(res => c.toBlob(res, "image/png"));
+    if (!blob) return;
+    const file = new File([blob], "pauta-hoje.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Pauta" });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "pauta-hoje.png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (e) {}
+}
+
 Object.assign(window, {
   haptic, OnboardingOverlay, TierGuideSheet,
   BestHourChart, CorrelationList, FocusCalendar, WeekReview, InsightsSheet,
   GoalsSection, useReminders, useFocusActivity,
+  useAutoBackup, useWakeLock, playChime, shareDayCard,
 });

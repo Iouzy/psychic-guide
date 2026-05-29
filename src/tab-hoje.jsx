@@ -1,8 +1,20 @@
 // Tab: HOJE — intenções do dia + reflexão noturna
 
 function TabHoje({ store, accentColor, onJumpToPauta }) {
-  const { state, addIntention, updateIntention, toggleIntention, removeIntention, reorderIntentions, setReflection } = store;
+  const { state, addIntention, updateIntention, toggleIntention, removeIntention, reorderIntentions, setReflection, carryOverIntentions } = store;
   const { today, blocks } = state;
+
+  // Unfinished intentions from the most recent archived day — offered as a
+  // one-tap carry-over so momentum survives the midnight rollover.
+  const carry = useMemo(() => {
+    const days = state.days || {};
+    const keys = Object.keys(days).filter(k => k < today.dayKey).sort();
+    for (let i = keys.length - 1; i >= 0; i--) {
+      const items = (days[keys[i]].intentions || []).filter(it => !it.done && (it.text || "").trim());
+      if (items.length) return { key: keys[i], items };
+    }
+    return null;
+  }, [state.days, today.dayKey]);
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -30,6 +42,21 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
   const intentionIds = today.intentions.map(i => i.id);
   const { dragId, start } = useDragReorder(intentionIds, reorderIntentions);
 
+  // Render today's summary as a shareable PNG (Web Share, else download).
+  const shareDay = () => {
+    const done = today.intentions.filter(i => i.done).length;
+    window.shareDayCard({
+      dateLabel: fmtDateLong(Date.now()),
+      focusValue: totalFocusToday > 0 ? fmtDuration(totalFocusToday) : "—",
+      focusCaption: tr("em foco hoje"),
+      ratioValue: done + " / " + today.intentions.length,
+      ratioCaption: tr("intenções concluídas"),
+      tagline: tr("escrito à mão, todos os dias"),
+      accent: accentColor,
+    });
+    if (window.haptic) window.haptic(8);
+  };
+
   const commitNew = () => {
     if (newText.trim()) addIntention(newText);
     setNewText("");
@@ -53,16 +80,26 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             </div>
           )}
         </div>
-        <button onClick={() => setHistoryOpen(true)} className="tap" title={tr("ver dias anteriores")}
-          style={{
-            border: "1px solid var(--rule)", background: "transparent",
-            borderRadius: 8, padding: "6px 10px",
-            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
-            textTransform: "uppercase", color: "var(--ink-3)",
-            cursor: "pointer", flexShrink: 0, marginTop: 2,
-          }}>
-          {tr("dias anteriores")} ↗
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0, marginTop: 2 }}>
+          <button onClick={() => setHistoryOpen(true)} className="tap" title={tr("ver dias anteriores")}
+            style={{
+              border: "1px solid var(--rule)", background: "transparent",
+              borderRadius: 8, padding: "6px 10px",
+              fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
+              textTransform: "uppercase", color: "var(--ink-3)", cursor: "pointer",
+            }}>
+            {tr("dias anteriores")} ↗
+          </button>
+          <button onClick={shareDay} className="tap" title={tr("partilhar o dia")} aria-label={tr("partilhar o dia")}
+            style={{
+              border: "1px solid var(--rule)", background: "transparent",
+              borderRadius: 8, padding: "6px 9px", color: "var(--ink-3)", cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: 6,
+              fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase",
+            }}>
+            <Icon.Upload size={12}/> {tr("partilhar")}
+          </button>
+        </div>
       </div>
 
       {/* Intentions */}
@@ -75,6 +112,27 @@ function TabHoje({ store, accentColor, onJumpToPauta }) {
             {tr("Comece por listar 1 a 4 coisas que importam hoje.")}<br/>
             {tr("Não tarefas de rotina — coisas que")} <em>{tr("movem")}</em> {tr("o seu dia.")}
           </div>
+          {carry && (
+            <button onClick={() => carryOverIntentions(carry.items)} className="tap"
+              style={{
+                marginTop: 16, width: "100%", textAlign: "left", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 12,
+                background: "var(--paper-2)", border: "1px solid var(--rule)",
+                borderRadius: 12, padding: "12px 14px", color: "var(--ink)",
+              }}>
+              <span style={{ flexShrink: 0, color: accentColor, display: "inline-flex" }}><Icon.Plus size={16}/></span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 500 }}>
+                  {carry.items.length === 1
+                    ? tr("Trazer 1 intenção de ontem")
+                    : trf("Trazer {n} intenções de ontem", { n: carry.items.length })}
+                </span>
+                <span style={{ display: "block", fontSize: 12.5, color: "var(--ink-3)", marginTop: 2, fontStyle: "italic", fontFamily: "var(--serif)" }}>
+                  {carry.items.slice(0, 2).map(i => i.text).join(" · ")}{carry.items.length > 2 ? "…" : ""}
+                </span>
+              </span>
+            </button>
+          )}
           <StarterChips
             label={tr("Para começar")}
             accentColor={accentColor}

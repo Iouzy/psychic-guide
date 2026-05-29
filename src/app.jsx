@@ -66,15 +66,33 @@ function UpdateChecker({ accentColor }) {
       });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json();
-      const releasedAt = j.published_at ? Math.floor(new Date(j.published_at).getTime() / 1000) : 0;
       const apk = (j.assets || []).find(a => /\.apk$/i.test(a.name || ""));
       if (!apk) { setState({ kind: "err", text: tr("Sem APK disponível no repositório.") }); return; }
-      // build.ts === 0 in local dev / sideloaded APKs without a stamp — treat
-      // every release as newer so the user can always pull the freshest APK.
-      if (build.ts > 0 && releasedAt > 0 && releasedAt <= build.ts) {
+
+      // The "latest" release is rolling (re-published every build), and GitHub
+      // freezes `published_at` at the release's first creation — so it can't be
+      // used to detect newer builds. Prefer the build NUMBER the workflow writes
+      // into the release name/body; fall back to the APK ASSET's `updated_at`
+      // (which IS bumped on every re-upload), with a grace window for the few
+      // seconds between stamping the build and uploading the asset.
+      const runMatch = String(j.name || "").match(/build\s+(\d+)/i) ||
+                       String(j.body || "").match(/build\s+(\d+)/i);
+      const releaseRun = runMatch ? Number(runMatch[1]) : 0;
+      const apkTs = apk.updated_at ? Math.floor(new Date(apk.updated_at).getTime() / 1000) : 0;
+
+      let current;
+      if (releaseRun > 0 && build.run > 0) {
+        current = releaseRun <= build.run;                 // exact, preferred
+      } else if (build.ts > 0 && apkTs > 0) {
+        current = apkTs <= build.ts + 600;                 // 10-min upload grace
+      } else {
+        current = false;                                   // dev / unstamped → always offer
+      }
+
+      if (current) {
         setState({ kind: "uptodate" });
       } else {
-        setState({ kind: "available", url: apk.browser_download_url, releasedAt });
+        setState({ kind: "available", url: apk.browser_download_url, releaseRun });
       }
     } catch (e) {
       setState({ kind: "err", text: tr("Não foi possível verificar atualizações.") });
@@ -89,7 +107,12 @@ function UpdateChecker({ accentColor }) {
   let status = null;
   if (state.kind === "checking") subtitle = tr("A verificar…");
   else if (state.kind === "uptodate") { subtitle = tr("Está atualizado."); status = "ok"; }
-  else if (state.kind === "available") { subtitle = tr("Atualização disponível."); status = "ok"; }
+  else if (state.kind === "available") {
+    subtitle = state.releaseRun > 0
+      ? trf("Atualização disponível: build {n}", { n: state.releaseRun })
+      : tr("Atualização disponível.");
+    status = "ok";
+  }
   else if (state.kind === "err") { subtitle = state.text; status = "err"; }
 
   return (
@@ -284,6 +307,13 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             value={prefs.reducedMotion} onChange={v => store.setPref("reducedMotion", v)}/>
         </DataGroup>
 
+        <DataGroup label={tr("Foco")} icon={<Icon.Play size={13}/>}>
+          <PrefToggle label={tr("Manter ecrã ligado")} sub={tr("Não deixa o telemóvel adormecer durante um bloco.")} accentColor={accentColor}
+            value={prefs.keepAwake} onChange={v => store.setPref("keepAwake", v)}/>
+          <PrefToggle label={tr("Som ao concluir")} sub={tr("Um sino suave ao terminar um bloco ou atingir a meta.")} accentColor={accentColor}
+            value={prefs.sound} onChange={v => { store.setPref("sound", v); if (v && window.playChime) window.playChime(); }}/>
+        </DataGroup>
+
         <DataGroup label={tr("Lembretes")} icon={<Icon.Bell size={13}/>}>
           {isNative && <FocusNotifControl accentColor={accentColor}/>}
           <PrefToggle label={tr("Notificações")} sub={tr("Avisos locais enquanto a app está aberta.")} accentColor={accentColor}
@@ -312,6 +342,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
         </DataGroup>
 
         <DataGroup label={tr("Dados")} icon={<Icon.Database size={13}/>}>
+          <AutoBackupControl store={store} accentColor={accentColor}/>
           <DataAction icon={<Icon.Download size={16}/>} accentColor={accentColor}
             title={tr("Exportar dados")}
             subtitle={tr("Transfere um ficheiro .json com tudo.")}
@@ -474,6 +505,86 @@ function FocusNotifControl({ accentColor }) {
   );
 }
 
+// Auto-backup: cadence picker + status + restore / download of the latest
+// rolling snapshot (see useAutoBackup / readAutoBackup in store + extras).
+function AutoBackupControl({ store, accentColor }) {
+  const freq = store.state.prefs.autoBackup || "off";
+  const [snap, setSnap] = useState(() => window.readAutoBackup());
+  const [note, setNote] = useState(null);
+  useEffect(() => { setSnap(window.readAutoBackup()); }, [freq]);
+
+  const relative = (ts) => {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return tr("agora mesmo");
+    const m = Math.floor(s / 60); if (m < 60) return trf("há {n} min", { n: m });
+    const h = Math.floor(m / 60); if (h < 24) return trf("há {n} h", { n: h });
+    const d = Math.floor(h / 24); return trf("há {n} dias", { n: d });
+  };
+
+  const restore = () => {
+    const s = window.readAutoBackup();
+    if (!s || !s.backup) return;
+    if (!confirm(tr("Restaurar a última cópia automática substitui todos os dados atuais. Continuar?"))) return;
+    const res = store.importData(JSON.stringify(s.backup));
+    setNote(res.ok ? tr("Cópia restaurada.") : (res.error || tr("Falhou.")));
+  };
+  const download = () => {
+    const s = window.readAutoBackup();
+    if (!s || !s.backup) return;
+    const blob = new Blob([JSON.stringify(s.backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "pauta-autobackup.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const opts = [
+    { value: "off", label: tr("Nunca") },
+    { value: "30m", label: "30m" },
+    { value: "hourly", label: "1h" },
+    { value: "daily", label: tr("Dia") },
+    { value: "weekly", label: tr("Semana") },
+  ];
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 10,
+      padding: "12px 14px", background: "var(--paper-2)",
+      border: "1px solid var(--rule)", borderRadius: 12,
+    }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{tr("Cópia automática")}</div>
+        <div style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>
+          {tr("Guarda uma cópia local que pode restaurar com um toque.")}
+        </div>
+      </div>
+      <Segmented value={freq} accentColor={accentColor}
+        onChange={v => store.setPref("autoBackup", v)} options={opts}/>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.02em" }}>
+        {snap ? trf("Última cópia: {t}", { t: relative(snap.ts) }) : tr("Ainda sem cópia.")}
+      </div>
+      {snap && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={restore} className="tap" style={miniBtn(accentColor, true)}>{tr("Restaurar")}</button>
+          <button onClick={download} className="tap" style={miniBtn(accentColor, false)}>{tr("Transferir")}</button>
+        </div>
+      )}
+      {note && (
+        <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--good)" }}>{note}</div>
+      )}
+    </div>
+  );
+}
+function miniBtn(accent, filled) {
+  return {
+    flex: 1, borderRadius: 8, padding: "9px 12px", cursor: "pointer", fontSize: 13, fontWeight: 500,
+    border: filled ? "none" : "1px solid var(--rule)",
+    background: filled ? accent : "transparent",
+    color: filled ? "#fff" : "var(--ink-2)",
+  };
+}
+
 // A row of accent swatches. The selected one gets a ring; tapping sets it.
 function AccentPicker({ value, onChange }) {
   const norm = (h) => (h || "").toLowerCase();
@@ -607,6 +718,10 @@ function App() {
   useReminders(store);
   // Native Android focus timer notification / Xiaomi island.
   useFocusActivity(store);
+  // Rolling local backup snapshot on the user's chosen cadence.
+  useAutoBackup(store);
+  // Keep the screen awake while a focus block is running (if enabled).
+  useWakeLock(!!store.activeBlock && prefs.keepAwake);
 
   // Keyboard shortcuts (desktop): 1/2/3 tabs, g settings, i insights, ? guide.
   useEffect(() => {

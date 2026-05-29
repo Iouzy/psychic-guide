@@ -159,6 +159,7 @@ function TabBar({ tab, onTab, accentColor }) {
         const active = tab === t.id;
         return (
           <button key={t.id} onClick={() => onTab(t.id)} className="tap"
+            aria-label={t.label} aria-current={active ? "page" : undefined}
             style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
               background: "transparent", border: "none", padding: "6px 0",
