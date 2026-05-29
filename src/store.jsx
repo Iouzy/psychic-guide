@@ -155,6 +155,7 @@ function defaultPrefs() {
     onboardingSeen: false,
     reminders: {
       enabled: false,
+      plannerTime: "08:00",     // morning nudge to write today's intentions (plano do dia)
       habitsTime: "09:00",      // daily nudge while habits are still pending
       reflectionTime: "21:30",  // evening reflection nudge
     },

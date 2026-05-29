@@ -37,6 +37,7 @@ for (const icon of [
   "ic_focus_pause.xml",      // focus-notification action-button icons
   "ic_focus_resume.xml",
   "ic_focus_conclude.xml",
+  "ic_focus_switch.xml",
 ]) {
   cpSync(join(SRC, icon), join(DRAWABLE, icon));
   console.log(`Copied ${icon}`);
@@ -68,6 +69,7 @@ const COMPONENTS = `
                 <action android:name="com.pauta.app.FOCUS_PAUSE"/>
                 <action android:name="com.pauta.app.FOCUS_RESUME"/>
                 <action android:name="com.pauta.app.FOCUS_CONCLUDE"/>
+                <action android:name="com.pauta.app.FOCUS_SWITCH"/>
             </intent-filter>
         </receiver>
         <receiver

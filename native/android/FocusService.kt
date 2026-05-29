@@ -235,6 +235,13 @@ class FocusService : Service() {
         } else {
             builder.addAction(R.drawable.ic_focus_pause, "Pausar",
                 actionPendingIntent(FocusActionReceiver.ACTION_PAUSE, 0))
+            // "Trocar" mirrors the active card's switch control: it opens the app
+            // to pick another block. The running block keeps ticking until the
+            // user actually chooses one, so there's no native state change here.
+            // Shown only while running (like the in-app card; the paused card has
+            // no switch), which also keeps the collapsed view at three buttons.
+            builder.addAction(R.drawable.ic_focus_switch, "Trocar",
+                actionPendingIntent(FocusActionReceiver.ACTION_SWITCH, 3))
         }
         builder.addAction(R.drawable.ic_focus_conclude, "Concluir",
             actionPendingIntent(FocusActionReceiver.ACTION_CONCLUDE, 2))

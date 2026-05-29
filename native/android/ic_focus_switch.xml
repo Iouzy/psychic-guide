@@ -1,0 +1,14 @@
+<!--
+  "Switch" (Trocar) action-button icon for the ongoing focus notification.
+  24×24 dp, single white path (Material "swap_horiz") — the system tints it to
+  match the shade theme, like the pause/resume/conclude icons.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.99,11L3,15l3.99,4v-3H14v-2H6.99v-3zM21,9l-3.99,-4v3H10v2h7.01v3L21,9z" />
+</vector>

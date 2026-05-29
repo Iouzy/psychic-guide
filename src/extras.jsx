@@ -781,10 +781,13 @@ function scheduleNativeReminders(rem) {
         enabled: true,
         habitsTime: rem.habitsTime || "",
         reflectionTime: rem.reflectionTime || "",
+        plannerTime: rem.plannerTime || "",
         habitsTitle: tr("Pauta · marés de hoje"),
         habitsBody: tr("Tens hábitos por marcar hoje."),
         reflectionTitle: tr("Pauta · reflexão da noite"),
         reflectionBody: tr("O que valeu hoje? Escreva uma linha."),
+        plannerTitle: tr("Pauta · plano do dia"),
+        plannerBody: tr("Escreva as suas intenções para hoje."),
       });
     } else {
       window.FocusActivity.cancelReminders();
@@ -804,7 +807,7 @@ function useReminders(store) {
   // changes. The in-app JS nudge below stays as a same-day fallback while open.
   useEffect(() => {
     scheduleNativeReminders(rem);
-  }, [rem.enabled, rem.habitsTime, rem.reflectionTime, window.PAUTA_LANG]);
+  }, [rem.enabled, rem.habitsTime, rem.reflectionTime, rem.plannerTime, window.PAUTA_LANG]);
   useEffect(() => {
     if (!rem.enabled) return;
     if (!notifySupported()) return;
@@ -814,6 +817,21 @@ function useReminders(store) {
       const now = new Date();
       const dayKey = dayKeyOf(now.getTime());
       const hhmm = pad(now.getHours()) + ":" + pad(now.getMinutes());
+
+      // Planner nudge (morning) — invite writing today's intentions if there
+      // are none yet for today. Mirrors the native background "plano do dia".
+      if (rem.plannerTime && hhmm >= rem.plannerTime) {
+        const hasIntentions = !!(state.today && state.today.dayKey === dayKey &&
+          (state.today.intentions || []).length > 0);
+        if (!hasIntentions && !localStorage.getItem(firedKey("planner", dayKey))) {
+          const ok = await fireReminder(
+            tr("Pauta · plano do dia"),
+            tr("Escreva as suas intenções para hoje."),
+            "pauta-planner"
+          );
+          if (ok) localStorage.setItem(firedKey("planner", dayKey), "1");
+        }
+      }
 
       // Habits nudge (global time)
       if (rem.habitsTime && hhmm >= rem.habitsTime) {
@@ -864,7 +882,7 @@ function useReminders(store) {
     tryFire();
     const id = setInterval(tryFire, 60000);
     return () => clearInterval(id);
-  }, [rem.enabled, rem.habitsTime, rem.reflectionTime, state.habits, state.today]);
+  }, [rem.enabled, rem.habitsTime, rem.reflectionTime, rem.plannerTime, state.habits, state.today]);
 }
 
 // ─── Startup notification opt-in ─────────────────────────────
@@ -984,17 +1002,27 @@ function NotifPrompt({ store, accentColor }) {
 // target) plus Pause/Resume/Conclude buttons matching the block's state, tinted
 // with the app's accent so it reads like an app control. Falls back silently in
 // plain PWA / browser contexts where the plugin is absent.
-function useFocusActivity(store, accentColor) {
+function useFocusActivity(store, accentColor, onSwitch) {
   const { activeBlock, state, pauseActive, resumeBlock, concludeActive } = store;
   // Track the last known active block id so the receiver can resume it by id.
   const lastIdRef = useRef(null);
 
+  // Keep a live ref to the handlers so the once-on-mount listener always calls
+  // the latest store actions / onSwitch, never the ones captured at mount (which
+  // would go stale after re-renders and silently no-op).
+  const handlersRef = useRef({});
+  handlersRef.current = { pauseActive, resumeBlock, concludeActive, onSwitch };
+
   // Wire native notification button taps → store actions (once on mount).
+  // "switch" has no store action — it asks the app to open the switch sheet
+  // (onSwitch, wired in App to jump to the Pauta tab and surface the picker).
   useEffect(() => {
     const h = window.FocusActivity.addListener("action", ({ kind }) => {
-      if (kind === "pause")   pauseActive("");
-      else if (kind === "resume" && lastIdRef.current) resumeBlock(lastIdRef.current);
-      else if (kind === "conclude") concludeActive("");
+      const H = handlersRef.current;
+      if (kind === "pause")   H.pauseActive("");
+      else if (kind === "resume" && lastIdRef.current) H.resumeBlock(lastIdRef.current);
+      else if (kind === "conclude") H.concludeActive("");
+      else if (kind === "switch" && H.onSwitch) H.onSwitch();
     });
     return () => { try { h.remove(); } catch (_) {} };
   }, []);

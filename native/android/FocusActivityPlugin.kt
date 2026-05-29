@@ -241,9 +241,10 @@ class FocusActivityPlugin : Plugin() {
         val enabled = call.getBoolean("enabled", false) ?: false
         ReminderScheduler.save(
             context, enabled,
-            call.getString("habitsTime"), call.getString("reflectionTime"),
+            call.getString("habitsTime"), call.getString("reflectionTime"), call.getString("plannerTime"),
             call.getString("habitsTitle"), call.getString("habitsBody"),
-            call.getString("reflectionTitle"), call.getString("reflectionBody")
+            call.getString("reflectionTitle"), call.getString("reflectionBody"),
+            call.getString("plannerTitle"), call.getString("plannerBody")
         )
         if (enabled) ReminderScheduler.rescheduleAll(context) else ReminderScheduler.cancelAll(context)
         call.resolve(JSObject()
@@ -253,7 +254,7 @@ class FocusActivityPlugin : Plugin() {
 
     @PluginMethod
     fun cancelReminders(call: PluginCall) {
-        ReminderScheduler.save(context, false, null, null, null, null, null, null)
+        ReminderScheduler.save(context, false, null, null, null, null, null, null, null, null, null)
         ReminderScheduler.cancelAll(context)
         call.resolve(JSObject().put("scheduled", false))
     }
