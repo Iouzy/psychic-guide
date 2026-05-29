@@ -571,46 +571,59 @@ const ACCENT_OPTIONS = [
 // 13+ the timer notification is invisible without POST_NOTIFICATIONS, so this
 // surfaces the state and lets the user grant it (or open system Settings when
 // Android has stopped showing the dialog after a permanent denial).
+//
+// Android permission ambiguity (the crux of the long-standing breakage): a
+// denied POST_NOTIFICATIONS reads identically whether the user was NEVER asked
+// or PERMANENTLY denied — shouldShowRequestPermissionRationale() returns false
+// in BOTH cases and only flips to true in the short window between a first and
+// second denial. So the system dialog cannot be the only signal. We persist
+// whether we've ever fired a request; combined with the live rationale flag
+// that disambiguates the three states reliably:
+//   never asked            → request() (the OS shows the dialog)
+//   asked once, can re-ask  → request() (rationale=true, dialog still appears)
+//   permanently denied      → openAppSettings() (only Settings can grant it now)
+const NOTIF_ASKED_KEY = "pauta.notifAsked";
+function notifAsked() { try { return localStorage.getItem(NOTIF_ASKED_KEY) === "1"; } catch (_) { return false; } }
+function markNotifAsked() { try { localStorage.setItem(NOTIF_ASKED_KEY, "1"); } catch (_) {} }
+
 function FocusNotifControl({ accentColor }) {
-  const [granted, setGranted]   = useState(null);   // null = still checking
-  const [canAsk, setCanAsk]     = useState(true);   // false = permanently denied
+  const [granted, setGranted] = useState(null);   // null = still checking
+  const [canAsk, setCanAsk]   = useState(true);   // false = must go to Settings
+
+  // Decide whether the in-app request dialog can still appear, or the user must
+  // be sent to system Settings. Only meaningful when permission is not granted.
+  const resolveCanAsk = async () => {
+    if (!notifAsked()) return true;                       // never asked → ask
+    try {
+      const rat = await window.FocusActivity.shouldShowRationale();
+      return !!(rat && rat.show);                          // re-askable only if rationale
+    } catch (_) { return false; }
+  };
 
   const refresh = async () => {
     try {
-      const [permR, rationaleR] = await Promise.all([
-        window.FocusActivity.checkPermission(),
-        window.FocusActivity.shouldShowRationale(),
-      ]);
+      const permR = await window.FocusActivity.checkPermission();
       const g = !!(permR && permR.granted);
       setGranted(g);
-      // canAsk = true only when OS will still show the dialog:
-      // either not yet asked (rationale=false, perm=false, never requested)
-      // or denied once (rationale=true). After permanent denial both are false.
-      if (!g) setCanAsk(!!(rationaleR && rationaleR.show) || granted === null);
+      if (!g) setCanAsk(await resolveCanAsk());
     } catch (_) {}
   };
 
   useEffect(() => {
-    let alive = true;
-    window.FocusActivity.checkPermission()
-      .then(r => { if (alive) { setGranted(!!(r && r.granted)); setCanAsk(true); } })
-      .catch(() => {});
-    // Re-check when the user returns from system Settings.
+    refresh();
+    // Re-check when the user returns from system Settings (granted there, not here).
     const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; document.removeEventListener("visibilitychange", onVisible); };
+    return () => { document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
   const request = async () => {
+    markNotifAsked();   // record BEFORE the call so a permanent denial is detectable
     try {
       const r = await window.FocusActivity.requestPermission();
       const g = !!(r && r.granted);
       setGranted(g);
-      if (!g) {
-        // Check if the OS will still show the dialog next time.
-        const rat = await window.FocusActivity.shouldShowRationale();
-        setCanAsk(!!(rat && rat.show));
-      }
+      if (!g) setCanAsk(await resolveCanAsk());
     } catch (_) {}
   };
 
@@ -650,13 +663,18 @@ function FocusNotifControl({ accentColor }) {
         </button>
       )}
       {granted === false && !canAsk && (
-        <button onClick={openSettings} className="tap"
-          style={{
-            border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer",
-            background: accentColor, color: "#fff", fontSize: 13, fontWeight: 500,
-          }}>
-          {tr("Abrir definições do sistema")}
-        </button>
+        <>
+          <button onClick={openSettings} className="tap"
+            style={{
+              border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer",
+              background: accentColor, color: "#fff", fontSize: 13, fontWeight: 500,
+            }}>
+            {tr("Abrir definições do sistema")}
+          </button>
+          <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
+            {tr("Ative \"Notificações\" para o Pauta. Em alguns telemóveis (Xiaomi, etc.) ative também o arranque automático.")}
+          </div>
+        </>
       )}
     </div>
   );
