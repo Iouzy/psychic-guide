@@ -1,7 +1,11 @@
 name: Build Android APK
 
-# Builds an installable .apk on every push and publishes it as a rolling
-# "latest" GitHub Release, so you never need Android Studio locally.
+# Builds an installable .apk on every push (so feature branches validate that
+# the APK still assembles), but ONLY the `main` branch publishes the rolling
+# "latest" GitHub Release that the in-app updater pulls. This stops a push to
+# any other branch from overwriting the release your phone updates from — and
+# the reset-proof epoch versionCode means a stray branch build could otherwise
+# look "newer" and silently downgrade installed users.
 on:
   push:
   workflow_dispatch:
@@ -93,6 +97,9 @@ jobs:
         run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Publish to rolling "latest" Release
+        # Only main owns the release the in-app updater fetches; branch pushes
+        # still build + upload the artifact above, but never touch `latest`.
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           # ONE rolling release, always tagged `latest` — this is exactly what

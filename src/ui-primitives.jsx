@@ -518,7 +518,13 @@ function ConfirmHost() {
           }}>{req.cancelLabel || tr("Cancelar")}</button>
           <button className="tap" onClick={() => close(true)} style={{
             border: "none", borderRadius: 10, padding: "10px 18px",
-            fontSize: 14, fontWeight: 600, cursor: "pointer", color: "var(--on-dark)",
+            fontSize: 14, fontWeight: 600, cursor: "pointer",
+            // Text must invert against the button fill. The danger fill is the
+            // accent (always sits well under light text); the default fill is
+            // --ink, whose inverse in *both* themes is --paper — using --on-dark
+            // here made the label near-invisible in dark mode (light-on-light).
+            // PT: o texto tem de contrastar com o fundo do botão.
+            color: req.danger ? "var(--on-dark)" : "var(--paper)",
             background: req.danger ? "var(--accent)" : "var(--ink)",
           }}>{req.okLabel || tr("OK")}</button>
         </div>
