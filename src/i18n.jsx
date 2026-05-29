@@ -596,6 +596,7 @@ const I18N_EN_BULK = {
   "dias activos": "active days",
   "dias anteriores": "previous days",
   "dias feitos": "days done",
+  "em foco": "in focus",
   "em foco.": "in focus.",
   "faltam {n} dias para": "{n} days left until",
   "foco · {n} {label}": "focus · {n} {label}",
