@@ -39,6 +39,18 @@ rationale. Ordered roughly by value.
   zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
   layer where the real data-loss risk lives.
 
+## Updates / distribution
+- **Publish a uniquely-tagged release per build** (e.g. `v1.0.<run>`) alongside
+  the rolling `latest` tag. The rolling tag never changes its name, so update
+  trackers like Obtainium need a manual "detect version from APK/date" toggle to
+  notice new builds; a per-build tag would make Obtainium (and any tag-based
+  tracker) work out of the box. *Left out:* changes CI release behaviour and the
+  in-app `UpdateChecker` keys off the `latest` tag — wants its own focused PR.
+- **In-app one-tap installer** (Android `PackageInstaller` + `REQUEST_INSTALL_PACKAGES`)
+  remains the most "native" option if Play Store distribution isn't wanted: the
+  app downloads the APK and launches the install directly (one system confirm),
+  no browser round-trip.
+
 ## Misc
 - **Update checker is the only outbound request in the web app** (`app.jsx`
   fetches the GitHub Releases API, native-only and user-initiated). It's not

@@ -106,6 +106,20 @@
 
 > No sign-up. No account. No internet required after the first load.
 
+### 🔄 Keep it updated automatically (Android)
+
+Because Pauta is sideloaded (it isn't on the Play Store), Android won't update it silently on its own, and the in-app **Check for updates** button only points you to the new APK to install by hand. The easiest hands-off option is **[Obtainium](https://github.com/ImranR98/Obtainium)** — a free, open-source app that watches this repo's releases and updates Pauta for you:
+
+1. Install **Obtainium** (from its [Releases page](https://github.com/ImranR98/Obtainium/releases), or via F-Droid / IzzyOnDroid).
+2. In Obtainium, tap **Add App** and paste this repo's URL:
+   ```
+   https://github.com/Iouzy/psychic-guide
+   ```
+3. Pauta's builds are published to a **rolling `latest` release tag** (the tag name never changes), so enable Obtainium's option to **detect the version from the APK / release date** in that app's settings — otherwise it may not notice new builds.
+4. Done. Obtainium now notifies you (or downloads in the background, if you turn that on) whenever a new build ships, and installs it over the top — your data is preserved.
+
+> **First time only:** if you previously installed an APK signed with a different key, you'll hit an *"App not installed / package conflicts"* error. **Export a backup first** (Settings → Backup → Export), uninstall Pauta once, then install via Obtainium. Every build after that shares the same signing key, so updates apply in place.
+
 ---
 
 ## ✨ What can I do with it?
@@ -340,6 +354,20 @@ Targets modern evergreen browsers (Chromium, Firefox, Safari) and Android WebVie
 </table>
 
 > Sem registo. Sem conta. Sem internet após o primeiro carregamento.
+
+### 🔄 Manter atualizado automaticamente (Android)
+
+Como a Pauta é instalada por fora (não está na Play Store), o Android não a atualiza sozinho em segundo plano, e o botão **Verificar atualizações** dentro da app apenas o leva ao novo APK para instalar à mão. A forma mais cómoda e automática é o **[Obtainium](https://github.com/ImranR98/Obtainium)** — uma app gratuita e de código aberto que vigia as releases deste repositório e atualiza a Pauta por si:
+
+1. Instale o **Obtainium** (a partir da [página de Releases](https://github.com/ImranR98/Obtainium/releases) ou via F-Droid / IzzyOnDroid).
+2. No Obtainium, toque em **Add App** e cole o URL deste repositório:
+   ```
+   https://github.com/Iouzy/psychic-guide
+   ```
+3. As builds da Pauta são publicadas numa **release com tag fixa `latest`** (o nome da tag nunca muda), por isso ative a opção do Obtainium para **detetar a versão pelo APK / data da release** nas definições dessa app — caso contrário pode não reparar nas novas builds.
+4. Pronto. O Obtainium passa a avisá-lo (ou a transferir em segundo plano, se ativar essa opção) sempre que sai uma build nova, e instala por cima — os seus dados são preservados.
+
+> **Só da primeira vez:** se já tinha instalado um APK assinado com outra chave, vai aparecer o erro *"Aplicação não instalada / conflito de pacote"*. **Faça primeiro uma cópia de segurança** (Definições → Backup → Exportar), desinstale a Pauta uma vez e instale pelo Obtainium. A partir daí todas as builds partilham a mesma chave, por isso as atualizações aplicam-se por cima.
 
 ---
 
