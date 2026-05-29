@@ -35,6 +35,15 @@ rationale. Ordered roughly by value.
   zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
   layer where the real data-loss risk lives.
 
+## Stats correctness
+- **Weekly review counts periodic tides per day, not per period.** `weeklyReview`
+  (`store.jsx`) walks the 7-day window counting one observation slot per active
+  day, so a weekly/monthly tide marked once shows as ~1/7 done instead of 1/1 —
+  dragging the week's `habitPct` down. The rest of the app uses cadence-aware
+  `habitPeriodStats`. *Left out:* a correct fix must reconcile a rolling 7-day
+  window with Monday-anchored habit periods; subtle enough to deserve its own PR
+  + cadence tests rather than riding along a build-script fix.
+
 ## Misc
 - **Update checker is the only outbound request in the web app** (`app.jsx`
   fetches the GitHub Releases API, native-only and user-initiated). It's not

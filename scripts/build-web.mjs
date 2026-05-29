@@ -7,7 +7,11 @@ const OUT = "www";
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-const files = ["index.html", "manifest.json"];
+// index.html registers ./service-worker.js on load, so it must ship in the
+// bundle — otherwise every static web deploy built from ./www silently has no
+// offline cache (the registration 404s and the .catch() swallows the error).
+// Native Capacitor bundles its assets and ignores the SW, so it's unaffected.
+const files = ["index.html", "manifest.json", "service-worker.js"];
 const dirs = ["icons", "src", "vendor"];
 
 for (const f of files) cpSync(f, `${OUT}/${f}`);
