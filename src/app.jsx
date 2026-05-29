@@ -418,6 +418,11 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
               border: "1px solid var(--rule)", borderRadius: 12,
             }}>
               <label style={timeRow}>
+                <span>{tr("Plano do dia")}</span>
+                <input type="time" value={prefs.reminders.plannerTime || ""}
+                  onChange={e => store.setReminderPref("plannerTime", e.target.value)} style={timeInput}/>
+              </label>
+              <label style={timeRow}>
                 <span>{tr("Hábitos pendentes")}</span>
                 <input type="time" value={prefs.reminders.habitsTime}
                   onChange={e => store.setReminderPref("habitsTime", e.target.value)} style={timeInput}/>
@@ -452,6 +457,7 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
               </button>
             </div>
           )}
+          {isNative && <NotifDiagnostics/>}
         </DataGroup>
 
         <DataGroup label={tr("Dados")} icon={<Icon.Database size={13}/>}>
@@ -625,6 +631,77 @@ function FocusNotifControl({ accentColor }) {
   );
 }
 
+// Native-only on-device diagnostics (collapsed by default). Surfaces the exact
+// runtime signals behind the old "this device doesn't support notifications"
+// message so a failure can be SEEN and screenshotted instead of guessed at:
+// whether Capacitor reports the app as native, which platform it thinks it is,
+// and whether POST_NOTIFICATIONS is granted — plus a one-tap test post.
+function NotifDiagnostics() {
+  const [perm, setPerm] = useState(null);   // null = checking
+  const [tested, setTested] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    window.FocusActivity.checkPermission()
+      .then(r => { if (alive) setPerm(!!(r && r.granted)); })
+      .catch(() => { if (alive) setPerm(false); });
+    return () => { alive = false; };
+  }, []);
+
+  const cap = window.Capacitor;
+  const isNative = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  const platform = (cap && cap.getPlatform) ? cap.getPlatform() : "web";
+  const build = window.PAUTA_BUILD || { ts: 0 };
+  const buildStr = build.ts > 0
+    ? new Date(build.ts * 1000).toISOString().slice(0, 10)
+    : tr("desenvolvimento");
+
+  const Row = ({ label, value, ok }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontFamily: "var(--mono)", fontSize: 11 }}>
+      <span style={{ color: "var(--ink-3)" }}>{label}</span>
+      <span style={{
+        textAlign: "right",
+        color: ok == null ? "var(--ink-2)" : ok ? "var(--good)" : "var(--accent)",
+      }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <details style={{
+      background: "var(--paper-2)", border: "1px solid var(--rule)",
+      borderRadius: 12, padding: "10px 14px",
+    }}>
+      <summary style={{ cursor: "pointer", fontSize: 13, color: "var(--ink-2)", fontWeight: 500 }}>
+        {tr("Diagnóstico")}
+      </summary>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+        <Row label={tr("App nativa (Capacitor)")} value={isNative ? tr("sim") : tr("não")} ok={isNative}/>
+        <Row label={tr("Plataforma")} value={platform} ok={platform === "android"}/>
+        <Row label={tr("Permissão de notificações")}
+          value={perm == null ? "…" : perm ? tr("concedida") : tr("negada")} ok={perm}/>
+        <Row label={tr("Versão")} value={buildStr}/>
+        {tested != null && (
+          <Row label={tr("Teste")} value={tested ? tr("mostrada") : tr("falhou")} ok={tested}/>
+        )}
+        <button
+          onClick={async () => {
+            const ok = await window.fireReminder(
+              tr("Pauta · teste"), tr("As notificações estão a funcionar."), "pauta-test-diag");
+            setTested(!!ok);
+          }}
+          className="tap"
+          style={{
+            marginTop: 4, alignSelf: "flex-start", border: "1px solid var(--rule)",
+            background: "transparent", borderRadius: 8, padding: "7px 11px", cursor: "pointer",
+            fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.08em",
+            textTransform: "uppercase", color: "var(--ink-2)",
+          }}>
+          {tr("Enviar teste")}
+        </button>
+      </div>
+    </details>
+  );
+}
+
 // Auto-backup: cadence picker + status + restore / download of the latest
 // rolling snapshot (see useAutoBackup / readAutoBackup in store + extras).
 function AutoBackupControl({ store, accentColor }) {
@@ -790,6 +867,7 @@ function App() {
 
   const [tab, setTab] = useState("pauta");
   const [pendingIntention, setPendingIntention] = useState(null);
+  const [pendingSwitch, setPendingSwitch] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [tierGuideOpen, setTierGuideOpen] = useState(false);
@@ -839,8 +917,10 @@ function App() {
 
   // Local reminders (only while the app is open).
   useReminders(store);
-  // Native Android focus timer notification / Xiaomi island.
-  useFocusActivity(store, accentColor);
+  // Native Android focus timer notification / Xiaomi island. The "Trocar"
+  // (switch) notification button jumps to the Pauta tab and opens the switch
+  // sheet there (TabPauta consumes pendingSwitch, like pendingIntention).
+  useFocusActivity(store, accentColor, () => { setTab("pauta"); setPendingSwitch(true); });
   // Rolling local backup snapshot on the user's chosen cadence.
   useAutoBackup(store);
   // Keep the screen awake while a focus block is running (if enabled).
@@ -903,7 +983,9 @@ function App() {
             <TabPauta store={store} accentColor={accentColor}
               showElapsed={t.showElapsed}
               pendingIntention={pendingIntention}
-              clearPending={() => setPendingIntention(null)}/>
+              clearPending={() => setPendingIntention(null)}
+              pendingSwitch={pendingSwitch}
+              clearPendingSwitch={() => setPendingSwitch(false)}/>
           )}
           {tab === "mares" && (
             <TabMares store={store} accentColor={accentColor}/>

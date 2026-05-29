@@ -1,6 +1,6 @@
 // Tab: PAUTA — bloco ativo + linha temporal com ciclo de vida + filtro
 
-function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPending }) {
+function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPending, pendingSwitch, clearPendingSwitch }) {
   const { state, activeBlock, startBlock, pauseActive, resumeBlock, concludeActive, concludeBlock, updateBlock, updateSessionNote, deleteBlock } = store;
   const { today, blocks } = state;
 
@@ -21,6 +21,15 @@ function TabPauta({ store, accentColor, showElapsed, pendingIntention, clearPend
       if (clearPending) clearPending();
     }
   }, [pendingIntention]);
+
+  // Open the switch sheet when asked from outside — the "Trocar" button on the
+  // native focus notification flips pendingSwitch in App and jumps to this tab.
+  useEffect(() => {
+    if (pendingSwitch) {
+      setSheetSwitch(true);
+      if (clearPendingSwitch) clearPendingSwitch();
+    }
+  }, [pendingSwitch]);
 
   // ─ Build today's timeline ─
   const dayK = dayKeyOf(Date.now());

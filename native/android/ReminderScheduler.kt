@@ -34,6 +34,7 @@ object ReminderScheduler {
     // Each reminder kind: a stable key + a distinct alarm request code.
     enum class Kind(val key: String, val requestCode: Int, val timePref: String,
                     val titlePref: String, val bodyPref: String, val tag: String) {
+        PLANNER("planner", 103, "planner_time", "planner_title", "planner_body", "pauta-planner"),
         HABITS("habits", 101, "habits_time", "habits_title", "habits_body", "pauta-habits"),
         REFLECTION("reflection", 102, "reflection_time", "reflection_title", "reflection_body", "pauta-reflection"),
     }
@@ -43,17 +44,21 @@ object ReminderScheduler {
 
     /** Persist the latest settings (so re-arm on fire / boot has what it needs). */
     fun save(context: Context, enabled: Boolean,
-             habitsTime: String?, reflectionTime: String?,
+             habitsTime: String?, reflectionTime: String?, plannerTime: String?,
              habitsTitle: String?, habitsBody: String?,
-             reflectionTitle: String?, reflectionBody: String?) {
+             reflectionTitle: String?, reflectionBody: String?,
+             plannerTitle: String?, plannerBody: String?) {
         prefs(context).edit()
             .putBoolean(K_ENABLED, enabled)
             .putString(Kind.HABITS.timePref, habitsTime)
             .putString(Kind.REFLECTION.timePref, reflectionTime)
+            .putString(Kind.PLANNER.timePref, plannerTime)
             .putString(Kind.HABITS.titlePref, habitsTitle)
             .putString(Kind.HABITS.bodyPref, habitsBody)
             .putString(Kind.REFLECTION.titlePref, reflectionTitle)
             .putString(Kind.REFLECTION.bodyPref, reflectionBody)
+            .putString(Kind.PLANNER.titlePref, plannerTitle)
+            .putString(Kind.PLANNER.bodyPref, plannerBody)
             .apply()
     }
 
@@ -61,6 +66,7 @@ object ReminderScheduler {
     fun rescheduleAll(context: Context) {
         val p = prefs(context)
         if (!p.getBoolean(K_ENABLED, false)) { cancelAll(context); return }
+        scheduleKind(context, Kind.PLANNER, p.getString(Kind.PLANNER.timePref, null))
         scheduleKind(context, Kind.HABITS, p.getString(Kind.HABITS.timePref, null))
         scheduleKind(context, Kind.REFLECTION, p.getString(Kind.REFLECTION.timePref, null))
     }
