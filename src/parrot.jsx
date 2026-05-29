@@ -143,15 +143,17 @@ const PARROT_REACT_GOAL = [
 ];
 
 // Where Pip rests/flies. top/left are % of the frame so they scale with size and
-// CSS-transition smoothly (a real "fly to"). `surf` rides the bottom on a wave.
+// CSS-transition smoothly (a real "fly to"). He lives in the lower, usually-empty
+// half of the screen so he never sits on top of the header or the cards, and each
+// tab has a distinct spot so switching tabs sends him on a visible flight across
+// the screen. `surf` rides the bottom on a wave.
 const PARROT_ANCHORS = {
-  tr:   { top: "11%", left: "63%", side: "right",  vert: "top" },
-  tl:   { top: "11%", left: "6%",  side: "left",   vert: "top" },
-  br:   { top: "70%", left: "63%", side: "right",  vert: "bottom" },
-  surf: { top: "75%", left: "50%", side: "center", vert: "bottom", surf: true },
+  hoje:  { top: "66%", left: "64%", side: "right",  vert: "bottom" },
+  pauta: { top: "66%", left: "8%",  side: "left",   vert: "bottom" },
+  surf:  { top: "74%", left: "50%", side: "center", vert: "bottom", surf: true },
 };
 // Resting anchor for each tab.
-const TAB_ANCHOR = { hoje: "tr", pauta: "tr", mares: "surf" };
+const TAB_ANCHOR = { hoje: "hoje", pauta: "pauta", mares: "surf" };
 
 // Cute, stylised parrot facing left. Body uses the live accent colour.
 function ParrotSvg({ accent, size = 56 }) {
@@ -178,7 +180,7 @@ function ParrotSvg({ accent, size = 56 }) {
 function SurfWave({ accent, width = 78 }) {
   return (
     <svg width={width} height={20} viewBox="0 0 78 20" fill="none" aria-hidden="true"
-      style={{ display: "block", marginTop: -8 }}>
+      style={{ display: "block", marginTop: -12 }}>
       <path d="M2 12 C14 4 22 18 34 12 C46 6 54 18 76 8 L76 20 L2 20 Z"
         fill={accent} opacity="0.28"/>
       <path d="M2 12 C14 4 22 18 34 12 C46 6 54 18 76 8"
@@ -190,7 +192,7 @@ function SurfWave({ accent, width = 78 }) {
 function ParrotCompanion({ store, accentColor, tab }) {
   const enabled = store.state.prefs.parrot !== false;
   const [bubble, setBubble] = useState(null);   // { text, happy }
-  const [anchorKey, setAnchorKey] = useState(TAB_ANCHOR[tab] || "br");
+  const [anchorKey, setAnchorKey] = useState(TAB_ANCHOR[tab] || "hoje");
   const hideTimer = useRef(null);
   const recent = useRef(new Set());              // last few PT strings shown
 
@@ -216,11 +218,12 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const sayIdle = () => {
     const av = recent.current;
     const r = Math.random();
-    if (tab === "hoje" && r < 0.5) return say(pickFresh(PARROT_HOJE, av), { anchor: "tr" });
-    if (tab === "pauta" && r < 0.5) return say(pickFresh(PARROT_PAUTA, av), { anchor: "tr" });
-    if (tab === "mares" && r < 0.5) return say(pickFresh(PARROT_MARES, av), { anchor: "surf" });
+    const here = TAB_ANCHOR[tab] || "hoje";
+    if (tab === "hoje" && r < 0.5) return say(pickFresh(PARROT_HOJE, av), { anchor: here });
+    if (tab === "pauta" && r < 0.5) return say(pickFresh(PARROT_PAUTA, av), { anchor: here });
+    if (tab === "mares" && r < 0.5) return say(pickFresh(PARROT_MARES, av), { anchor: here });
     const general = [PARROT_TIPS, PARROT_DYK, PARROT_APP, PARROT_JOKES, PARROT_PHILO, PARROT_CULTURE];
-    return say(pickFresh(pickOne(general), av), { anchor: TAB_ANCHOR[tab] || "br" });
+    return say(pickFresh(pickOne(general), av), { anchor: here });
   };
 
   // First hello shortly after load, then an occasional idle line.
@@ -237,7 +240,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const firstTab = useRef(true);
   useEffect(() => {
     if (!enabled) return;
-    setAnchorKey(TAB_ANCHOR[tab] || "br");
+    setAnchorKey(TAB_ANCHOR[tab] || "hoje");
     if (firstTab.current) { firstTab.current = false; return; }
     if (Math.random() < 0.4) {
       const map = { hoje: PARROT_HOJE, pauta: PARROT_PAUTA, mares: PARROT_MARES };
@@ -257,7 +260,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const doneHabits = (store.state.habits || []).filter(h => h.log && h.log[todayKey]).length;
   const prevHabits = useRef(doneHabits);
   useEffect(() => {
-    if (enabled && doneHabits > prevHabits.current) say(pickFresh(PARROT_REACT_HABIT, recent.current), { anchor: tab === "mares" ? "surf" : "br", happy: true });
+    if (enabled && doneHabits > prevHabits.current) say(pickFresh(PARROT_REACT_HABIT, recent.current), { anchor: TAB_ANCHOR[tab], happy: true });
     prevHabits.current = doneHabits;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneHabits]);
@@ -266,7 +269,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const activeId = store.activeBlock ? store.activeBlock.id : null;
   const prevActive = useRef(activeId);
   useEffect(() => {
-    if (enabled && activeId && activeId !== prevActive.current) say(pickFresh(PARROT_REACT_BLOCK_START, recent.current), { anchor: "tr" });
+    if (enabled && activeId && activeId !== prevActive.current) say(pickFresh(PARROT_REACT_BLOCK_START, recent.current), { anchor: TAB_ANCHOR[tab] });
     prevActive.current = activeId;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
@@ -277,7 +280,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   ).length;
   const prevDoneBlocks = useRef(doneBlocks);
   useEffect(() => {
-    if (enabled && doneBlocks > prevDoneBlocks.current) say(pickFresh(PARROT_REACT_BLOCK_DONE, recent.current), { anchor: "tr", happy: true });
+    if (enabled && doneBlocks > prevDoneBlocks.current) say(pickFresh(PARROT_REACT_BLOCK_DONE, recent.current), { anchor: TAB_ANCHOR[tab], happy: true });
     prevDoneBlocks.current = doneBlocks;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneBlocks]);
@@ -286,7 +289,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const doneIntentions = ((store.state.today && store.state.today.intentions) || []).filter(i => i.done).length;
   const prevIntentions = useRef(doneIntentions);
   useEffect(() => {
-    if (enabled && doneIntentions > prevIntentions.current) say(pickFresh(PARROT_REACT_INTENTION, recent.current), { anchor: "tr", happy: true });
+    if (enabled && doneIntentions > prevIntentions.current) say(pickFresh(PARROT_REACT_INTENTION, recent.current), { anchor: TAB_ANCHOR[tab], happy: true });
     prevIntentions.current = doneIntentions;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneIntentions]);
@@ -295,7 +298,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const hasReflection = !!(store.state.today && store.state.today.reflection && store.state.today.reflection.trim());
   const prevReflection = useRef(hasReflection);
   useEffect(() => {
-    if (enabled && hasReflection && !prevReflection.current) say(pickFresh(PARROT_REACT_REFLECTION, recent.current), { anchor: "tr", happy: true });
+    if (enabled && hasReflection && !prevReflection.current) say(pickFresh(PARROT_REACT_REFLECTION, recent.current), { anchor: TAB_ANCHOR[tab], happy: true });
     prevReflection.current = hasReflection;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasReflection]);
@@ -304,14 +307,14 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const doneGoals = (store.state.goals || []).filter(g => g.done).length;
   const prevGoals = useRef(doneGoals);
   useEffect(() => {
-    if (enabled && doneGoals > prevGoals.current) say(pickFresh(PARROT_REACT_GOAL, recent.current), { anchor: "tr", happy: true });
+    if (enabled && doneGoals > prevGoals.current) say(pickFresh(PARROT_REACT_GOAL, recent.current), { anchor: TAB_ANCHOR[tab], happy: true });
     prevGoals.current = doneGoals;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneGoals]);
 
   if (!enabled) return null;
 
-  const a = PARROT_ANCHORS[anchorKey] || PARROT_ANCHORS.br;
+  const a = PARROT_ANCHORS[anchorKey] || PARROT_ANCHORS.hoje;
 
   // The bubble sits above or below the bird, and opens toward the side with room.
   // NOTE: an absolutely-positioned bubble anchored only by `right`/`left` (no
@@ -339,11 +342,16 @@ function ParrotCompanion({ store, accentColor, tab }) {
       : { right: 20 }),
   };
 
-  // The bird: surfs on the Marés tab, hops when happy, gently floats otherwise.
+  // The bird's own motion. When happy he hops; on the wave he leans side to side
+  // (a rotate only — the vertical bob is done by the surf wrapper so he stays *on*
+  // the wave instead of hovering above it); otherwise he floats gently in place.
+  const birdAnim = bubble && bubble.happy ? "parrotHop 0.7s ease"
+    : a.surf ? "parrotTilt 3s ease-in-out infinite"
+    : "parrotFloat 4.5s ease-in-out infinite";
   const bird = (
     <button onClick={sayIdle} className="tap" aria-label={tr("papagaio")} style={{
       pointerEvents: "auto", border: "none", background: "transparent", padding: 0, cursor: "pointer",
-      animation: bubble && bubble.happy ? "parrotHop 0.7s ease" : "parrotFloat 4.5s ease-in-out infinite",
+      animation: birdAnim,
       filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.25))",
     }}>
       <ParrotSvg accent={accentColor} size={a.surf ? 48 : 54}/>
@@ -383,8 +391,10 @@ function ParrotCompanion({ store, accentColor, tab }) {
             </div>
           )}
           {a.surf ? (
+            // Drift sideways (the surfing run), and bob the bird *and* the wave
+            // together so they rise and fall as one — Pip rides the crest.
             <div style={{ animation: "parrotDrift 6s ease-in-out infinite" }}>
-              <div style={{ animation: "parrotSurf 2.4s ease-in-out infinite", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ animation: "parrotSurf 2.8s ease-in-out infinite", display: "flex", flexDirection: "column", alignItems: "center" }}>
                 {bird}
                 <SurfWave accent={accentColor}/>
               </div>

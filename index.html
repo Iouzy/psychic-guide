@@ -202,15 +202,23 @@
     85%  { transform: translateY(0) rotate(-2deg) scale(1); }
     100% { transform: translateY(0) rotate(0) scale(1); }
   }
-  /* Riding the wave on the Marés tab: a buoyant bob + tilt. */
+  /* Riding the wave on the Marés tab: a buoyant vertical bob. The bird and the
+     wave share this wrapper so they rise and fall together (Pip stays on the
+     crest); the bird's own lean comes from parrotTilt. */
   @keyframes parrotSurf {
-    0%, 100% { transform: translateY(0) rotate(-6deg); }
-    50%      { transform: translateY(-6px) rotate(6deg); }
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+  }
+  /* Surfing lean — a rotate only, so Pip tilts on the board without lifting off
+     the wave. */
+  @keyframes parrotTilt {
+    0%, 100% { transform: rotate(-6deg); }
+    50%      { transform: rotate(6deg); }
   }
   /* Slow horizontal drift so Pip surfs along the bottom. */
   @keyframes parrotDrift {
-    0%, 100% { transform: translateX(-30px); }
-    50%      { transform: translateX(30px); }
+    0%, 100% { transform: translateX(-34px); }
+    50%      { transform: translateX(34px); }
   }
   /* Speech bubble pops in. */
   @keyframes bubblePop {
