@@ -620,24 +620,30 @@ function normalizeImported(s) {
 
 // Parse + validate backup text. Returns the normalized state or throws.
 function parseBackup(text) {
+  if (typeof text !== "string" || !text.trim()) {
+    throw new Error(tr("Ficheiro vazio ou inválido."));
+  }
   // Guarda de tamanho antes do parse / size guard before parsing: um backup
   // real cabe em localStorage; um ficheiro muito maior é um engano.
-  if (typeof text !== "string" || text.length > MAX_BACKUP_CHARS) {
-    throw new Error(tr("Ficheiro vazio ou inválido."));
+  if (text.length > MAX_BACKUP_CHARS) {
+    throw new Error(tr("Ficheiro demasiado grande para ser um backup do Pauta."));
   }
   let parsed;
   try {
     parsed = JSON.parse(text);
   } catch (e) {
+    throw new Error(tr("Ficheiro não é JSON válido. Verifique se o ficheiro está intacto."));
+  }
+  if (!isPlainObj(parsed)) {
     throw new Error(tr("Ficheiro vazio ou inválido."));
   }
-  const incoming = (isPlainObj(parsed) && parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
+  const incoming = (parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
   if (!isPlainObj(incoming)) {
     throw new Error(tr("Ficheiro vazio ou inválido."));
   }
   const looksLikePauta = ("blocks" in incoming) || ("habits" in incoming) || ("today" in incoming) || ("goals" in incoming);
   if (!looksLikePauta) {
-    throw new Error(tr("Isto não parece um backup do Pauta."));
+    throw new Error(tr("Isto não parece um backup do Pauta. Verifique que exportou o ficheiro correto."));
   }
   return normalizeImported(incoming);
 }
@@ -1110,6 +1116,12 @@ function weeklyReview(state, endKey = dayKeyOf(Date.now()), now = Date.now()) {
   };
 }
 
+// Previous week for comparison (same shape as weeklyReview, 7 days before endKey).
+function prevWeeklyReview(state, endKey = dayKeyOf(Date.now()), now = Date.now()) {
+  const prevEnd = addDaysToKey(endKey, -7);
+  return weeklyReview(state, prevEnd, now);
+}
+
 // ─── HOOK ────────────────────────────────────────────────
 function useStore() {
   const [state, setState] = useState(loadState);
@@ -1503,7 +1515,7 @@ Object.assign(window, {
   buildTimeline, blockFocusMs, dailyFocusMs, dailyBlockCount, blocksAllDays, pastDayKeys,
   // prefs / goals / insights
   defaultPrefs, mergePrefs, quarterOf, quarterLabel, nextQuarter, prevQuarter,
-  focusByHour, bestHourStats, habitFocusCorrelation, weeklyReview,
+  focusByHour, bestHourStats, habitFocusCorrelation, weeklyReview, prevWeeklyReview,
   // habit stats
   HABIT_MATURITY_DAYS, TIDE_TIERS, NAVIGATOR_LEVELS,
   habitCreatedKey, habitEndKey, habitIsActiveOn, habitHasFinished,

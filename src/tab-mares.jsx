@@ -20,6 +20,34 @@ function TabMares({ store, accentColor }) {
   // Respiro popover: { habitId, dayKey, anchorRect }
   const [respiroAt, setRespiroAt] = useState(null);
 
+  // Tier-up toast — fires once when a habit's streak crosses into a new tier.
+  const tierUpRef = useRef({});
+  const tierUpTimer = useRef(null);
+  const [tierUpToast, setTierUpToast] = useState(null); // { habitName, tierName, message }
+  const isCurrentMonth = view.y === todayD.getFullYear() && view.m === todayD.getMonth();
+
+  useEffect(() => {
+    if (!isCurrentMonth) return;
+    for (const h of habits) {
+      const streak = habitCurrentStreak(h, Date.now());
+      const tier = tideTier(streak.days);
+      const prev = tierUpRef.current[h.id];
+      const cur = tier ? tier.min : 0;
+      if (prev !== undefined && cur > prev && tier) {
+        const msg = MARE_PHRASES.tierUp[tier.name] || "";
+        if (msg) {
+          if (tierUpTimer.current) clearTimeout(tierUpTimer.current);
+          setTierUpToast({ habitName: h.name, tierName: tr(tier.name), message: tr(msg) });
+          tierUpTimer.current = setTimeout(() => setTierUpToast(null), 5000);
+          if (window.haptic) window.haptic(20);
+        }
+      }
+      tierUpRef.current[h.id] = cur;
+    }
+  }, [habits]);
+
+  useEffect(() => () => { if (tierUpTimer.current) clearTimeout(tierUpTimer.current); }, []);
+
   // Filter habits to those that existed at any point in the visible month
   const visibleHabits = useMemo(() => habits.filter(h => {
     const r = habitObservedRangeInMonth(h, view.y, view.m, now);
@@ -28,8 +56,6 @@ function TabMares({ store, accentColor }) {
 
   const overall = useMemo(() => overallPctInMonth(habits, view.y, view.m, now), [habits, view, now]);
   const homePhrase = useMemo(() => pickHomePhrase(habits, now), [habits, now]);
-
-  const isCurrentMonth = view.y === todayD.getFullYear() && view.m === todayD.getMonth();
 
   // Drag-to-reorder the visible tides. Reordering reflows the global habit list
   // (hidden habits keep their slots), so it works the same in any month view.
@@ -190,6 +216,37 @@ function TabMares({ store, accentColor }) {
           </div>
         )}
       </div>
+
+      {/* Tier-up celebration toast */}
+      {tierUpToast && (
+        <div style={{
+          position: "absolute",
+          bottom: 72, left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 50,
+          background: "var(--paper)",
+          border: `1px solid ${accentColor}55`,
+          borderRadius: 14,
+          padding: "12px 16px",
+          boxShadow: "0 8px 28px rgba(0,0,0,0.14)",
+          maxWidth: 260, textAlign: "center",
+          animation: "riseIn 0.35s ease both",
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.14em",
+            textTransform: "uppercase", color: accentColor, marginBottom: 4,
+          }}>
+            {tierUpToast.habitName} · {tierUpToast.tierName}
+          </div>
+          <div style={{
+            fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 13,
+            color: "var(--ink-2)", lineHeight: 1.45,
+          }}>
+            {tierUpToast.message}
+          </div>
+        </div>
+      )}
 
       {/* Sheets / popovers */}
       <TrendSheet
@@ -672,15 +729,19 @@ function HabitRow({ habit, year, monthIdx, todayTs, accentColor,
       </div>
 
       {/* Best streak */}
-      {bestStreak >= 3 && (
-        <div style={{
-          marginTop: 6,
-          fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
-          letterSpacing: "0.08em",
-        }}>
-          {trf("melhor: {n} dias", { n: bestStreak })}
-        </div>
-      )}
+      {bestStreak >= 3 && (() => {
+        const bestTier = tideTier(bestStreak);
+        return (
+          <div style={{
+            marginTop: 6,
+            fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)",
+            letterSpacing: "0.08em",
+          }}>
+            {trf("melhor: {n} dias", { n: bestStreak })}
+            {bestTier && <span style={{ color: "var(--ink-4)", marginLeft: 4 }}>· {bestTier.name}</span>}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -811,11 +872,19 @@ function DayCell({ day, accentColor, ndays, target, onTap, onLongPress, onToolti
         <RespiroPattern color={accentColor}/>
       )}
       {isPartial && (
-        <div style={{
-          position: "absolute", left: 0, right: 0, bottom: 0,
-          height: `${Math.max(15, partialFrac * 100)}%`,
-          background: accentColor, opacity: 0.55,
-        }}/>
+        <>
+          <div style={{
+            position: "absolute", left: 0, right: 0, bottom: 0,
+            height: `${Math.max(15, partialFrac * 100)}%`,
+            background: accentColor, opacity: 0.55,
+          }}/>
+          <span style={{
+            position: "relative", zIndex: 1,
+            fontFamily: "var(--mono)", fontSize: 8, lineHeight: 1,
+            color: partialFrac >= 0.6 ? "var(--paper)" : "var(--ink-2)",
+            fontWeight: 600, pointerEvents: "none",
+          }}>{day.count}</span>
+        </>
       )}
     </div>
   );

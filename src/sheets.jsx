@@ -1,7 +1,7 @@
 // Pauta — sheets (bottom modals)
 
 // ─── START SHEET ──────────────────────────────────────────
-function StartSheet({ open, onClose, intentions, prefilledIntention, projects = [], onStart, accentColor, hasActive, activeTitle }) {
+function StartSheet({ open, onClose, intentions, prefilledIntention, projects = [], recentBlocks = [], onStart, accentColor, hasActive, activeTitle }) {
   const [title, setTitle] = useState("");
   const [selectedIntention, setSelectedIntention] = useState(null);
   const [project, setProject] = useState("");
@@ -20,6 +20,13 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
       }
     }
   }, [open, prefilledIntention]);
+
+  const applyTemplate = (b) => {
+    setTitle(b.title);
+    setSelectedIntention(null);
+    setProject(b.project || "");
+    setTargetMin(b.targetMs ? Math.round(b.targetMs / 60000) : 0);
+  };
 
   const pick = (i) => {
     setSelectedIntention(i.id);
@@ -81,6 +88,28 @@ function StartSheet({ open, onClose, intentions, prefilledIntention, projects = 
                     {selectedIntention === i.id && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--paper)" }}/>}
                   </div>
                   <span style={{ flex: 1 }}>{i.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recentBlocks.length > 0 && !prefilledIntention && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 10 }}>
+              {tr("retomar de antes")}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {recentBlocks.map(b => (
+                <button key={b.id} onClick={() => applyTemplate(b)} className="tap"
+                  style={{
+                    textAlign: "left", display: "flex", alignItems: "center", gap: 10,
+                    background: "transparent", border: "1px solid var(--rule)",
+                    borderRadius: 10, padding: "10px 14px", cursor: "pointer",
+                  }}>
+                  <span style={{ flex: 1, fontSize: 14, color: "var(--ink)", fontFamily: "var(--sans)" }}>{b.title}</span>
+                  {b.project && <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)" }}>{b.project}</span>}
+                  {b.targetMs > 0 && <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: accentColor }}>{fmtDuration(b.targetMs)}</span>}
                 </button>
               ))}
             </div>
