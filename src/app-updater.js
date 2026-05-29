@@ -3,24 +3,36 @@
 // system package installer) instead of bouncing the user out to the browser.
 // No-ops / reports "not native" in a plain browser or PWA, where there is no
 // installer — callers fall back to opening the download URL there.
+//
+// Lazy resolution (see focus-activity.js for the full rationale): `isNative`
+// and the plugin proxy are resolved on EVERY call, never frozen at load. A
+// frozen-false `isNative` was why the in-app updater silently fell back to
+// window.open(apkUrl) even inside the APK — sending users to the browser and
+// the "package conflicts" install error instead of updating in place.
 (function () {
   "use strict";
 
   function noopHandle() { return { remove: function () {} }; }
 
-  var cap = (typeof Capacitor !== "undefined") ? Capacitor
-          : (typeof window !== "undefined" ? window.Capacitor : null);
-  var native = null;
+  function getCap() {
+    return (typeof Capacitor !== "undefined") ? Capacitor
+         : (typeof window !== "undefined" ? window.Capacitor : null);
+  }
 
-  // Custom native plugins must be obtained via Capacitor.registerPlugin() (see
-  // focus-activity.js for the full rationale); the legacy Plugins global isn't
-  // populated for them without a bundler-side registration.
-  try {
-    if (cap && cap.isNativePlatform && cap.isNativePlatform()
-        && typeof cap.registerPlugin === "function") {
-      native = cap.registerPlugin("AppUpdater");
-    }
-  } catch (e) { native = null; }
+  function nativePlatform() {
+    var cap = getCap();
+    try { return !!(cap && cap.isNativePlatform && cap.isNativePlatform()); }
+    catch (e) { return false; }
+  }
+
+  var cached = null;
+  function plugin() {
+    if (cached) return cached;
+    var cap = getCap();
+    if (!cap || !nativePlatform() || typeof cap.registerPlugin !== "function") return null;
+    try { cached = cap.registerPlugin("AppUpdater"); } catch (e) { cached = null; }
+    return cached;
+  }
 
   // AppUpdater.canInstall() → Promise<{ granted }>
   //   Whether the app may install APKs ("install unknown apps" allowed; always
@@ -39,10 +51,10 @@
   //   Fires with 0–100 while the APK downloads (when the size is known).
 
   window.AppUpdater = {
-    isNative:    !!native,
-    canInstall:          function () { return native ? native.canInstall()          : Promise.resolve({ granted: false }); },
-    openInstallSettings: function () { return native ? native.openInstallSettings() : Promise.resolve(); },
-    downloadAndInstall:  function (o) { return native ? native.downloadAndInstall(o) : Promise.reject(new Error("not native")); },
-    addListener: function (ev, cb) { return native ? native.addListener(ev, cb) : noopHandle(); },
+    get isNative() { return nativePlatform(); },
+    canInstall:          function ()  { var p = plugin(); return p ? p.canInstall()          : Promise.resolve({ granted: false }); },
+    openInstallSettings: function ()  { var p = plugin(); return p ? p.openInstallSettings() : Promise.resolve(); },
+    downloadAndInstall:  function (o) { var p = plugin(); return p ? p.downloadAndInstall(o)  : Promise.reject(new Error("not native")); },
+    addListener:         function (ev, cb) { var p = plugin(); return p ? p.addListener(ev, cb) : noopHandle(); },
   };
 })();
