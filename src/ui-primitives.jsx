@@ -176,8 +176,50 @@ function TabBar({ tab, onTab, accentColor }) {
   );
 }
 
+// ─── Focus trap (modal a11y) ────────────────────────────────
+// While `open`, keep keyboard focus inside the modal: Escape closes it, Tab
+// cycles within its focusable children, and focus returns to whatever was
+// focused before it opened. Pointer/touch users are unaffected. No-ops while
+// closed, so it's safe to call unconditionally (Rules of Hooks).
+function useFocusTrap(ref, open, onClose) {
+  useEffect(() => {
+    if (!open) return;
+    const node = ref.current;
+    const prevFocus = document.activeElement;
+    const SEL = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    // Only count visible controls (e.g. skip the hidden file <input>).
+    const focusables = () => node ? Array.from(node.querySelectorAll(SEL)).filter(el => el.offsetParent !== null) : [];
+
+    // Don't steal focus from a control that's already focused inside the modal
+    // (e.g. an input rendered with autoFocus) — only pull focus in if it's
+    // currently outside.
+    if (!(node && node.contains(document.activeElement))) {
+      const first = focusables()[0];
+      if (first) first.focus();
+      else if (node) { node.setAttribute("tabindex", "-1"); node.focus(); }
+    }
+
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); onClose && onClose(); return; }
+      if (e.key !== "Tab") return;
+      const f = focusables();
+      if (f.length === 0) { e.preventDefault(); return; }
+      const a = f[0], z = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
+    };
+  }, [open]);
+}
+
 // ─── Sheet (centered modal) ─────────────────────────────────
 function Sheet({ open, onClose, children, title }) {
+  const cardRef = useRef(null);
+  useFocusTrap(cardRef, open, onClose);
   if (!open) return null;
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 100, animation: "fadeIn 0.18s ease" }}>
@@ -187,7 +229,8 @@ function Sheet({ open, onClose, children, title }) {
         backdropFilter: "blur(10px) saturate(120%)",
         WebkitBackdropFilter: "blur(10px) saturate(120%)",
       }}/>
-      <div className="om-sheet-card" style={{
+      <div ref={cardRef} className="om-sheet-card"
+        role="dialog" aria-modal="true" aria-label={title || undefined} style={{
         position: "absolute",
         left: "50%", top: "50%",
         transform: "translate(-50%, -50%)",
@@ -443,6 +486,7 @@ if (typeof window !== "undefined" && !window.pautaConfirm) window.pautaConfirm =
 
 function ConfirmHost() {
   const [req, setReq] = useState(null);
+  const cardRef = useRef(null);
   useEffect(() => {
     window.pautaConfirm = (opts) => new Promise((resolve) => {
       const o = typeof opts === "string" ? { message: opts } : (opts || {});
@@ -450,15 +494,16 @@ function ConfirmHost() {
     });
     return () => { window.pautaConfirm = pautaConfirmFallback; };
   }, []);
+  const close = (val) => { if (!req) return; const r = req.resolve; setReq(null); r(val); };
+  useFocusTrap(cardRef, !!req, () => close(false));
   if (!req) return null;
-  const close = (val) => { const r = req.resolve; setReq(null); r(val); };
   return (
     <div onClick={() => close(false)} style={{
       position: "absolute", inset: 0, zIndex: 200,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       background: "rgba(0,0,0,0.5)", animation: "fadeIn 0.18s ease",
     }}>
-      <div onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" style={{
+      <div ref={cardRef} onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" style={{
         width: "100%", maxWidth: 340, background: "var(--paper)",
         border: "1px solid var(--rule)", borderRadius: 16, padding: "22px 22px 16px",
         boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: "sheetCenterIn 0.22s ease",
@@ -482,4 +527,4 @@ function ConfirmHost() {
   );
 }
 
-Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder, StarterChips, ConfirmHost });
+Object.assign(window, { Icon, StatusBar, TabBar, Sheet, useFocusTrap, AutoTextarea, EditableText, Button, Check, useDragReorder, StarterChips, ConfirmHost });

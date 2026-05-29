@@ -463,36 +463,166 @@ function downloadJSON(filename, obj) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Rebuild a clean, current-day-normalized state from an imported object.
-// Accepts either a raw state object or the wrapped backup file's `.data`.
+// ─── IMPORT SANITIZERS ─────────────────────────────────────
+// A backup file is untrusted input: hand-edited, truncated, malicious, or from
+// an older/newer schema. These coercers guarantee the shapes the rest of the
+// app assumes — arrays where it iterates, plain objects keyed by dayKey where
+// it indexes — so a malformed field degrades to empty instead of crashing the
+// render (e.g. `b.sessions.forEach` on a non-array, `Object.keys(h.log)` on a
+// string). Every field is rebuilt from scratch; unknown keys are dropped.
+const isPlainObj = (v) => v != null && typeof v === "object" && !Array.isArray(v);
+const asArray = (v) => (Array.isArray(v) ? v : []);
+const isDayKey = (k) => typeof k === "string" && /^\d{4}-\d{2}-\d{2}$/.test(k);
+// Keep only entries under a YYYY-MM-DD key, mapping each value through valueFn
+// (which may return null to drop it).
+function asDayMap(v, valueFn) {
+  const out = {};
+  if (!isPlainObj(v)) return out;
+  for (const k of Object.keys(v)) {
+    if (!isDayKey(k)) continue;
+    const val = valueFn ? valueFn(v[k]) : v[k];
+    if (val != null) out[k] = val;
+  }
+  return out;
+}
+const cleanStr = (v) => (typeof v === "string" ? v : "");
+const finiteOr = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
+
+function sanitizeIntention(it) {
+  if (!isPlainObj(it)) return null;
+  const out = {
+    id: typeof it.id === "string" ? it.id : uid("i_"),
+    text: cleanStr(it.text),
+    done: !!it.done,
+    createdAt: finiteOr(it.createdAt, Date.now()),
+  };
+  if (typeof it.priority === "string") out.priority = it.priority;
+  return out;
+}
+function sanitizeSession(seg) {
+  if (!isPlainObj(seg)) return null;
+  const startedAt = finiteOr(seg.startedAt, NaN);
+  if (!Number.isFinite(startedAt)) return null;   // a session with no start is meaningless
+  const endedAt = Number.isFinite(Number(seg.endedAt)) ? Number(seg.endedAt) : null;
+  return { startedAt, endedAt, note: cleanStr(seg.note) };
+}
+function sanitizeBlock(b) {
+  if (!isPlainObj(b)) return null;
+  const sessions = asArray(b.sessions).map(sanitizeSession).filter(Boolean);
+  if (sessions.length === 0) return null;
+  return {
+    id: typeof b.id === "string" ? b.id : uid("b_"),
+    title: cleanStr(b.title),
+    linkedToId: typeof b.linkedToId === "string" ? b.linkedToId : null,
+    project: typeof b.project === "string" ? b.project : null,
+    targetMs: Number.isFinite(Number(b.targetMs)) ? Number(b.targetMs) : null,
+    sessions,
+    status: ["active", "paused", "done"].includes(b.status) ? b.status : "done",
+    reflection: cleanStr(b.reflection),
+    createdAt: finiteOr(b.createdAt, sessions[0].startedAt),
+  };
+}
+function sanitizeHabit(h) {
+  if (!isPlainObj(h)) return null;
+  const m = migrateHabit(h);   // applies legacy migration + field defaults
+  const target = Number.isFinite(Number(m.target)) && Number(m.target) > 1 ? Math.round(Number(m.target)) : null;
+  return {
+    ...m,
+    id: typeof m.id === "string" ? m.id : uid("h_"),
+    name: cleanStr(m.name),
+    time: cleanStr(m.time),
+    description: cleanStr(m.description),
+    recurrence: ["forever", "period", "month"].includes(m.recurrence) ? m.recurrence : "forever",
+    endsAt: Number.isFinite(Number(m.endsAt)) ? Number(m.endsAt) : null,
+    cadence: ["daily", "weekly", "monthly"].includes(m.cadence) ? m.cadence : "daily",
+    anchor: Number.isFinite(Number(m.anchor)) ? Number(m.anchor) : null,
+    target,
+    unit: cleanStr(m.unit),
+    clock: cleanStr(m.clock),
+    log: asDayMap(m.log, () => 1),
+    respiros: asDayMap(m.respiros, (v) => (isPlainObj(v) ? { reason: cleanStr(v.reason), at: finiteOr(v.at, Date.now()) } : { reason: "", at: Date.now() })),
+    counts: asDayMap(m.counts, (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? n : null; }),
+    createdAt: finiteOr(m.createdAt, Date.now()),
+  };
+}
+function sanitizeGoal(g) {
+  if (!isPlainObj(g)) return null;
+  const text = cleanStr(g.text);
+  if (!text) return null;
+  return {
+    id: typeof g.id === "string" ? g.id : uid("g_"),
+    text,
+    done: !!g.done,
+    quarter: typeof g.quarter === "string" ? g.quarter : quarterOf(Date.now()),
+    createdAt: finiteOr(g.createdAt, Date.now()),
+  };
+}
+function sanitizeDay(d) {
+  if (!isPlainObj(d)) return { intentions: [], reflection: "" };
+  return {
+    intentions: asArray(d.intentions).map(sanitizeIntention).filter(Boolean),
+    reflection: cleanStr(d.reflection),
+  };
+}
+
+// Rebuild a clean, current-day-normalized, type-safe state from an imported
+// object. Accepts either a raw state object or the wrapped backup file's `.data`.
 function normalizeImported(s) {
+  if (!isPlainObj(s)) s = {};
   const todayKey = dayKeyOf(Date.now());
-  const days = (s.days && typeof s.days === "object") ? { ...s.days } : {};
-  let today = (s.today && s.today.dayKey)
-    ? { dayKey: s.today.dayKey, intentions: s.today.intentions || [], reflection: s.today.reflection || "" }
+
+  const days = {};
+  if (isPlainObj(s.days)) {
+    for (const k of Object.keys(s.days)) {
+      if (!isDayKey(k)) continue;
+      days[k] = sanitizeDay(s.days[k]);
+    }
+  }
+
+  const srcToday = isPlainObj(s.today) ? s.today : null;
+  let today = (srcToday && typeof srcToday.dayKey === "string")
+    ? { dayKey: srcToday.dayKey, ...sanitizeDay(srcToday) }
     : { dayKey: todayKey, intentions: [], reflection: "" };
   if (today.dayKey !== todayKey) {
-    if ((today.intentions && today.intentions.length > 0) || (today.reflection && today.reflection.trim())) {
+    if (today.intentions.length > 0 || today.reflection.trim()) {
       days[today.dayKey] = { intentions: today.intentions, reflection: today.reflection };
     }
     today = { dayKey: todayKey, intentions: [], reflection: "" };
   }
-  const blocks = Array.isArray(s.blocks) ? s.blocks : [];
-  const habits = Array.isArray(s.habits) ? s.habits.map(h => migrateHabit(h)) : [];
-  const goals = Array.isArray(s.goals) ? s.goals : [];
-  const prefs = mergePrefs(s.prefs);
+
+  const blocks = asArray(s.blocks).map(sanitizeBlock).filter(Boolean);
+  const habits = asArray(s.habits).map(sanitizeHabit).filter(Boolean);
+  const goals = asArray(s.goals).map(sanitizeGoal).filter(Boolean);
+  const prefs = mergePrefs(isPlainObj(s.prefs) ? s.prefs : {});
+
+  // Exactly one block may be active. Honour activeId when it points at a real
+  // block; close any *other* block left in an "active" state (with an open
+  // session) so it can't tick forever as a phantom timer after import.
   const activeId = blocks.some(b => b.id === s.activeId) ? s.activeId : null;
+  for (const b of blocks) {
+    if (b.status === "active" && b.id !== activeId) {
+      b.status = "paused";
+      const last = b.sessions[b.sessions.length - 1];
+      if (last && last.endedAt == null) last.endedAt = last.startedAt;
+    }
+  }
+
   return { today, days, activeId, blocks, habits, goals, prefs };
 }
 
 // Parse + validate backup text. Returns the normalized state or throws.
 function parseBackup(text) {
-  const parsed = JSON.parse(text);
-  const incoming = (parsed && parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
-  if (!incoming || typeof incoming !== "object") {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
     throw new Error(tr("Ficheiro vazio ou inválido."));
   }
-  const looksLikePauta = ("blocks" in incoming) || ("habits" in incoming) || ("today" in incoming);
+  const incoming = (isPlainObj(parsed) && parsed.app === "pauta" && parsed.data) ? parsed.data : parsed;
+  if (!isPlainObj(incoming)) {
+    throw new Error(tr("Ficheiro vazio ou inválido."));
+  }
+  const looksLikePauta = ("blocks" in incoming) || ("habits" in incoming) || ("today" in incoming) || ("goals" in incoming);
   if (!looksLikePauta) {
     throw new Error(tr("Isto não parece um backup do Pauta."));
   }
@@ -1372,4 +1502,7 @@ Object.assign(window, {
   habitMaturityUnits, cadenceUnitShort, weekStartKey, weekEndKey,
   // auto-backup
   readAutoBackup, writeAutoBackup, autoBackupIntervalMs,
+  // schema / import (exposed for tests + reuse)
+  STORAGE_KEY, EXPORT_VERSION, emptyState, seed, loadState, saveState,
+  migrateHabit, normalizeImported, parseBackup,
 });

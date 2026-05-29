@@ -56,21 +56,26 @@ in a plain browser.
 ## Commands
 
 ```bash
-npm install                 # install Capacitor CLI/deps
+npm install                 # install Capacitor CLI/deps + the Vitest dev dep
 
 npm run build:web           # assemble web assets into ./www (the Capacitor webDir)
 npm run inject:native       # patch the generated android/ project with native Kotlin
 npm run sync                # build:web + npx cap sync android
 
-node tools/check-jsx.mjs    # transpile every src/*.jsx with vendored Babel — RUN BEFORE COMMITTING
-node tools/test-cadence.mjs # smoke-test the date/cadence math in store.jsx (no test runner exists)
+npm run check               # full gate: check:jsx + check:i18n + test:cadence + vitest
+npm run check:jsx           # transpile every src/*.jsx with vendored Babel — RUN BEFORE COMMITTING
+npm run check:i18n          # report PT strings used via tr()/trf() with no English translation
+npm test                    # Vitest: store logic, schema/migration, backup round-trip + hardening
+npm run test:cadence        # smoke-test the date/cadence math in store.jsx
 node tools/gen-icons.mjs    # regenerate app icons
 ```
 
-`tools/check-jsx.mjs` is the closest thing to a lint/test gate — it catches the
-syntax errors that would otherwise silently break the in-browser app. Run it
-after editing any `.jsx`. Run `test-cadence.mjs` after touching date math or the
-habit/cadence helpers in `store.jsx`.
+`npm run check` is the lint/test gate — run it before committing. `check:jsx`
+catches the syntax errors that would otherwise silently break the in-browser
+app; `check:i18n` catches untranslated UI; the Vitest suite (`tests/`) loads the
+real `store.jsx` in a sandbox (via vendored Babel, like `test-cadence.mjs`) and
+covers the schema, the v4 migration and the backup export→import round-trip.
+Run `test:cadence` after touching date math or the habit/cadence helpers.
 
 To preview locally, serve the repo root over HTTP (e.g. `npx serve`) and open
 `index.html` — opening via `file://` breaks the service worker and `text/babel`
