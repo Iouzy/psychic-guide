@@ -18,10 +18,6 @@ rationale. Ordered roughly by value.
 - **Prune stale reminder flags.** `useReminders` writes `pauta.reminded.<kind>.<dayKey>`
   keys to `localStorage` and never deletes them, so they accumulate one-per-day
   forever. A tiny sweep (drop keys older than ~2 days) would stop the slow leak.
-- **Backup file size guard.** `importData` reads the whole file into memory with
-  no size cap. Not a real risk for a personal JSON backup, but a defensive
-  `if (text.length > N) throw` would harden against accidentally importing a
-  giant/wrong file.
 
 ## Accessibility
 - **Focus-trap the onboarding overlay.** `OnboardingOverlay` is a full-screen
