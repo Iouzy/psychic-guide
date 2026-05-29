@@ -66,10 +66,23 @@ class FocusActivityPlugin : Plugin() {
 
     // ── Permissions ──────────────────────────────────────────────
 
-    private fun hasNotifPermission(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+    // Whether the app can actually post notifications.
+    // - Pre-Android 13: no runtime permission exists — trust the real per-app
+    //   toggle via areNotificationsEnabled().
+    // - Android 13+: the canonical signal is the POST_NOTIFICATIONS grant, BUT on
+    //   Xiaomi/MIUI checkSelfPermission() wrongly reports it as DENIED even after
+    //   the user switches notifications on in system settings (a documented OEM
+    //   quirk). So we also accept areNotificationsEnabled(), which reflects the
+    //   actual toggle — either being true means notifications will show. This is
+    //   what stops the app from saying "permission denied" when MIUI has in fact
+    //   granted it.
+    private fun hasNotifPermission(): Boolean {
+        val enabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return enabled
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
+        return granted || enabled
+    }
 
     private fun resolveGranted(call: PluginCall, granted: Boolean) {
         call.resolve(JSObject().put("granted", granted))

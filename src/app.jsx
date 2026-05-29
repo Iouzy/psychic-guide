@@ -81,7 +81,12 @@ function UpdateChecker({ accentColor, store }) {
       });
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json();
-      const apk = (j.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+      // Pick the NEWEST .apk asset by upload time. The release now keeps a
+      // versioned APK per build (pauta-DATE-buildN.apk), so a plain "first .apk"
+      // could grab an older one — sort by updated_at and take the latest.
+      const apks = (j.assets || []).filter(a => /\.apk$/i.test(a.name || ""));
+      const apk = apks.sort((a, b) =>
+        new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0];
       if (!apk) { setState({ kind: "err", text: tr("Sem APK disponível no repositório.") }); return; }
 
       // The "latest" release is rolling (re-published every build), and GitHub

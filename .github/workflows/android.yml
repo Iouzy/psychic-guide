@@ -83,18 +83,25 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
+      - name: Build version stamp
+        id: stamp
+        # Versioned, distinct filename per build so downloads don't collide / pile
+        # up as pauta(1).apk and the user can tell builds apart. The date is what
+        # the app shows ("Versão de YYYY-MM-DD"); the run number keeps same-day
+        # builds unique. The in-app updater picks the newest .apk asset by upload
+        # time, so the changing name doesn't affect update detection.
+        run: |
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "file=pauta-$(date -u +%Y-%m-%d)-build${{ github.run_number }}.apk" >> "$GITHUB_OUTPUT"
+
       - name: Stage APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk pauta.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "${{ steps.stamp.outputs.file }}"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: pauta-apk
-          path: pauta.apk
-
-      - name: Build date stamp
-        id: stamp
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          path: ${{ steps.stamp.outputs.file }}
 
       - name: Publish to rolling "latest" Release
         # Only main owns the release the in-app updater fetches; branch pushes
@@ -117,6 +124,6 @@ jobs:
           name: Pauta · ${{ steps.stamp.outputs.date }}
           body: |
             Automatically built Android APK (${{ steps.stamp.outputs.date }}).
-            Download pauta.apk below and install it on your phone.
-          files: pauta.apk
+            Download ${{ steps.stamp.outputs.file }} below and install it on your phone.
+          files: ${{ steps.stamp.outputs.file }}
           fail_on_unmatched_files: true
