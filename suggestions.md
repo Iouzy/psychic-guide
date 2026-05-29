@@ -15,9 +15,6 @@ rationale. Ordered roughly by value.
   fonts are vendored — it would then only ever serve Google Fonts.
 
 ## Data / storage hygiene
-- **Prune stale reminder flags.** `useReminders` writes `pauta.reminded.<kind>.<dayKey>`
-  keys to `localStorage` and never deletes them, so they accumulate one-per-day
-  forever. A tiny sweep (drop keys older than ~2 days) would stop the slow leak.
 - **Backup file size guard.** `importData` reads the whole file into memory with
   no size cap. Not a real risk for a personal JSON backup, but a defensive
   `if (text.length > N) throw` would harden against accidentally importing a
@@ -38,6 +35,15 @@ rationale. Ordered roughly by value.
   would need a DOM environment (jsdom/@testing-library). *Left out:* keeps the
   zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
   layer where the real data-loss risk lives.
+
+## CI
+- **Gate CI on `npm run check`.** `.github/workflows/android.yml` builds and
+  publishes the APK on every push with no lint/test step, so broken JSX or a
+  failing Vitest suite still ships to the rolling `latest` release. Adding a
+  `npm run check` step before the build would catch it. (Flagged in PR #39.)
+- **Migration regression tests.** `schema.test.mjs` covers `migrateHabit`;
+  `loadState`'s day-archival + prefs-merge paths could use explicit coverage.
+  (Flagged in PR #39.)
 
 ## Misc
 - **Update checker is the only outbound request in the web app** (`app.jsx`
