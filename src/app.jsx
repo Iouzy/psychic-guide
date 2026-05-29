@@ -319,6 +319,8 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
             value={prefs.haptics} onChange={v => store.setPref("haptics", v)}/>
           <PrefToggle label={tr("Reduzir movimento")} sub={tr("Desliga animações. Segue o sistema por omissão.")} accentColor={accentColor}
             value={prefs.reducedMotion} onChange={v => store.setPref("reducedMotion", v)}/>
+          <PrefToggle label={tr("Papagaio ajudante")} sub={tr("O Pip aparece com dicas e piadas. Toca-lhe para mais.")} accentColor={accentColor}
+            value={prefs.parrot !== false} onChange={v => store.setPref("parrot", v)}/>
         </DataGroup>
 
         <DataGroup label={tr("Foco")} icon={<Icon.Play size={13}/>}>
@@ -834,6 +836,7 @@ function App() {
           }}/>
       )}
 
+      {prefs.onboardingSeen && <ParrotCompanion store={store} accentColor={accentColor}/>}
       <ConfirmHost/>
 
       <TweaksPanel title={tr("Tweaks")}>
