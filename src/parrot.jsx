@@ -219,6 +219,20 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const [flight, setFlight] = useState({ key: 0, dir: null });
   const prevTabRef = useRef(tab);
   const hideTimer = useRef(null);
+
+  // Hide Pip while any bottom-sheet/modal is open. The Pauta-tab sheets render
+  // inside the content wrapper (its own stacking context), so their z-index sits
+  // *below* this overlay — Pip would otherwise float on top of the sheet's
+  // fields and buttons. A MutationObserver flips this when a `.om-sheet-card`
+  // enters/leaves the DOM.
+  const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setSheetOpen(!!document.querySelector(".om-sheet-card"));
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, []);
   const recent = useRef(new Set());              // last few PT strings shown
 
   const remember = (msg) => {
@@ -343,7 +357,7 @@ function ParrotCompanion({ store, accentColor, tab }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneGoals]);
 
-  if (!enabled) return null;
+  if (!enabled || sheetOpen) return null;   // stay out of the way of open sheets
 
   const a = PARROT_ANCHORS[anchorKey] || PARROT_ANCHORS.hoje;
 

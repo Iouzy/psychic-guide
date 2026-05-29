@@ -64,7 +64,7 @@
     start:       function (o) { if (native) native.start(o); },
     update:      function (o) { if (native) native.update(o); },
     stop:        function ()  { if (native) native.stop(); },
-    notify:      function (o) { return native ? native.notify(o) : Promise.resolve({ shown: false }); },
+    notify:      function (o) { return native ? native.showReminder(o) : Promise.resolve({ shown: false }); },
     addListener: function (ev, cb) { return native ? native.addListener(ev, cb) : noopHandle(); },
     checkPermission:   function () { return native ? native.checkPermission()   : Promise.resolve({ granted: false }); },
     requestPermission: function () { return native ? native.requestPermission() : Promise.resolve({ granted: false }); },
