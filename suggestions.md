@@ -39,9 +39,14 @@ rationale. Ordered roughly by value.
   cadence tests rather than riding along an unrelated change.
 
 ## Testing
+- ~~**`loadState()` migration regression tests.**~~ *Shipped this pass* —
+  `tests/load-state.test.mjs` now exercises the on-startup migration path
+  (day rollover/archival, legacy habit `data[]`→`log{}` migration, missing-slice
+  backfill, prefs merge, and the malformed-JSON fallback to `seed()`/`emptyState()`).
+  This is the spot a silent migration bug would lose data on the next launch.
 - **Component/interaction tests** (sheets open/close, swipe nav, timer ticking)
   would need a DOM environment (jsdom/@testing-library). *Left out:* keeps the
-  zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
+  zero-build, near-zero-dep ethos; the Vitest suite covers the pure store
   layer where the real data-loss risk lives.
 - **Migration regression tests.** `schema.test.mjs` covers `migrateHabit`, but
   `loadState`'s day-archival and prefs-merge paths have no explicit coverage —
