@@ -75,6 +75,13 @@
   //   after a hard denial the user must enable it in system Settings, so callers
   //   should guide there if the result is still false.
   //
+  // FocusActivity.shouldShowRationale() → Promise<{ show }>
+  //   True when the OS will still show the permission dialog on the next request.
+  //   False when permanently denied — guide the user to openAppSettings() instead.
+  //
+  // FocusActivity.openAppSettings() → Promise<void>
+  //   Opens the system notification settings screen for this app.
+  //
   // FocusActivity.notify({ title, body, tag }) → Promise<{ shown }>
   //   Posts a one-shot local reminder on its own channel. This is the ONLY
   //   notification channel that works inside the Capacitor WebView. `tag`
@@ -97,7 +104,9 @@
     scheduleReminders: function (o) { var p = plugin(); return p ? p.scheduleReminders(o) : Promise.resolve({ scheduled: false, exact: false }); },
     cancelReminders:   function ()  { var p = plugin(); return p ? p.cancelReminders()    : Promise.resolve({ scheduled: false }); },
     addListener: function (ev, cb) { var p = plugin(); return p ? p.addListener(ev, cb) : noopHandle(); },
-    checkPermission:   function () { var p = plugin(); return p ? p.checkPermission()   : Promise.resolve({ granted: false }); },
-    requestPermission: function () { var p = plugin(); return p ? p.requestPermission() : Promise.resolve({ granted: false }); },
+    checkPermission:     function () { var p = plugin(); return p ? p.checkPermission()     : Promise.resolve({ granted: false }); },
+    requestPermission:   function () { var p = plugin(); return p ? p.requestPermission()   : Promise.resolve({ granted: false }); },
+    shouldShowRationale: function () { var p = plugin(); return p ? p.shouldShowRationale() : Promise.resolve({ show: false }); },
+    openAppSettings:     function () { var p = plugin(); return p ? p.openAppSettings()     : Promise.resolve(); },
   };
 })();

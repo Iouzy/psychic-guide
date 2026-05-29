@@ -143,6 +143,7 @@ const I18N_EN = {
   "desligada": "off",
   "Permitir notificações": "Allow notifications",
   "Se nada acontecer, ative as notificações do Pauta nas definições do sistema.": "If nothing happens, enable Pauta's notifications in your system settings.",
+  "Abrir definições do sistema": "Open system settings",
 
   // ─── Empty-state starters ───
   "Para começar": "To begin",
