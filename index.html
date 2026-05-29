@@ -147,6 +147,15 @@
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
+  /* Flex-centred entrance: for cards already centred by their flex parent (e.g.
+     ConfirmHost). No translate(-50%,-50%) here — that would yank the card
+     half-off-screen during the animation and snap back. Just a scale + tiny
+     lift. // PT: entrada para cartões já centrados por flexbox — sem translate
+     que os atirava para fora do ecrã durante a animação. */
+  @keyframes cardCenterIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
   .om-sheet-card::-webkit-scrollbar { display: none; }
   @keyframes fadeIn {
     from { opacity: 0; }
@@ -181,12 +190,35 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  /* Pip the parrot flies in from the right and settles with a tiny overshoot. */
+  /* Pip swoops in from off-screen with a couple of wing-flap wobbles, then
+     settles with a small bump. */
   @keyframes parrotIn {
-    0%   { opacity: 0; transform: translateX(130px) translateY(10px) rotate(12deg); }
-    60%  { opacity: 1; transform: translateX(-8px) translateY(-2px) rotate(-5deg); }
-    80%  { transform: translateX(3px) translateY(0) rotate(2deg); }
-    100% { opacity: 1; transform: translateX(0) rotate(0); }
+    0%   { opacity: 0; transform: translateX(260px) translateY(-40px) rotate(26deg) scale(0.7); }
+    35%  { opacity: 1; transform: translateX(-34px) translateY(16px)  rotate(-14deg) scale(1.12); }
+    58%  { transform: translateX(18px)  translateY(-10px) rotate(9deg)  scale(0.95); }
+    78%  { transform: translateX(-8px)  translateY(4px)   rotate(-4deg) scale(1.03); }
+    92%  { transform: translateX(3px)   translateY(-1px)  rotate(2deg)  scale(0.99); }
+    100% { opacity: 1; transform: translateX(0) translateY(0) rotate(0) scale(1); }
+  }
+  /* Flung across to the next tab (swiped right): launch up into a big arc, lean
+     and stretch like he's racing the screen, then squash on arrival — the
+     unmistakable "bump the wall". The horizontal travel itself comes from
+     .pip-move (top/left transition); this is the airborne flourish on top. */
+  @keyframes parrotFlyRight {
+    0%   { transform: rotate(0) scale(1); }
+    20%  { transform: translateY(-30px) rotate(24deg) scale(1.18, 0.85); }
+    50%  { transform: translateY(-22px) rotate(22deg) scale(1.12, 0.92); }
+    74%  { transform: translateY(-4px)  rotate(-12deg) scale(0.85, 1.16); }
+    88%  { transform: translateY(0)     rotate(6deg)  scale(1.05, 0.96); }
+    100% { transform: rotate(0) scale(1); }
+  }
+  @keyframes parrotFlyLeft {
+    0%   { transform: rotate(0) scale(1); }
+    20%  { transform: translateY(-30px) rotate(-24deg) scale(1.18, 0.85); }
+    50%  { transform: translateY(-22px) rotate(-22deg) scale(1.12, 0.92); }
+    74%  { transform: translateY(-4px)  rotate(12deg)  scale(0.85, 1.16); }
+    88%  { transform: translateY(0)     rotate(-6deg) scale(1.05, 0.96); }
+    100% { transform: rotate(0) scale(1); }
   }
   /* Idle hover — Pip bobs gently in place with a subtle tilt so he feels alive. */
   @keyframes parrotFloat {
@@ -202,21 +234,43 @@
     85%  { transform: translateY(0) rotate(-2deg) scale(1); }
     100% { transform: translateY(0) rotate(0) scale(1); }
   }
-  /* Riding the wave on the Marés tab: a buoyant bob + tilt. */
+  /* Riding the wave on the Marés tab: a buoyant vertical bob. The bird and the
+     wave share this wrapper so they rise and fall together (Pip stays on the
+     crest); the bird's own lean comes from parrotTilt. */
   @keyframes parrotSurf {
-    0%, 100% { transform: translateY(0) rotate(-6deg); }
-    50%      { transform: translateY(-6px) rotate(6deg); }
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+  }
+  /* Surfing lean — a rotate only, so Pip tilts on the board without lifting off
+     the wave. */
+  @keyframes parrotTilt {
+    0%, 100% { transform: rotate(-6deg); }
+    50%      { transform: rotate(6deg); }
   }
   /* Slow horizontal drift so Pip surfs along the bottom. */
   @keyframes parrotDrift {
-    0%, 100% { transform: translateX(-30px); }
-    50%      { transform: translateX(30px); }
+    0%, 100% { transform: translateX(-34px); }
+    50%      { transform: translateX(34px); }
   }
   /* Speech bubble pops in. */
   @keyframes bubblePop {
     0%   { opacity: 0; transform: scale(0.85) translateY(6px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
   }
+
+  /* Pip's motion lives in classes (not inline) so it can survive reduce-motion —
+     see the exemption below. */
+  .pip-in    { animation: parrotIn 0.95s cubic-bezier(0.22,1,0.36,1) both; }
+  .pip-fly-l { animation: parrotFlyLeft 1s cubic-bezier(0.34,1.4,0.5,1) both; }
+  .pip-fly-r { animation: parrotFlyRight 1s cubic-bezier(0.34,1.4,0.5,1) both; }
+  .pip-float { animation: parrotFloat 4.5s ease-in-out infinite; }
+  .pip-tilt  { animation: parrotTilt 3s ease-in-out infinite; }
+  .pip-hop   { animation: parrotHop 0.7s ease; }
+  .pip-drift { animation: parrotDrift 6s ease-in-out infinite; }
+  .pip-surf  { animation: parrotSurf 2.8s ease-in-out infinite; }
+  .pip-pop   { animation: bubblePop 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
+  /* The "fly to" between tabs: snappy with an overshoot so he bumps the wall. */
+  .pip-move  { transition: top 0.9s cubic-bezier(0.34,1.32,0.64,1), left 0.9s cubic-bezier(0.34,1.32,0.64,1); }
 
   /* Honour the user's (or OS's) reduce-motion preference: kill all animation.
      The attribute is set on <html> by app.jsx from prefs.reducedMotion, which
@@ -228,6 +282,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+  /* …except Pip. He's an explicit opt-in mascot (Definições → Papagaio ajudante),
+     and his whole point is to fly around — so his own motion stays alive even
+     under reduce-motion. Turn the parrot off to silence him entirely. Higher
+     specificity + !important re-asserts each class's timing over the kill rule. */
+  html[data-reduced-motion="true"] .pip-in    { animation: parrotIn 0.95s cubic-bezier(0.22,1,0.36,1) both !important; }
+  html[data-reduced-motion="true"] .pip-fly-l { animation: parrotFlyLeft 1s cubic-bezier(0.34,1.4,0.5,1) both !important; }
+  html[data-reduced-motion="true"] .pip-fly-r { animation: parrotFlyRight 1s cubic-bezier(0.34,1.4,0.5,1) both !important; }
+  html[data-reduced-motion="true"] .pip-float { animation: parrotFloat 4.5s ease-in-out infinite !important; }
+  html[data-reduced-motion="true"] .pip-tilt  { animation: parrotTilt 3s ease-in-out infinite !important; }
+  html[data-reduced-motion="true"] .pip-hop   { animation: parrotHop 0.7s ease !important; }
+  html[data-reduced-motion="true"] .pip-drift { animation: parrotDrift 6s ease-in-out infinite !important; }
+  html[data-reduced-motion="true"] .pip-surf  { animation: parrotSurf 2.8s ease-in-out infinite !important; }
+  html[data-reduced-motion="true"] .pip-pop   { animation: bubblePop 0.3s cubic-bezier(0.34,1.56,0.64,1) both !important; }
+  html[data-reduced-motion="true"] .pip-move  { transition: top 0.9s cubic-bezier(0.34,1.32,0.64,1), left 0.9s cubic-bezier(0.34,1.32,0.64,1) !important; }
 
   /* text-edit affordance for direct manipulation friendliness */
   input:focus, textarea:focus { outline: none; }

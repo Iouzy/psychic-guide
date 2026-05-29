@@ -85,29 +85,23 @@ function UpdateChecker({ accentColor, store }) {
       if (!apk) { setState({ kind: "err", text: tr("Sem APK disponível no repositório.") }); return; }
 
       // The "latest" release is rolling (re-published every build), and GitHub
-      // freezes `published_at` at the release's first creation — so it can't be
-      // used to detect newer builds. Prefer the build NUMBER the workflow writes
-      // into the release name/body; fall back to the APK ASSET's `updated_at`
-      // (which IS bumped on every re-upload), with a grace window for the few
-      // seconds between stamping the build and uploading the asset.
-      const runMatch = String(j.name || "").match(/build\s+(\d+)/i) ||
-                       String(j.body || "").match(/build\s+(\d+)/i);
-      const releaseRun = runMatch ? Number(runMatch[1]) : 0;
+      // freezes `published_at` at the release's first creation — useless for
+      // detecting newer builds. The build's wall-clock timestamp is the source
+      // of truth instead: it's monotonic and immune to the run-number resetting
+      // (a workflow rename or repo fork restarts it at 1, which once produced a
+      // build with a HIGHER number than newer builds — so a numeric compare
+      // wrongly reported "up to date"). The rolling release re-uploads the APK
+      // every build, so its asset `updated_at` advances each time; a 10-min
+      // grace covers the gap between stamping a build and uploading its asset.
       const apkTs = apk.updated_at ? Math.floor(new Date(apk.updated_at).getTime() / 1000) : 0;
-
-      let current;
-      if (releaseRun > 0 && build.run > 0) {
-        current = releaseRun <= build.run;                 // exact, preferred
-      } else if (build.ts > 0 && apkTs > 0) {
-        current = apkTs <= build.ts + 600;                 // 10-min upload grace
-      } else {
-        current = false;                                   // dev / unstamped → always offer
-      }
+      const current = (build.ts > 0 && apkTs > 0)
+        ? apkTs <= build.ts + 600
+        : false;                                           // dev / unstamped → always offer
 
       if (current) {
         setState({ kind: "uptodate" });
       } else {
-        setState({ kind: "available", url: apk.browser_download_url, releaseRun });
+        setState({ kind: "available", url: apk.browser_download_url });
       }
     } catch (e) {
       setState({ kind: "err", text: tr("Não foi possível verificar atualizações.") });
@@ -116,7 +110,6 @@ function UpdateChecker({ accentColor, store }) {
 
   const startUpdate = async () => {
     const url = state.url;
-    const releaseRun = state.releaseRun;
     // Offer a safety backup before installing the update.
     const backup = await window.pautaConfirm({
       message: tr("Guardar uma cópia de segurança antes de atualizar?"),
@@ -133,18 +126,18 @@ function UpdateChecker({ accentColor, store }) {
     // the user's data is preserved). Plain browser/PWA has no installer, so
     // fall back to opening the download URL there.
     if (window.AppUpdater && window.AppUpdater.isNative) {
-      setState({ kind: "downloading", url, releaseRun, progress: null });
+      setState({ kind: "downloading", url, progress: null });
       try {
         const res = await window.AppUpdater.downloadAndInstall({ url });
         if (res && res.status === "needs-permission") {
           // We just opened the "install unknown apps" toggle; let the user
           // allow it and tap again.
-          setState({ kind: "available", url, releaseRun, needsPerm: true });
+          setState({ kind: "available", url, needsPerm: true });
         } else {
           setState({ kind: "installing" });
         }
       } catch (e) {
-        setState({ kind: "available", url, releaseRun, dlError: true });
+        setState({ kind: "available", url, dlError: true });
       }
       return;
     }
@@ -152,9 +145,15 @@ function UpdateChecker({ accentColor, store }) {
     setTimeout(() => window.open(url, "_blank"), backup ? 500 : 0);
   };
 
-  const buildLabel = build.run > 0
-    ? trf("Versão atual: build {n}", { n: build.run })
-    : tr("Versão de desenvolvimento.");
+  // Show the build DATE, not the run number: dates always move forward and read
+  // intuitively, whereas the run number reset once and showed an older build
+  // with a bigger number.
+  let buildLabel = tr("Versão de desenvolvimento.");
+  if (build.ts > 0) {
+    const d = new Date(build.ts * 1000);
+    const p2 = (n) => String(n).padStart(2, "0");
+    buildLabel = trf("Versão de {date}", { date: `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}` });
+  }
 
   let subtitle = buildLabel;
   let status = null;
@@ -171,9 +170,7 @@ function UpdateChecker({ accentColor, store }) {
     if (state.needsPerm) { subtitle = tr("Permite instalar apps desta origem e toca outra vez."); status = "err"; }
     else if (state.dlError) { subtitle = tr("Não foi possível transferir a atualização."); status = "err"; }
     else {
-      subtitle = state.releaseRun > 0
-        ? trf("Atualização disponível: build {n}", { n: state.releaseRun })
-        : tr("Atualização disponível.");
+      subtitle = tr("Atualização disponível.");
       status = "ok";
     }
   }
@@ -219,6 +216,19 @@ function UpdateChecker({ accentColor, store }) {
           {state.kind === "downloading" ? tr("A transferir…") : tr("Transferir nova versão")}
         </button>
       )}
+      {state.kind === "available" && !state.needsPerm && (
+        // One-time gotcha: builds from before the project settled on a fixed
+        // signing key were each signed with a throwaway key, so Android blocks
+        // installing a newer (consistently-signed) build over them with "package
+        // conflicts with an existing package". Can't be fixed from inside the
+        // app — the user has to back up, uninstall once, and reinstall.
+        <span style={{
+          fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12,
+          color: "var(--ink-3)", lineHeight: 1.4, padding: "2px 2px 0",
+        }}>
+          {tr("Se a instalação falhar com «conflito com um pacote existente»: exporta uma cópia de segurança, desinstala a app e instala de novo. Só é preciso uma vez — daí em diante as atualizações mantêm os teus dados.")}
+        </span>
+      )}
     </div>
   );
 }
@@ -244,10 +254,23 @@ function DataSheet({ open, onClose, store, accentColor, onOpenInsights, onOpenTi
       if (!res.ok) {
         setMsg({ kind: "err", text: res.reason === "unsupported"
           ? tr("Este dispositivo não suporta notificações.")
-          : tr("Permissão de notificações negada.") });
+          : tr("Permissão de notificações negada. Ativa-a nas definições do sistema.") });
         store.setReminderPref("enabled", false);
         return;
       }
+      // Confirm it actually works with one notification right now — otherwise
+      // the user has no way to tell the channel fired (reminders only nudge at
+      // the set times, and only while the app is open).
+      store.setReminderPref("enabled", true);
+      const shown = await window.fireReminder(
+        tr("Notificações ativadas"),
+        tr("Vou avisar-te dos hábitos e da reflexão às horas marcadas."),
+        "pauta-test"
+      );
+      setMsg(shown
+        ? { kind: "ok", text: tr("Notificações ativadas.") }
+        : { kind: "err", text: tr("Permissão de notificações negada. Ativa-a nas definições do sistema.") });
+      return;
     }
     store.setReminderPref("enabled", next);
   };

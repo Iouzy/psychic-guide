@@ -1,9 +1,15 @@
 package com.pauta.app
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -140,6 +146,82 @@ class FocusActivityPlugin : Plugin() {
             context.startService(intent)
         }
         call.resolve()
+    }
+
+    // ── One-shot local reminders ─────────────────────────────────
+    // The web Notification API and service-worker notifications don't work
+    // inside the Capacitor WebView, so reminders (habits / nightly reflection)
+    // are posted natively here, on their own channel separate from the ongoing
+    // focus-timer service notification. `tag` gives each kind a stable id so a
+    // new reminder of the same kind replaces the previous one instead of stacking.
+
+    // Bumped to v2 so the channel is recreated with HIGH importance even for
+    // users who already had the old DEFAULT-importance channel (Android won't
+    // change an existing channel's importance once created).
+    private val reminderChannelId = "pauta_reminders_v2"
+
+    private fun ensureReminderChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val ch = NotificationChannel(
+                reminderChannelId,
+                "Lembretes",
+                // HIGH so the reminder pops as a heads-up and the user can't miss it.
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Avisos de hábitos pendentes e da reflexão da noite"
+                setShowBadge(true)
+            }
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .createNotificationChannel(ch)
+        }
+    }
+
+    // NOTE: named showReminder, not notify(), to avoid any ambiguity with the
+    // final Object.notify() the plugin inherits — the JS bridge maps
+    // FocusActivity.notify(...) onto this.
+    @PluginMethod
+    fun showReminder(call: PluginCall) {
+        // No permission → no notification (Android 13+ silently drops it anyway).
+        if (!hasNotifPermission()) {
+            call.resolve(JSObject().put("shown", false))
+            return
+        }
+        val title = call.getString("title") ?: "Pauta"
+        val body  = call.getString("body") ?: ""
+        val tag   = call.getString("tag") ?: "pauta"
+        val notifId = tag.hashCode()
+
+        ensureReminderChannel()
+
+        // Tap → bring the app to the front (same launch flags as the service one).
+        val launchIntent = (context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?: Intent(context, MainActivity::class.java))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val launchPi = PendingIntent.getActivity(
+            context, notifId, launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+        )
+
+        val notif = NotificationCompat.Builder(context, reminderChannelId)
+            .setSmallIcon(R.drawable.ic_stat_focus)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setAutoCancel(true)
+            .setContentIntent(launchPi)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(notifId, notif)
+            call.resolve(JSObject().put("shown", true))
+        } catch (e: SecurityException) {
+            // Permission revoked between the check and the post — fail soft.
+            call.resolve(JSObject().put("shown", false))
+        }
     }
 
     // ── Called by FocusActionReceiver when a notification button is tapped ──

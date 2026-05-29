@@ -88,17 +88,28 @@ jobs:
           name: pauta-apk
           path: pauta.apk
 
+      - name: Build date stamp
+        id: stamp
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
       - name: Publish to rolling "latest" Release
         uses: softprops/action-gh-release@v2
         with:
+          # ONE rolling release, always tagged `latest` — this is exactly what
+          # the in-app UpdateChecker fetches (releases/tags/latest). prerelease
+          # MUST be false and make_latest true so GitHub's "Latest" badge and the
+          # checker always agree on the same release; without this a stale
+          # pre-release once held the `latest` tag while a different release wore
+          # the badge. The checker compares the APK asset's upload time against
+          # the build's timestamp (not a parsed number), so the name/body only
+          # need to be human-friendly — we show the date, which always moves
+          # forward (the old run-number could reset and go backwards).
           tag_name: latest
-          # The build number is advertised here so the in-app update checker can
-          # compare exactly — GitHub freezes a rolling release's published_at, so
-          # timestamps are unreliable. Keep the literal "build <n>" format:
-          # UpdateChecker parses it from the release name/body.
-          name: Pauta · build ${{ github.run_number }}
+          prerelease: false
+          make_latest: true
+          name: Pauta · ${{ steps.stamp.outputs.date }}
           body: |
-            Automatically built Android APK (build ${{ github.run_number }}).
+            Automatically built Android APK (${{ steps.stamp.outputs.date }}).
             Download pauta.apk below and install it on your phone.
           files: pauta.apk
           fail_on_unmatched_files: true

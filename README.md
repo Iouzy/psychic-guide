@@ -92,7 +92,7 @@
   </tr>
   <tr>
     <td>🤖 <b>Android</b></td>
-    <td>Download the latest <code>.apk</code> from the <a href="../../releases/latest">Releases page</a> and open it to install</td>
+    <td>Download the latest <code>.apk</code> from the <a href="../../releases/latest">Releases page</a> and open it to install. <sub>Updating from an <b>old build</b> and see <i>"conflicts with an existing package"</i>? Export a backup (Settings → Export data), uninstall, reinstall, re-import. One time only — see <a href="#continuous-integration">CI</a>.</sub></td>
   </tr>
   <tr>
     <td>🍎 <b>iPhone / iPad</b></td>
@@ -253,6 +253,8 @@ From there, open `android/` in Android Studio or build from the command line (`c
 
 `.github/workflows/android.yml` builds an installable `.apk` on every push (and on manual dispatch) and publishes it to a rolling **`latest`** GitHub Release. The committed `debug.keystore` keeps the signing key stable across builds, so reinstalling an update preserves your data.
 
+> **Updating from a build made before the stable keystore landed?** Those older builds were each signed with a throwaway debug key the CI runner generated per run, so Android refuses to install a newer (consistently-signed) build over them — *"the package conflicts with an existing package"*. Android's signature check can't be bypassed from inside the app, so do this **once**: export a backup (**Settings → Export data**), uninstall the old app, install the new APK, then re-import. Every update after that installs in place and keeps your data.
+
 ## Keyboard shortcuts
 
 | Key | Action |
@@ -327,7 +329,7 @@ Targets modern evergreen browsers (Chromium, Firefox, Safari) and Android WebVie
   </tr>
   <tr>
     <td>🤖 <b>Android</b></td>
-    <td>Transfira o <code>.apk</code> mais recente na <a href="../../releases/latest">página de Releases</a> e abra-o para instalar</td>
+    <td>Transfira o <code>.apk</code> mais recente na <a href="../../releases/latest">página de Releases</a> e abra-o para instalar. <sub>A atualizar de uma <b>versão antiga</b> e aparece <i>"conflito com um pacote existente"</i>? Exporta uma cópia (Definições → Exportar dados), desinstala, reinstala e reimporta. Só uma vez.</sub></td>
   </tr>
   <tr>
     <td>🍎 <b>iPhone / iPad</b></td>
@@ -413,7 +415,9 @@ npm run sync             # build:web + sincronizar Android
 cd android && ./gradlew assembleDebug   # compilar APK
 ```
 
-O `.github/workflows/android.yml` compila um `.apk` a cada push e publica numa release contínua **`latest`**.
+O `.github/workflows/android.yml` compila um `.apk` a cada push e publica numa release contínua **`latest`**. A `debug.keystore` versionada mantém a chave de assinatura estável entre builds, por isso reinstalar uma atualização preserva os teus dados.
+
+> **A atualizar de uma versão anterior à chave estável?** Essas builds antigas foram assinadas com uma chave de depuração descartável que o runner gerava a cada execução, por isso o Android recusa instalar uma build mais recente (assinada de forma consistente) por cima — *"o pacote entra em conflito com um pacote existente"*. A verificação de assinatura do Android não pode ser contornada de dentro da app, por isso faz isto **uma vez**: exporta uma cópia (**Definições → Exportar dados**), desinstala a app antiga, instala o novo APK e reimporta. A partir daí, todas as atualizações instalam por cima e mantêm os dados.
 
 </details>
 
