@@ -151,7 +151,8 @@ function TabBar({ tab, onTab, accentColor }) {
       backdropFilter: "blur(8px)",
       WebkitBackdropFilter: "blur(8px)",
       display: "flex",
-      padding: "8px 16px 22px",
+      // Reserve room for the (transparent, edge-to-edge) system navigation bar.
+      padding: "8px 16px calc(14px + env(safe-area-inset-bottom))",
       position: "relative",
       zIndex: 5,
     }}>
@@ -428,4 +429,57 @@ function StarterChips({ items, onPick, accentColor, label }) {
   );
 }
 
-Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder, StarterChips });
+// ─── In-app confirm dialog ──────────────────────────────────
+// Replaces the OS confirm() (grey, off-theme, breaks immersion) with a styled
+// modal. Promise-based so call sites stay simple:
+//   if (await window.pautaConfirm({ message, danger:true })) { ... }
+// A native fallback is installed immediately (below) so calls before the host
+// mounts still work; ConfirmHost overrides it with the themed version on mount.
+function pautaConfirmFallback(opts) {
+  var m = typeof opts === "string" ? opts : (opts && opts.message) || "";
+  return Promise.resolve(window.confirm(m));
+}
+if (typeof window !== "undefined" && !window.pautaConfirm) window.pautaConfirm = pautaConfirmFallback;
+
+function ConfirmHost() {
+  const [req, setReq] = useState(null);
+  useEffect(() => {
+    window.pautaConfirm = (opts) => new Promise((resolve) => {
+      const o = typeof opts === "string" ? { message: opts } : (opts || {});
+      setReq({ message: o.message || "", okLabel: o.okLabel, cancelLabel: o.cancelLabel, danger: !!o.danger, resolve });
+    });
+    return () => { window.pautaConfirm = pautaConfirmFallback; };
+  }, []);
+  if (!req) return null;
+  const close = (val) => { const r = req.resolve; setReq(null); r(val); };
+  return (
+    <div onClick={() => close(false)} style={{
+      position: "absolute", inset: 0, zIndex: 200,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+      background: "rgba(0,0,0,0.5)", animation: "fadeIn 0.18s ease",
+    }}>
+      <div onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" style={{
+        width: "100%", maxWidth: 340, background: "var(--paper)",
+        border: "1px solid var(--rule)", borderRadius: 16, padding: "22px 22px 16px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)", animation: "sheetCenterIn 0.22s ease",
+      }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 19, lineHeight: 1.3, color: "var(--ink)", marginBottom: 20 }}>
+          {req.message}
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button className="tap" onClick={() => close(false)} style={{
+            border: "none", background: "transparent", color: "var(--ink-3)",
+            fontSize: 14, fontWeight: 500, padding: "10px 14px", cursor: "pointer",
+          }}>{req.cancelLabel || tr("Cancelar")}</button>
+          <button className="tap" onClick={() => close(true)} style={{
+            border: "none", borderRadius: 10, padding: "10px 18px",
+            fontSize: 14, fontWeight: 600, cursor: "pointer", color: "var(--on-dark)",
+            background: req.danger ? "var(--accent)" : "var(--ink)",
+          }}>{req.okLabel || tr("OK")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, StatusBar, TabBar, Sheet, AutoTextarea, EditableText, Button, Check, useDragReorder, StarterChips, ConfirmHost });

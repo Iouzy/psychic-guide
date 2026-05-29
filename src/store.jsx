@@ -1261,20 +1261,15 @@ function useStore() {
     return { ...s, goals: next };
   });
 
-  const resetAll = () => {
-    if (confirm(tr("Apagar tudo e recomeçar? Isto não pode ser desfeito."))) {
-      setState(s => ({
-        ...emptyState(),
-        prefs: s.prefs,  // keep theme/haptics/reminders prefs across a reset
-      }));
-    }
-  };
-
-  const reseed = () => {
-    if (confirm(tr("Recarregar dados de exemplo? Isto apaga o que tem agora."))) {
-      setState(seed());
-    }
-  };
+  // Pure actions — the caller is responsible for confirming (via the in-app
+  // dialog), so the store stays free of UI concerns.
+  const resetAll = () => setState(s => ({
+    ...emptyState(),
+    prefs: s.prefs,  // keep theme/haptics/reminders prefs across a reset
+  }));
+  // Keep prefs (incl. onboardingSeen) so reloading the demo doesn't re-trigger
+  // the tour or reset the user's appearance/backup choices.
+  const reseed = () => setState(s => ({ ...seed(), prefs: s.prefs }));
 
   // Silent reset used at the end of the interactive onboarding when the user
   // chooses "start fresh": wipes the demo seed and anything they created during

@@ -396,10 +396,8 @@ function EditBlockSheet({ open, onClose, block, onUpdateBlock, onUpdateSessionNo
   };
 
   const remove = () => {
-    if (confirm(tr("Apagar este bloco? Não dá pra desfazer."))) {
-      onDelete(block.id);
-      onClose();
-    }
+    window.pautaConfirm({ message: tr("Apagar este bloco? Não dá pra desfazer."), danger: true })
+      .then(ok => { if (ok) { onDelete(block.id); onClose(); } });
   };
 
   const statusLabel = block.status === "done" ? tr("concluído") : (block.status === "paused" ? tr("pausado") : tr("em curso"));

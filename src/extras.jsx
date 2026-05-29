@@ -1063,9 +1063,37 @@ async function shareDayCard({ dateLabel, focusValue, focusCaption, ratioValue, r
   } catch (e) {}
 }
 
+// ─── Share backup to the cloud (lightweight) ─────────────────
+// Hands the backup JSON to the OS share sheet so the user can drop it into
+// Google Drive / Dropbox / Files — no account or API keys, fits the offline
+// ethos. Falls back to a normal download where file-sharing isn't available.
+async function shareBackupFile(backupObj) {
+  const name = "pauta-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+  const json = JSON.stringify(backupObj, null, 2);
+  try {
+    const file = new File([json], name, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Pauta", text: "Pauta backup" });
+      return { ok: true, shared: true };
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") return { ok: true, shared: false }; // user cancelled
+  }
+  // Fallback: download (Android saves to Downloads; the user can upload it).
+  try {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return { ok: true, shared: false };
+  } catch (e) { return { ok: false }; }
+}
+
 Object.assign(window, {
   haptic, OnboardingOverlay, TierGuideSheet,
   BestHourChart, CorrelationList, FocusCalendar, WeekReview, InsightsSheet,
   GoalsSection, useReminders, useFocusActivity,
-  useAutoBackup, useWakeLock, playChime, shareDayCard,
+  useAutoBackup, useWakeLock, playChime, shareDayCard, shareBackupFile,
 });

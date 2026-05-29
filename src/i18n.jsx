@@ -168,6 +168,14 @@ const I18N_EN = {
 
   // ─── Update checker ───
   "Atualização disponível: build {n}": "Update available: build {n}",
+  "Guardar uma cópia de segurança antes de atualizar?": "Save a backup before updating?",
+  "Cópia e atualizar": "Back up & update",
+  "Só atualizar": "Just update",
+
+  // ─── Cloud share ───
+  "Enviar para a nuvem": "Send to the cloud",
+  "Partilha a cópia para o Drive, Dropbox, Ficheiros…": "Share the copy to Drive, Dropbox, Files…",
+  "Cópia transferida.": "Copy downloaded.",
 };
 
 // === I18N_EN_BULK_BEGIN === (entries collected from the rest of the app)
