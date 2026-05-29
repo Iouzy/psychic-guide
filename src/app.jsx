@@ -569,26 +569,53 @@ const ACCENT_OPTIONS = [
 
 // Native-only control for the focus-timer notification permission. On Android
 // 13+ the timer notification is invisible without POST_NOTIFICATIONS, so this
-// surfaces the state and lets the user grant it (or learn they must enable it
-// in system Settings, since Android stops showing the dialog after a denial).
+// surfaces the state and lets the user grant it (or open system Settings when
+// Android has stopped showing the dialog after a permanent denial).
 function FocusNotifControl({ accentColor }) {
-  const [granted, setGranted] = useState(null);   // null = still checking
-  const [asked, setAsked] = useState(false);
+  const [granted, setGranted]   = useState(null);   // null = still checking
+  const [canAsk, setCanAsk]     = useState(true);   // false = permanently denied
+
+  const refresh = async () => {
+    try {
+      const [permR, rationaleR] = await Promise.all([
+        window.FocusActivity.checkPermission(),
+        window.FocusActivity.shouldShowRationale(),
+      ]);
+      const g = !!(permR && permR.granted);
+      setGranted(g);
+      // canAsk = true only when OS will still show the dialog:
+      // either not yet asked (rationale=false, perm=false, never requested)
+      // or denied once (rationale=true). After permanent denial both are false.
+      if (!g) setCanAsk(!!(rationaleR && rationaleR.show) || granted === null);
+    } catch (_) {}
+  };
 
   useEffect(() => {
     let alive = true;
     window.FocusActivity.checkPermission()
-      .then(r => { if (alive) setGranted(!!(r && r.granted)); })
+      .then(r => { if (alive) { setGranted(!!(r && r.granted)); setCanAsk(true); } })
       .catch(() => {});
-    return () => { alive = false; };
+    // Re-check when the user returns from system Settings.
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
   const request = async () => {
-    setAsked(true);
     try {
       const r = await window.FocusActivity.requestPermission();
-      setGranted(!!(r && r.granted));
+      const g = !!(r && r.granted);
+      setGranted(g);
+      if (!g) {
+        // Check if the OS will still show the dialog next time.
+        const rat = await window.FocusActivity.shouldShowRationale();
+        setCanAsk(!!(rat && rat.show));
+      }
     } catch (_) {}
+  };
+
+  const openSettings = () => {
+    try { window.FocusActivity.openAppSettings(); } catch (_) {}
   };
 
   return (
@@ -613,7 +640,7 @@ function FocusNotifControl({ accentColor }) {
           {granted === null ? "…" : granted ? tr("ativa") : tr("desligada")}
         </span>
       </div>
-      {granted === false && (
+      {granted === false && canAsk && (
         <button onClick={request} className="tap"
           style={{
             border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer",
@@ -622,10 +649,14 @@ function FocusNotifControl({ accentColor }) {
           {tr("Permitir notificações")}
         </button>
       )}
-      {granted === false && asked && (
-        <div style={{ fontFamily: "var(--serif)", fontStyle: "italic", fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>
-          {tr("Se nada acontecer, ative as notificações do Pauta nas definições do sistema.")}
-        </div>
+      {granted === false && !canAsk && (
+        <button onClick={openSettings} className="tap"
+          style={{
+            border: "none", borderRadius: 8, padding: "9px 12px", cursor: "pointer",
+            background: accentColor, color: "#fff", fontSize: 13, fontWeight: 500,
+          }}>
+          {tr("Abrir definições do sistema")}
+        </button>
       )}
     </div>
   );

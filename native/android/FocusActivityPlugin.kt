@@ -7,7 +7,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -28,6 +31,8 @@ import com.getcapacitor.annotation.PermissionCallback
  *   FocusActivity.stop()
  *   FocusActivity.checkPermission()    → { granted }
  *   FocusActivity.requestPermission()  → { granted }
+ *   FocusActivity.shouldShowRationale() → { show } (true = OS will still show dialog)
+ *   FocusActivity.openAppSettings()   → void (opens system notification settings)
  *   FocusActivity.addListener("action", ({ kind }) => …)
  *     kind: "pause" | "resume" | "conclude"
  *
@@ -90,6 +95,34 @@ class FocusActivityPlugin : Plugin() {
     @PermissionCallback
     fun notifPermCallback(call: PluginCall) {
         resolveGranted(call, hasNotifPermission())
+    }
+
+    // True when the OS would still show the permission dialog; false when the user
+    // has permanently denied (checked "never ask again" or denied twice on Android 13+).
+    @PluginMethod
+    fun shouldShowRationale(call: PluginCall) {
+        val show = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
+        } else false
+        call.resolve(JSObject().put("show", show))
+    }
+
+    // Opens the system notification settings screen for this app so the user can
+    // grant POST_NOTIFICATIONS after a permanent denial.
+    @PluginMethod
+    fun openAppSettings(call: PluginCall) {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            }
+        } else {
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        call.resolve()
     }
 
     // ── Plugin methods ───────────────────────────────────────────

@@ -92,10 +92,6 @@ jobs:
           name: pauta-apk
           path: pauta.apk
 
-      - name: Build date stamp
-        id: stamp
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-
       - name: Publish to rolling "latest" Release
         # Only main owns the release the in-app updater fetches; branch pushes
         # still build + upload the artifact above, but never touch `latest`.
@@ -108,15 +104,15 @@ jobs:
           # checker always agree on the same release; without this a stale
           # pre-release once held the `latest` tag while a different release wore
           # the badge. The checker compares the APK asset's upload time against
-          # the build's timestamp (not a parsed number), so the name/body only
-          # need to be human-friendly — we show the date, which always moves
-          # forward (the old run-number could reset and go backwards).
+          # the build's timestamp (not a parsed number), so the name uses the
+          # run_number (already stamped into the APK) as a human-friendly counter
+          # that always moves forward.
           tag_name: latest
           prerelease: false
           make_latest: true
-          name: Pauta · ${{ steps.stamp.outputs.date }}
+          name: Pauta ${{ github.run_number }}
           body: |
-            Automatically built Android APK (${{ steps.stamp.outputs.date }}).
+            Build ${{ github.run_number }} — automatically assembled Android APK.
             Download pauta.apk below and install it on your phone.
           files: pauta.apk
           fail_on_unmatched_files: true
