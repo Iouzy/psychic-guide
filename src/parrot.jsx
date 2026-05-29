@@ -314,13 +314,29 @@ function ParrotCompanion({ store, accentColor, tab }) {
   const a = PARROT_ANCHORS[anchorKey] || PARROT_ANCHORS.br;
 
   // The bubble sits above or below the bird, and opens toward the side with room.
+  // NOTE: an absolutely-positioned bubble anchored only by `right`/`left` (no
+  // explicit width) shrinks-to-fit its containing block — here the ~54px bird
+  // wrapper — collapsing the text to one word per line. We give it a real width
+  // so the phrase wraps like a proper speech bubble. // PT: largura fixa para o
+  // balão embrulhar bem o texto (senão encolhia até caber só uma palavra).
   const bubblePos = {
     position: "absolute",
-    maxWidth: 224,
-    ...(a.vert === "top" ? { top: "100%", marginTop: 8 } : { bottom: "100%", marginBottom: 8 }),
+    width: "min(15rem, 72vw)",
+    ...(a.vert === "top" ? { top: "100%", marginTop: 10 } : { bottom: "100%", marginBottom: 10 }),
     ...(a.side === "left" ? { left: 0 }
       : a.side === "center" ? { left: "50%", transform: "translateX(-50%)" }
       : { right: 0 }),
+  };
+
+  // A little tail that points back at Pip: a rotated square tucked under the
+  // bubble's edge, on the side nearest the bird and the edge facing him.
+  const tailStyle = {
+    position: "absolute", width: 12, height: 12, background: "var(--surface-dark)",
+    transform: "rotate(45deg)", borderRadius: 2,
+    ...(a.vert === "top" ? { top: -5 } : { bottom: -5 }),
+    ...(a.side === "left" ? { left: 20 }
+      : a.side === "center" ? { left: "50%", marginLeft: -6 }
+      : { right: 20 }),
   };
 
   // The bird: surfs on the Marés tab, hops when happy, gently floats otherwise.
@@ -351,10 +367,12 @@ function ParrotCompanion({ store, accentColor, tab }) {
               <div style={{
                 position: "relative", pointerEvents: "auto",
                 background: "var(--surface-dark)", color: "var(--on-dark)",
-                borderRadius: 14, padding: "11px 30px 11px 13px", fontSize: 13, lineHeight: 1.38,
-                fontFamily: "var(--sans)", boxShadow: "0 10px 28px rgba(0,0,0,0.3)",
-                animation: "bubblePop 0.28s ease both",
+                borderRadius: 14, padding: "12px 32px 12px 14px", fontSize: 13.5, lineHeight: 1.45,
+                fontFamily: "var(--sans)", boxShadow: "0 12px 30px rgba(0,0,0,0.32)",
+                whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "normal",
+                animation: "bubblePop 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
               }}>
+                <span style={tailStyle} aria-hidden="true"/>
                 {bubble.text}
                 <button onClick={() => setBubble(null)} aria-label={tr("fechar")} style={{
                   position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
