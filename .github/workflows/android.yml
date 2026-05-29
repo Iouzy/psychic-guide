@@ -84,13 +84,17 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Stage APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk pauta.apk
+        # Version the filename (pauta-v<run>.apk) so each download lands as a
+        # DISTINCT file in the phone's Downloads folder instead of colliding on
+        # "pauta.apk" and being renamed pauta(1).apk, pauta(2).apk … The in-app
+        # updater matches any *.apk asset (not a fixed name), so this is safe.
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "pauta-v${{ github.run_number }}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: pauta-apk
-          path: pauta.apk
+          path: pauta-v${{ github.run_number }}.apk
 
       - name: Publish to rolling "latest" Release
         # Only main owns the release the in-app updater fetches; branch pushes
@@ -113,6 +117,6 @@ jobs:
           name: Pauta ${{ github.run_number }}
           body: |
             Build ${{ github.run_number }} — automatically assembled Android APK.
-            Download pauta.apk below and install it on your phone.
-          files: pauta.apk
+            Download pauta-v${{ github.run_number }}.apk below and install it on your phone.
+          files: pauta-v${{ github.run_number }}.apk
           fail_on_unmatched_files: true
