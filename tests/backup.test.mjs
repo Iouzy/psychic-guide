@@ -50,6 +50,13 @@ describe("import rejects junk", () => {
   it("throws on null", () => {
     expect(() => S.parseBackup("null")).toThrow();
   });
+  it("rejects an oversized file before parsing", () => {
+    expect(typeof S.MAX_BACKUP_CHARS).toBe("number");
+    const huge = "0".repeat(S.MAX_BACKUP_CHARS + 1);
+    expect(() => S.parseBackup(huge)).toThrow();
+    // a normal-sized valid backup still parses fine
+    expect(() => S.parseBackup(JSON.stringify(S.emptyState()))).not.toThrow();
+  });
 });
 
 describe("import sanitizes malformed fields instead of crashing", () => {

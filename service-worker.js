@@ -1,6 +1,6 @@
 // Pauta service worker — offline app shell.
 // Bump CACHE_VERSION whenever the precached assets change so clients refresh.
-const CACHE_VERSION = "pauta-v6";
+const CACHE_VERSION = "pauta-v7";
 
 // Same-origin assets that make up the app shell. Relative paths keep this
 // working whether served from a domain root or a GitHub Pages subpath.

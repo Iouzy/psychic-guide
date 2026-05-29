@@ -14,12 +14,6 @@ rationale. Ordered roughly by value.
 - **Drop/relax the "Third-party CDN deps" branch in `service-worker.js`** once
   fonts are vendored — it would then only ever serve Google Fonts.
 
-## Data / storage hygiene
-- **Backup file size guard.** `importData` reads the whole file into memory with
-  no size cap. Not a real risk for a personal JSON backup, but a defensive
-  `if (text.length > N) throw` would harden against accidentally importing a
-  giant/wrong file.
-
 ## Accessibility
 - **Focus-trap the onboarding overlay.** `OnboardingOverlay` is a full-screen
   overlay that doesn't use the shared `Sheet`, so it doesn't get the new
@@ -30,11 +24,38 @@ rationale. Ordered roughly by value.
   WCAG contrast check (and nudging any that fail AA) would make the palette
   provably accessible rather than eyeballed.
 
+## Reporting
+- **`weeklyReview` over-counts periodic habits.** It increments
+  `habitObservedSlots` once per *day* a habit is active (`store.jsx`, the
+  `weeklyReview` loop), but a weekly/monthly tide only needs one completion per
+  *period*. So `habitPct` under-reports weekly/monthly habit completion. *Left
+  out:* a correct fix has to reconcile a rolling 7-day window with
+  Monday-anchored / month-anchored periods, so it deserves its own PR plus
+  cadence tests rather than riding along an unrelated change.
+
 ## Testing
+- ~~**`loadState()` migration regression tests.**~~ *Shipped this pass* —
+  `tests/load-state.test.mjs` now exercises the on-startup migration path
+  (day rollover/archival, legacy habit `data[]`→`log{}` migration, missing-slice
+  backfill, prefs merge, and the malformed-JSON fallback to `seed()`/`emptyState()`).
+  This is the spot a silent migration bug would lose data on the next launch.
 - **Component/interaction tests** (sheets open/close, swipe nav, timer ticking)
   would need a DOM environment (jsdom/@testing-library). *Left out:* keeps the
-  zero-build, near-zero-dep ethos; the new Vitest suite covers the pure store
+  zero-build, near-zero-dep ethos; the Vitest suite covers the pure store
   layer where the real data-loss risk lives.
+- **Migration regression tests.** `schema.test.mjs` covers `migrateHabit`, but
+  `loadState`'s day-archival and prefs-merge paths have no explicit coverage —
+  the places a silent migration regression would lose data. Worth a focused
+  test file.
+
+## Stats correctness
+- **Weekly review counts periodic tides per day, not per period.** `weeklyReview`
+  (`store.jsx`) walks the 7-day window counting one observation slot per active
+  day, so a weekly/monthly tide marked once shows as ~1/7 done instead of 1/1 —
+  dragging the week's `habitPct` down. The rest of the app uses cadence-aware
+  `habitPeriodStats`. *Left out:* a correct fix must reconcile a rolling 7-day
+  window with Monday-anchored habit periods; subtle enough to deserve its own PR
+  + cadence tests rather than riding along a build-script fix.
 
 ## CI
 - **Gate CI on `npm run check`.** `.github/workflows/android.yml` builds and
