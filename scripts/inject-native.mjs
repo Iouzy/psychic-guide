@@ -23,14 +23,24 @@ for (const file of [
   "FocusService.kt",
   "AppUpdaterPlugin.kt",
   "MainActivity.kt",
+  "ReminderScheduler.kt",
+  "ReminderReceiver.kt",
+  "BootReceiver.kt",
 ]) {
   cpSync(join(SRC, file), join(JAVA, file));
   console.log(`Copied ${file}`);
 }
 
-// ── 2. Copy resources (notification icon + updater FileProvider paths) ──
-cpSync(join(SRC, "ic_stat_focus.xml"), join(DRAWABLE, "ic_stat_focus.xml"));
-console.log("Copied ic_stat_focus.xml");
+// ── 2. Copy resources (notification icons + updater FileProvider paths) ──
+for (const icon of [
+  "ic_stat_focus.xml",       // status-bar / small icon
+  "ic_focus_pause.xml",      // focus-notification action-button icons
+  "ic_focus_resume.xml",
+  "ic_focus_conclude.xml",
+]) {
+  cpSync(join(SRC, icon), join(DRAWABLE, icon));
+  console.log(`Copied ${icon}`);
+}
 cpSync(join(SRC, "update_file_paths.xml"), join(XML, "update_file_paths.xml"));
 console.log("Copied update_file_paths.xml");
 
@@ -41,7 +51,10 @@ const PERMISSIONS = `
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>`;
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>`;
 
 const COMPONENTS = `
         <service
@@ -55,6 +68,22 @@ const COMPONENTS = `
                 <action android:name="com.pauta.app.FOCUS_PAUSE"/>
                 <action android:name="com.pauta.app.FOCUS_RESUME"/>
                 <action android:name="com.pauta.app.FOCUS_CONCLUDE"/>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.pauta.app.REMINDER_FIRE"/>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
         <provider

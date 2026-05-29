@@ -677,6 +677,32 @@ function pruneStaleReminderFlags() {
   } catch (_) {}
 }
 
+// Push the reminder settings down to native AlarmManager so they fire even with
+// the app fully closed (the JS loop below only runs while the page is open). The
+// title/body are sent already-localized — translation stays here in the JS i18n
+// layer; the native side just stores and re-displays them. With the app closed
+// we cannot read how many habits are still pending, so the background body is a
+// neutral, generic nudge (the in-app loop can still be specific). No-ops cleanly
+// in a plain browser / PWA (the bridge resolves { scheduled:false }).
+function scheduleNativeReminders(rem) {
+  if (!(window.FocusActivity && window.FocusActivity.isNative)) return;
+  try {
+    if (rem.enabled) {
+      window.FocusActivity.scheduleReminders({
+        enabled: true,
+        habitsTime: rem.habitsTime || "",
+        reflectionTime: rem.reflectionTime || "",
+        habitsTitle: tr("Pauta · marés de hoje"),
+        habitsBody: tr("Tens hábitos por marcar hoje."),
+        reflectionTitle: tr("Pauta · reflexão da noite"),
+        reflectionBody: tr("O que valeu hoje? Escreva uma linha."),
+      });
+    } else {
+      window.FocusActivity.cancelReminders();
+    }
+  } catch (_) {}
+}
+
 function useReminders(store) {
   const { state } = store;
   const prefs = state.prefs || {};
@@ -684,6 +710,12 @@ function useReminders(store) {
   // Sweep accumulated reminder flags once on mount (runs regardless of whether
   // reminders are currently enabled, so leftover keys still get cleaned up).
   useEffect(() => { pruneStaleReminderFlags(); }, []);
+  // Keep native AlarmManager in sync with the reminder settings (the only path
+  // that fires with the app closed). Re-runs whenever the toggle or a time
+  // changes. The in-app JS nudge below stays as a same-day fallback while open.
+  useEffect(() => {
+    scheduleNativeReminders(rem);
+  }, [rem.enabled, rem.habitsTime, rem.reflectionTime, window.PAUTA_LANG]);
   useEffect(() => {
     if (!rem.enabled) return;
     if (!notifySupported()) return;
@@ -730,9 +762,13 @@ function useReminders(store) {
 }
 
 // ─── Native focus timer notification (Android island) ────────
-// Drives the FocusActivity Capacitor plugin while a block is running.
-// Falls back silently in plain PWA / browser contexts where the plugin is absent.
-function useFocusActivity(store) {
+// Drives the FocusActivity Capacitor plugin while a block is running, mirroring
+// the Pauta tab's active card in the notification drawer: the live timer (a
+// count-up for open-ended blocks, a count-down for blocks with a Pomodoro
+// target) plus Pause/Resume/Conclude buttons matching the block's state, tinted
+// with the app's accent so it reads like an app control. Falls back silently in
+// plain PWA / browser contexts where the plugin is absent.
+function useFocusActivity(store, accentColor) {
   const { activeBlock, state, pauseActive, resumeBlock, concludeActive } = store;
   // Track the last known active block id so the receiver can resume it by id.
   const lastIdRef = useRef(null);
@@ -776,7 +812,12 @@ function useFocusActivity(store) {
       );
       // start() handles both "new block" and "resumed block": it resets the
       // chronometer base to now − elapsedMs so the total accumulated time shows.
-      startNative({ title: activeBlock.title, startedAt: lastSeg.startedAt, elapsedMs });
+      // targetMs (optional Pomodoro target) lets native show a count-down to the
+      // target; accent tints the notification like the in-app control.
+      startNative({
+        title: activeBlock.title, startedAt: lastSeg.startedAt, elapsedMs,
+        targetMs: activeBlock.targetMs || 0, accent: accentColor || "",
+      });
     } else {
       const blockId = lastIdRef.current;
       if (!blockId) return;

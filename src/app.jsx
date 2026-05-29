@@ -820,7 +820,7 @@ function App() {
   // Local reminders (only while the app is open).
   useReminders(store);
   // Native Android focus timer notification / Xiaomi island.
-  useFocusActivity(store);
+  useFocusActivity(store, accentColor);
   // Rolling local backup snapshot on the user's chosen cadence.
   useAutoBackup(store);
   // Keep the screen awake while a focus block is running (if enabled).

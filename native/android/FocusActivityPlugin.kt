@@ -99,12 +99,16 @@ class FocusActivityPlugin : Plugin() {
         val title     = call.getString("title") ?: "Focus"
         val startedAt = call.getDouble("startedAt")?.toLong() ?: System.currentTimeMillis()
         val elapsedMs = call.getDouble("elapsedMs")?.toLong() ?: 0L
+        val targetMs  = call.getDouble("targetMs")?.toLong() ?: 0L
+        val accent    = call.getString("accent") ?: ""
 
         val intent = Intent(context, FocusService::class.java).apply {
             action = FocusService.ACTION_START
             putExtra(FocusService.EXTRA_TITLE,      title)
             putExtra(FocusService.EXTRA_STARTED_AT, startedAt)
             putExtra(FocusService.EXTRA_ELAPSED_MS, elapsedMs)
+            putExtra(FocusService.EXTRA_TARGET_MS,  targetMs)
+            putExtra(FocusService.EXTRA_ACCENT,     accent)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -222,6 +226,36 @@ class FocusActivityPlugin : Plugin() {
             // Permission revoked between the check and the post — fail soft.
             call.resolve(JSObject().put("shown", false))
         }
+    }
+
+    // ── Scheduled background reminders (AlarmManager) ────────────
+    // Unlike the in-app JS reminder loop (which only ticks while the WebView is
+    // open), these fire even when the app is fully closed. JS passes the toggle
+    // state, the two HH:mm times and the *already-localized* title/body strings
+    // (so translation stays in the JS i18n layer); we persist + (re)schedule.
+    // Returns { scheduled, exact } — exact=false means the OS denied exact alarms
+    // (Android 12+), so delivery falls back to inexact and may drift by minutes.
+
+    @PluginMethod
+    fun scheduleReminders(call: PluginCall) {
+        val enabled = call.getBoolean("enabled", false) ?: false
+        ReminderScheduler.save(
+            context, enabled,
+            call.getString("habitsTime"), call.getString("reflectionTime"),
+            call.getString("habitsTitle"), call.getString("habitsBody"),
+            call.getString("reflectionTitle"), call.getString("reflectionBody")
+        )
+        if (enabled) ReminderScheduler.rescheduleAll(context) else ReminderScheduler.cancelAll(context)
+        call.resolve(JSObject()
+            .put("scheduled", enabled)
+            .put("exact", ReminderScheduler.canExact(context)))
+    }
+
+    @PluginMethod
+    fun cancelReminders(call: PluginCall) {
+        ReminderScheduler.save(context, false, null, null, null, null, null, null)
+        ReminderScheduler.cancelAll(context)
+        call.resolve(JSObject().put("scheduled", false))
     }
 
     // ── Called by FocusActionReceiver when a notification button is tapped ──

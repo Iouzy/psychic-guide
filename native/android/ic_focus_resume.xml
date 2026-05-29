@@ -1,0 +1,13 @@
+<!--
+  "Resume" (play) action icon for the ongoing focus notification. 24×24 dp,
+  single white path — the system tints it to match the shade theme.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,5v14l11,-7z" />
+</vector>

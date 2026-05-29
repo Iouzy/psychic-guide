@@ -338,6 +338,7 @@ const I18N_EN_BULK = {
   "Pauta · marés de hoje": "Pauta · today's tides",
   "Falta \"{name}\".": "\"{name}\" is missing.",
   "Faltam {n} hábitos hoje.": "{n} habits left today.",
+  "Tens hábitos por marcar hoje.": "You have habits to check off today.",
   "Pauta · reflexão da noite": "Pauta · evening reflection",
   "O que valeu hoje? Escreva uma linha.": "What was worth it today? Write a line.",
   "nome": "name",

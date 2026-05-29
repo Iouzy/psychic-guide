@@ -93,6 +93,41 @@ style notification).
    typed service), and `POST_NOTIFICATIONS` (Android 13+, request at runtime).
 4. `update`/`stop` mutate or cancel the notification.
 
+## Shipped on Android (already in the tree)
+
+Two pieces of the above are now implemented, not roadmap:
+
+**Focus-timer control in the notification drawer** — `FocusService` posts an
+ongoing, accent-tinted notification that mirrors the Pauta card: the block title,
+a "Pauta" app label, and a **live system chronometer** that counts *up* from
+accumulated focus time, or *down* to the Pomodoro target
+(`setChronometerCountDown`) when the block has one. Action buttons (Pause/Resume —
+whichever matches the state — and Conclude) fire broadcasts to
+`FocusActionReceiver`, which both updates the service (so the notification stays
+correct even if the WebView was reclaimed) and emits the `"action"` event back to
+JS, keeping the in-app timer and the notification in sync **both ways**.
+
+**Background reminders via `AlarmManager`** — the in-app JS reminder loop only
+ticks while the page is open, so habit/reflection nudges are also scheduled
+natively (`ReminderScheduler` → `ReminderReceiver`) and fire **with the app
+closed**. `BootReceiver` re-arms them after a reboot or app update. Settings are
+mirrored to `SharedPreferences` so the alarm can re-arm itself for the next day
+and survive process death. They post on the same HIGH-importance "Lembretes"
+channel as the in-app path, so they still pop as heads-up notifications.
+
+Honest limitations (preserved deliberately):
+- **Exactness:** exact alarms need `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM`
+  (Android 12+ may deny them). When denied we fall back to an inexact,
+  Doze-friendly alarm — a reminder still arrives, just not necessarily to the
+  minute.
+- **OEM battery managers** (notably MIUI/Xiaomi) can still delay or drop
+  background alarms unless the app is allowed to autostart / exempt from battery
+  optimization. This is outside the app's control.
+- **App-closed body is generic:** with the WebView not running we can't read
+  `localStorage` to count *which* habits are still pending, so the closed-app
+  reminder uses a neutral nudge ("You have habits to check off today."). The
+  in-app loop, when open, can still be specific.
+
 ## Fullscreen / immersive mode
 
 - **Android:** a small plugin calling `WindowInsetsControllerCompat` to hide the

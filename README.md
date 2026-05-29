@@ -152,7 +152,7 @@ Tap the **menu** in the top bar to open Settings.
 | 🌍 **Language** | Switch between English and Portuguese any time |
 | 🌗 **Theme** | Auto (follows device), Light, or Dark |
 | 🎨 **Accent colour** | Pick a colour that feels like you |
-| 🔔 **Reminders** | Optional on-device nudges for pending habits and your evening reflection |
+| 🔔 **Reminders** | Optional on-device nudges for pending habits and your evening reflection. On the Android app they're scheduled natively (`AlarmManager`) so they fire even when the app is closed; aggressive OEM battery managers (e.g. MIUI) may still delay them |
 | 💾 **Backup** | Export or import your data as a file |
 | 📲 **Install** | Instructions to add the app to your home screen |
 | 📊 **Weekly Review** | A 7-day summary of focus sessions, habits and patterns |
@@ -387,7 +387,7 @@ A Pauta tem três secções — alterne tocando nos separadores ou deslizando pa
 | 🌍 **Idioma** | Mude entre português e inglês a qualquer momento |
 | 🌗 **Tema** | Automático (segue o dispositivo), Claro ou Escuro |
 | 🎨 **Cor de destaque** | Escolha uma cor que se identifique consigo |
-| 🔔 **Lembretes** | Notificações locais opcionais para hábitos e reflexão noturna |
+| 🔔 **Lembretes** | Notificações locais opcionais para hábitos e reflexão noturna. Na app Android são agendados nativamente (`AlarmManager`), por isso disparam mesmo com a app fechada; gestores de bateria de alguns fabricantes (ex.: MIUI) podem atrasá-los |
 | 💾 **Backup** | Exporte ou importe os seus dados como ficheiro |
 | 📲 **Instalar** | Instruções para adicionar a app ao ecrã principal |
 | 📊 **Revisão semanal** | Um resumo de 7 dias das sessões, hábitos e padrões |
