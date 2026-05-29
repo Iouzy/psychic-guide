@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider paths for the in-app updater (AppUpdaterPlugin). The downloaded
+     update.apk lives in the app-specific external files dir; we expose just that
+     directory to the system package installer via a content:// URI. A separate
+     authority (.updateprovider) keeps this independent of Capacitor's own
+     .fileprovider so neither clobbers the other. -->
+<paths>
+    <external-files-path name="updates" path="." />
+    <files-path name="internal_updates" path="." />
+</paths>

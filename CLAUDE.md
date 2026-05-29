@@ -45,13 +45,16 @@ deps). Consequences that matter:
 - **A JSX syntax error fails silently in the browser** (the whole app stops
   rendering). Always run the JSX check before committing — see below.
 
-The native Android layer is Kotlin in `native/android/` (a foreground-service
-focus-timer plugin: `FocusActivityPlugin`, `FocusService`,
-`FocusActionReceiver`, `MainActivity`). It is **not** part of a checked-in
-Android project — `scripts/inject-native.mjs` copies it into the `android/`
-project that Capacitor generates, patches `AndroidManifest.xml`, and bumps the
-version. The JS↔native bridge is `src/focus-activity.js`, which no-ops cleanly
-in a plain browser.
+The native Android layer is Kotlin in `native/android/`: a foreground-service
+focus-timer plugin (`FocusActivityPlugin`, `FocusService`,
+`FocusActionReceiver`, `MainActivity`) and an in-app updater plugin
+(`AppUpdaterPlugin`, which downloads the release APK and launches the system
+package installer — no browser). It is **not** part of a checked-in Android
+project — `scripts/inject-native.mjs` copies it into the `android/` project that
+Capacitor generates, patches `AndroidManifest.xml` (permissions + the updater
+FileProvider), and bumps the version. The JS↔native bridges are
+`src/focus-activity.js` and `src/app-updater.js`, which both no-op cleanly in a
+plain browser.
 
 ## Commands
 

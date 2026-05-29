@@ -50,13 +50,28 @@ function PrefToggle({ label, sub, value, onChange, accentColor }) {
 // ─── UPDATE CHECKER ─────────────────────────────────────────
 // Queries the GitHub Releases API for the rolling "latest" tag and compares
 // its publication time against the build stamp injected at build time. When a
-// newer APK is available the user can tap to download it via the system
-// browser, which fixes the "package conflicts with an existing package" loop
-// some users hit when sideloading APKs through Firefox on MIUI.
+// newer APK is available:
+//   • in the native Android app it is downloaded and handed straight to the
+//     system package installer (AppUpdater plugin) — no browser, installs
+//     in-place over the current app and keeps the user's data, and
+//   • in a plain browser/PWA (no native installer) it falls back to opening the
+//     APK download URL, which also fixes the "package conflicts with an
+//     existing package" loop some users hit when sideloading through a browser.
 function UpdateChecker({ accentColor, store }) {
   const build = window.PAUTA_BUILD || { ts: 0, run: 0 };
   const repo  = window.PAUTA_REPO  || "Iouzy/psychic-guide";
   const [state, setState] = useState({ kind: "idle" });
+
+  // Reflect native download progress (0–100) in the button subtitle.
+  useEffect(() => {
+    if (!(window.AppUpdater && window.AppUpdater.isNative)) return;
+    const sub = window.AppUpdater.addListener("downloadProgress", (e) => {
+      const pct = e && typeof e.percent === "number" ? e.percent : null;
+      setState(s => (s.kind === "downloading" ? { ...s, progress: pct } : s));
+    });
+    // addListener may return a handle or a Promise of one (Capacitor versions differ).
+    return () => { try { Promise.resolve(sub).then(h => h && h.remove && h.remove()); } catch (_) {} };
+  }, []);
 
   const check = async () => {
     setState({ kind: "checking" });
@@ -99,6 +114,44 @@ function UpdateChecker({ accentColor, store }) {
     }
   };
 
+  const startUpdate = async () => {
+    const url = state.url;
+    const releaseRun = state.releaseRun;
+    // Offer a safety backup before installing the update.
+    const backup = await window.pautaConfirm({
+      message: tr("Guardar uma cópia de segurança antes de atualizar?"),
+      okLabel: tr("Cópia e atualizar"),
+      cancelLabel: tr("Só atualizar"),
+    });
+    if (backup && store) {
+      try { window.writeAutoBackup(store.serializeBackup()); } catch (e) {}
+      store.exportData();
+    }
+
+    // Native: download the APK and hand it to Android's package installer —
+    // no browser, installs in-place over the current app (same signing key, so
+    // the user's data is preserved). Plain browser/PWA has no installer, so
+    // fall back to opening the download URL there.
+    if (window.AppUpdater && window.AppUpdater.isNative) {
+      setState({ kind: "downloading", url, releaseRun, progress: null });
+      try {
+        const res = await window.AppUpdater.downloadAndInstall({ url });
+        if (res && res.status === "needs-permission") {
+          // We just opened the "install unknown apps" toggle; let the user
+          // allow it and tap again.
+          setState({ kind: "available", url, releaseRun, needsPerm: true });
+        } else {
+          setState({ kind: "installing" });
+        }
+      } catch (e) {
+        setState({ kind: "available", url, releaseRun, dlError: true });
+      }
+      return;
+    }
+
+    setTimeout(() => window.open(url, "_blank"), backup ? 500 : 0);
+  };
+
   const buildLabel = build.run > 0
     ? trf("Versão atual: build {n}", { n: build.run })
     : tr("Versão de desenvolvimento.");
@@ -107,11 +160,22 @@ function UpdateChecker({ accentColor, store }) {
   let status = null;
   if (state.kind === "checking") subtitle = tr("A verificar…");
   else if (state.kind === "uptodate") { subtitle = tr("Está atualizado."); status = "ok"; }
-  else if (state.kind === "available") {
-    subtitle = state.releaseRun > 0
-      ? trf("Atualização disponível: build {n}", { n: state.releaseRun })
-      : tr("Atualização disponível.");
+  else if (state.kind === "downloading") {
+    subtitle = state.progress != null
+      ? trf("A transferir atualização… {n}%", { n: state.progress })
+      : tr("A transferir atualização…");
     status = "ok";
+  }
+  else if (state.kind === "installing") { subtitle = tr("A abrir o instalador…"); status = "ok"; }
+  else if (state.kind === "available") {
+    if (state.needsPerm) { subtitle = tr("Permite instalar apps desta origem e toca outra vez."); status = "err"; }
+    else if (state.dlError) { subtitle = tr("Não foi possível transferir a atualização."); status = "err"; }
+    else {
+      subtitle = state.releaseRun > 0
+        ? trf("Atualização disponível: build {n}", { n: state.releaseRun })
+        : tr("Atualização disponível.");
+      status = "ok";
+    }
   }
   else if (state.kind === "err") { subtitle = state.text; status = "err"; }
 
@@ -141,28 +205,18 @@ function UpdateChecker({ accentColor, store }) {
         </span>
         <Icon.Chevron size={14}/>
       </button>
-      {state.kind === "available" && (
-        <button onClick={async () => {
-            const url = state.url;
-            // Offer a safety backup before the user leaves to install the update.
-            const backup = await window.pautaConfirm({
-              message: tr("Guardar uma cópia de segurança antes de atualizar?"),
-              okLabel: tr("Cópia e atualizar"),
-              cancelLabel: tr("Só atualizar"),
-            });
-            if (backup && store) {
-              try { window.writeAutoBackup(store.serializeBackup()); } catch (e) {}
-              store.exportData();
-            }
-            setTimeout(() => window.open(url, "_blank"), backup ? 500 : 0);
-          }} className="tap"
+      {(state.kind === "available" || state.kind === "downloading") && (
+        <button onClick={startUpdate} className="tap"
+          disabled={state.kind === "downloading"}
           style={{
             background: accentColor, color: "var(--on-dark)", border: "none",
-            borderRadius: 12, padding: "12px 14px", cursor: "pointer",
+            borderRadius: 12, padding: "12px 14px",
+            cursor: state.kind === "downloading" ? "default" : "pointer",
+            opacity: state.kind === "downloading" ? 0.7 : 1,
             fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.06em",
             textTransform: "uppercase",
           }}>
-          {tr("Transferir nova versão")}
+          {state.kind === "downloading" ? tr("A transferir…") : tr("Transferir nova versão")}
         </button>
       )}
     </div>
