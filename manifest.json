@@ -1,6 +1,7 @@
 {
   "name": "Pauta",
   "short_name": "Pauta",
+  "id": "./",
   "description": "Intenções, blocos de foco e hábitos — a sua pauta diária.",
   "lang": "pt-PT",
   "start_url": "./index.html",
