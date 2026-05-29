@@ -115,10 +115,11 @@ Because Pauta is sideloaded (it isn't on the Play Store), Android won't update i
    ```
    https://github.com/Iouzy/psychic-guide
    ```
-3. Pauta's builds are published to a **rolling `latest` release tag** (the tag name never changes), so enable Obtainium's option to **detect the version from the APK / release date** in that app's settings — otherwise it may not notice new builds.
-4. Done. Obtainium now notifies you (or downloads in the background, if you turn that on) whenever a new build ships, and installs it over the top — your data is preserved.
+3. Done. Each build is published as its own versioned release, so Obtainium detects new versions automatically — no extra setup.
 
-> **First time only:** if you previously installed an APK signed with a different key, you'll hit an *"App not installed / package conflicts"* error. **Export a backup first** (Settings → Backup → Export), uninstall Pauta once, then install via Obtainium. Every build after that shares the same signing key, so updates apply in place.
+**You stay in control.** By default Obtainium only **notifies** you that an update is available, and *you* tap to install it (skip it or wait as long as you like — nothing installs without you). Prefer fully hands-off? Turn on background auto-update in Obtainium's settings — but that's optional and off by default.
+
+> **First time only:** if you previously installed an APK signed with a different key, you'll hit an *"App not installed / package conflicts"* error. **Export a backup first** (Settings → Backup → Export), uninstall Pauta once, then install via Obtainium. Every CI build shares the same committed signing key, so from then on updates apply in place — no more conflicts.
 
 ---
 
@@ -364,10 +365,11 @@ Como a Pauta é instalada por fora (não está na Play Store), o Android não a 
    ```
    https://github.com/Iouzy/psychic-guide
    ```
-3. As builds da Pauta são publicadas numa **release com tag fixa `latest`** (o nome da tag nunca muda), por isso ative a opção do Obtainium para **detetar a versão pelo APK / data da release** nas definições dessa app — caso contrário pode não reparar nas novas builds.
-4. Pronto. O Obtainium passa a avisá-lo (ou a transferir em segundo plano, se ativar essa opção) sempre que sai uma build nova, e instala por cima — os seus dados são preservados.
+3. Pronto. Cada build é publicada como a sua própria release versionada, por isso o Obtainium deteta as novas versões automaticamente — sem configuração extra.
 
-> **Só da primeira vez:** se já tinha instalado um APK assinado com outra chave, vai aparecer o erro *"Aplicação não instalada / conflito de pacote"*. **Faça primeiro uma cópia de segurança** (Definições → Backup → Exportar), desinstale a Pauta uma vez e instale pelo Obtainium. A partir daí todas as builds partilham a mesma chave, por isso as atualizações aplicam-se por cima.
+**O controlo é seu.** Por omissão, o Obtainium apenas o **avisa** de que existe uma atualização e é *você* que toca para instalar (pode adiar ou ignorar o tempo que quiser — nada se instala sem si). Prefere totalmente automático? Ative a atualização em segundo plano nas definições do Obtainium — mas é opcional e está desligada por omissão.
+
+> **Só da primeira vez:** se já tinha instalado um APK assinado com outra chave, vai aparecer o erro *"Aplicação não instalada / conflito de pacote"*. **Faça primeiro uma cópia de segurança** (Definições → Backup → Exportar), desinstale a Pauta uma vez e instale pelo Obtainium. Todas as builds de CI partilham a mesma chave de assinatura, por isso a partir daí as atualizações aplicam-se por cima — sem mais conflitos.
 
 ---
 

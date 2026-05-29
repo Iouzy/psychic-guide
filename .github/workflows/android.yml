@@ -68,17 +68,37 @@ jobs:
           name: pauta-apk
           path: pauta.apk
 
-      - name: Publish to rolling "latest" Release
+      # Versioned release: immutable, one per build, with a tag that changes
+      # every time (v1.0.<run>). This is the repo's "Latest" full release, so
+      # update trackers like Obtainium — and GitHub's /releases/latest — detect
+      # every new build automatically, with no manual per-app config. Obtainium
+      # notifies the user of the update; the user chooses when to install it.
+      - name: Publish versioned Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          # The build number is advertised here so the in-app update checker can
-          # compare exactly — GitHub freezes a rolling release's published_at, so
-          # timestamps are unreliable. Keep the literal "build <n>" format:
-          # UpdateChecker parses it from the release name/body.
+          tag_name: v1.0.${{ github.run_number }}
           name: Pauta · build ${{ github.run_number }}
           body: |
             Automatically built Android APK (build ${{ github.run_number }}).
             Download pauta.apk below and install it on your phone.
           files: pauta.apk
           fail_on_unmatched_files: true
+          make_latest: true
+
+      # Rolling "latest" tag: kept for backward compatibility — older installs'
+      # in-app update checker queries this tag directly. Marked as a prerelease
+      # so it doesn't claim the "Latest" badge from the versioned release above.
+      # The build number is advertised in the name so the in-app UpdateChecker
+      # can parse it; keep the literal "build <n>" format.
+      - name: Update rolling "latest" Release (for the in-app checker)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Pauta · build ${{ github.run_number }}
+          body: |
+            Automatically built Android APK (build ${{ github.run_number }}).
+            Download pauta.apk below and install it on your phone.
+          files: pauta.apk
+          fail_on_unmatched_files: true
+          prerelease: true
+          make_latest: false
