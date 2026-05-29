@@ -83,18 +83,26 @@ if (!manifest.includes("FocusService")) {
   console.log("AndroidManifest.xml already patched — skipped");
 }
 
-// ── 4. Bump versionCode/versionName from CI env ──────────────
-// Without this, every CI build ships versionCode 1, so Android refuses to
-// install the new APK over an existing copy with "package conflicts with an
-// existing package". Using GITHUB_RUN_NUMBER makes each build strictly newer
-// than the previous one, so the OS treats it as a real update.
-const run = Number(process.env.GITHUB_RUN_NUMBER || 0);
-if (run > 0) {
+// ── 4. Bump versionCode/versionName in CI ────────────────────
+// versionCode must be a monotonically increasing integer or Android refuses the
+// update ("package conflicts with an existing package" / downgrade blocked).
+// We previously used GITHUB_RUN_NUMBER — but that counter RESETS to 1 when the
+// workflow is renamed or the repo is forked/transferred, which already happened
+// here and produced a build with a HIGHER number than newer builds. Derive the
+// code from wall-clock minutes since the epoch instead: always increasing,
+// reset-proof, and well within the 2,147,483,647 ceiling for ~4000 years.
+// versionName is a human date (no fake semver tied to the run number).
+// Gate on CI (GITHUB_RUN_NUMBER present) so local builds keep the Capacitor default.
+if (process.env.GITHUB_RUN_NUMBER) {
+  const versionCode = Math.floor(Date.now() / 60000);   // epoch minutes — monotonic
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const versionName = `${d.getUTCFullYear()}.${p(d.getUTCMonth() + 1)}.${p(d.getUTCDate())}`;
   let gradle = readFileSync(GRADLE, "utf8");
-  gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${run}`);
-  gradle = gradle.replace(/versionName\s+"[^"]*"/, `versionName "1.0.${run}"`);
+  gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${versionCode}`);
+  gradle = gradle.replace(/versionName\s+"[^"]*"/, `versionName "${versionName}"`);
   writeFileSync(GRADLE, gradle);
-  console.log(`Patched build.gradle: versionCode=${run}, versionName=1.0.${run}`);
+  console.log(`Patched build.gradle: versionCode=${versionCode}, versionName=${versionName}`);
 } else {
   console.log("No GITHUB_RUN_NUMBER set — leaving build.gradle versionCode at the Capacitor default.");
 }

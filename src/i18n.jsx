@@ -104,6 +104,7 @@ const I18N_EN = {
   "Não foi possível verificar atualizações.": "Could not check for updates.",
   "Sem APK disponível no repositório.": "No APK available in the repository.",
   "Versão atual: build {n}": "Current version: build {n}",
+  "Versão de {date}": "Version from {date}",
   "Versão de desenvolvimento.": "Development build.",
 
   // ─── Tweaks panel ───
