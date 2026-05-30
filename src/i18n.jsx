@@ -144,6 +144,10 @@ const I18N_EN = {
   "Permitir notificações": "Allow notifications",
   "Se nada acontecer, ative as notificações do Pauta nas definições do sistema.": "If nothing happens, enable Pauta's notifications in your system settings.",
   "Abrir definições do sistema": "Open system settings",
+  "Notificações ativas": "Notifications enabled",
+  "Canal de lembretes": "Reminders channel",
+  "bloqueado": "blocked",
+  "Motivo": "Reason",
   "Ative \"Notificações\" para o Pauta. Em alguns telemóveis (Xiaomi, etc.) ative também o arranque automático.": "Turn on \"Notifications\" for Pauta. On some phones (Xiaomi, etc.) also enable autostart.",
 
   // ─── Empty-state starters ───

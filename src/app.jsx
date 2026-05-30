@@ -688,11 +688,18 @@ function FocusNotifControl({ accentColor }) {
 function NotifDiagnostics() {
   const [perm, setPerm] = useState(null);   // null = checking
   const [tested, setTested] = useState(null);
+  const [reason, setReason] = useState(null);   // why the test failed (native)
+  const [status, setStatus] = useState(null);   // { enabled, channelBlocked }
   useEffect(() => {
     let alive = true;
-    const check = () => window.FocusActivity.checkPermission()
-      .then(r => { if (alive) setPerm(!!(r && r.granted)); })
-      .catch(() => { if (alive) setPerm(false); });
+    const check = () => {
+      window.FocusActivity.checkPermission()
+        .then(r => { if (alive) setPerm(!!(r && r.granted)); })
+        .catch(() => { if (alive) setPerm(false); });
+      window.FocusActivity.notifStatus()
+        .then(s => { if (alive) setStatus(s || null); })
+        .catch(() => {});
+    };
     check();
     // Re-check when returning from system Settings, so a grant shows live here.
     const onVisible = () => { if (document.visibilityState === "visible") check(); };
@@ -731,15 +738,30 @@ function NotifDiagnostics() {
         <Row label={tr("Plataforma")} value={platform} ok={platform === "android"}/>
         <Row label={tr("Permissão de notificações")}
           value={perm == null ? "…" : perm ? tr("concedida") : tr("negada")} ok={perm}/>
+        {status && (
+          <Row label={tr("Notificações ativas")}
+            value={status.enabled ? tr("sim") : tr("não")} ok={!!status.enabled}/>
+        )}
+        {status && status.channelBlocked && (
+          <Row label={tr("Canal de lembretes")} value={tr("bloqueado")} ok={false}/>
+        )}
         <Row label={tr("Versão")} value={buildStr}/>
         {tested != null && (
           <Row label={tr("Teste")} value={tested ? tr("mostrada") : tr("falhou")} ok={tested}/>
         )}
+        {reason && !tested && (
+          <Row label={tr("Motivo")} value={reason} ok={false}/>
+        )}
         <button
           onClick={async () => {
-            const ok = await window.fireReminder(
-              tr("Pauta · teste"), tr("As notificações estão a funcionar."), "pauta-test-diag");
-            setTested(!!ok);
+            // Call the native channel directly so we get the precise failure reason.
+            let res = null;
+            try { res = await window.FocusActivity.notify({
+              title: tr("Pauta · teste"), body: tr("As notificações estão a funcionar."), tag: "pauta-test-diag" }); }
+            catch (e) { res = { shown: false, reason: String(e && e.message || e) }; }
+            setTested(!!(res && res.shown));
+            setReason((res && res.reason) || null);
+            try { setStatus(await window.FocusActivity.notifStatus()); } catch (_) {}
           }}
           className="tap"
           style={{

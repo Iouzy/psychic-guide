@@ -108,5 +108,6 @@
     requestPermission:   function () { var p = plugin(); return p ? p.requestPermission()   : Promise.resolve({ granted: false }); },
     shouldShowRationale: function () { var p = plugin(); return p ? p.shouldShowRationale() : Promise.resolve({ show: false }); },
     openAppSettings:     function () { var p = plugin(); return p ? p.openAppSettings()     : Promise.resolve(); },
+    notifStatus:         function () { var p = plugin(); return p ? p.notifStatus()         : Promise.resolve({ permission: false, enabled: false, channelBlocked: false }); },
   };
 })();

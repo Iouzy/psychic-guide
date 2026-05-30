@@ -97,6 +97,34 @@ class FocusActivityPlugin : Plugin() {
         resolveGranted(call, hasNotifPermission())
     }
 
+    // Detailed notification state for the on-device diagnostics, so a failure can
+    // be SEEN instead of guessed at. Distinguishes the three independent things
+    // that each silently suppress a notification on Android 13+/HyperOS:
+    //   permission      — POST_NOTIFICATIONS runtime grant
+    //   enabled         — the app's master "Show notifications" switch
+    //   channelBlocked  — the Lembretes channel set to importance NONE
+    @PluginMethod
+    fun notifStatus(call: PluginCall) {
+        val enabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        var channelImportance = -1
+        var channelBlocked = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ensureReminderChannel()
+            val ch = (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .getNotificationChannel(reminderChannelId)
+            if (ch != null) {
+                channelImportance = ch.importance
+                channelBlocked = ch.importance == NotificationManager.IMPORTANCE_NONE
+            }
+        }
+        call.resolve(JSObject()
+            .put("permission", hasNotifPermission())
+            .put("enabled", enabled)
+            .put("channelImportance", channelImportance)
+            .put("channelBlocked", channelBlocked)
+            .put("sdk", Build.VERSION.SDK_INT))
+    }
+
     // True when the OS would still show the permission dialog; false when the user
     // has permanently denied (checked "never ask again" or denied twice on Android 13+).
     @PluginMethod
@@ -238,7 +266,12 @@ class FocusActivityPlugin : Plugin() {
     fun showReminder(call: PluginCall) {
         // No permission → no notification (Android 13+ silently drops it anyway).
         if (!hasNotifPermission()) {
-            call.resolve(JSObject().put("shown", false))
+            call.resolve(JSObject().put("shown", false).put("reason", "no-permission"))
+            return
+        }
+        // Master switch off (or every channel blocked) → the OS drops it silently.
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            call.resolve(JSObject().put("shown", false).put("reason", "notifications-disabled"))
             return
         }
         val title = call.getString("title") ?: "Pauta"
@@ -272,10 +305,11 @@ class FocusActivityPlugin : Plugin() {
 
         try {
             NotificationManagerCompat.from(context).notify(notifId, notif)
-            call.resolve(JSObject().put("shown", true))
-        } catch (e: SecurityException) {
-            // Permission revoked between the check and the post — fail soft.
-            call.resolve(JSObject().put("shown", false))
+            call.resolve(JSObject().put("shown", true).put("reason", "ok"))
+        } catch (e: Exception) {
+            // Permission revoked between the check and the post, or an OEM block —
+            // surface the message so the diagnostics can show what actually failed.
+            call.resolve(JSObject().put("shown", false).put("reason", "exception: ${e.message}"))
         }
     }
 
