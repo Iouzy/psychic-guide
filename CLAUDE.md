@@ -169,5 +169,27 @@ the release.
 - `docs/NATIVE_ROADMAP.md` — why iOS/Dynamic Island/Live Activities aren't in
   the web tree and what building them would take.
 - `README.md` — user-facing docs (EN + PT) and developer guide.
+
+## Workflow — how to ship changes
+
+**Always handle the full cycle autonomously**, without asking for confirmation at each step:
+
+1. **Develop** on a feature branch (create it from the current `main`).
+2. **Run `npm run check`** before committing — it catches JSX syntax errors,
+   missing i18n keys, cadence math bugs, and Vitest failures. Fix anything that
+   fails before pushing.
+3. **Commit** with a clear message, **push**, and **open a draft PR** targeting `main`.
+4. **Subscribe** to PR activity (`subscribe_pr_activity`) and **wait for CI** to
+   complete. If CI fails, diagnose and fix immediately; push the fix to the same
+   branch (never a new PR for a CI fix).
+5. When **both `check` and `build` are green**, mark the PR ready and **merge to
+   `main`** using squash. Do not ask for permission — the user has authorised
+   autonomous merges on this repo.
+6. After merging, **verify** the new release was published (the CI on `main` runs
+   the publish step; check `get_latest_release` to confirm the tag moved to the
+   new commit and the asset name is `pauta-v<N>.apk`).
+
+**Never** leave a commit stranded on a branch without a PR. **Never** push to
+`main` directly — always go through a PR so CI runs first.
 </content>
 </invoke>
