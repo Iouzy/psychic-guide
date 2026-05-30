@@ -84,13 +84,29 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Stage APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk pauta.apk
+        # Version the filename (pauta-v<run>.apk) so each download lands as a
+        # DISTINCT file in the phone's Downloads folder instead of colliding on
+        # "pauta.apk" and being renamed pauta(1).apk, pauta(2).apk … The in-app
+        # updater matches any *.apk asset (not a fixed name), so this is safe.
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "pauta-v${{ github.run_number }}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: pauta-apk
-          path: pauta.apk
+          path: pauta-v${{ github.run_number }}.apk
+
+      - name: Move the rolling `latest` tag to this commit
+        # Without this the `latest` git tag stays pinned to wherever it was first
+        # created (an ancient commit), so the Release page forever shows that old
+        # SHA and a stale "Pauta N" name even though the APK asset is replaced each
+        # build — which looks like nothing ever ships. Force-move the tag to HEAD
+        # so the Release reflects the actual build commit. main-only (same gate as
+        # the publish below); contents:write + the checkout token allow the push.
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git tag -f latest
+          git push -f origin latest
 
       - name: Publish to rolling "latest" Release
         # Only main owns the release the in-app updater fetches; branch pushes
@@ -106,13 +122,15 @@ jobs:
           # the badge. The checker compares the APK asset's upload time against
           # the build's timestamp (not a parsed number), so the name uses the
           # run_number (already stamped into the APK) as a human-friendly counter
-          # that always moves forward.
+          # that always moves forward. target_commitish pins the release to THIS
+          # build's commit so the page stops showing the stale tag SHA.
           tag_name: latest
+          target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           name: Pauta ${{ github.run_number }}
           body: |
             Build ${{ github.run_number }} — automatically assembled Android APK.
-            Download pauta.apk below and install it on your phone.
-          files: pauta.apk
+            Download pauta-v${{ github.run_number }}.apk below and install it on your phone.
+          files: pauta-v${{ github.run_number }}.apk
           fail_on_unmatched_files: true

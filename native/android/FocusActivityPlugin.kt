@@ -108,22 +108,39 @@ class FocusActivityPlugin : Plugin() {
         call.resolve(JSObject().put("show", show))
     }
 
-    // Opens the system notification settings screen for this app so the user can
-    // grant POST_NOTIFICATIONS after a permanent denial.
+    // Opens system settings so the user can grant POST_NOTIFICATIONS after a
+    // permanent denial. ROBUST on OEM skins (Xiaomi/HyperOS, etc.): the dedicated
+    // ACTION_APP_NOTIFICATION_SETTINGS screen isn't honoured everywhere and the
+    // launch can throw ActivityNotFoundException — which silently did nothing
+    // before. We now try it, then fall back to the app's details page (always
+    // present; on MIUI it carries the Permissions list), and prefer launching
+    // from the real Activity (no NEW_TASK quirk) over the app Context.
     @PluginMethod
     fun openAppSettings(call: PluginCall) {
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        val act = activity
+
+        fun launch(intent: Intent): Boolean = try {
+            if (act != null) {
+                act.startActivity(intent)
+            } else {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
             }
-        } else {
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
-        }
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
-        call.resolve()
+            true
+        } catch (e: Exception) { false }
+
+        // 1) Per-app notification settings (Android 8+).
+        val notifIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        // 2) Fallback: the app's "App info" page — guaranteed to exist.
+        val detailsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setData(Uri.fromParts("package", context.packageName, null))
+
+        val opened =
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && launch(notifIntent)) ||
+                launch(detailsIntent)
+
+        call.resolve(JSObject().put("opened", opened))
     }
 
     // ── Plugin methods ───────────────────────────────────────────
